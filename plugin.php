@@ -32,9 +32,9 @@ function checkDependency()
 function dependencyNotice(): void
 {
     ?>
-<div class="notice notice-error is-dismissible">
-<p>使用 Power Partner Server 外掛必須先安裝並啟用 <a href="https://wpclouddeploy.com/" target="_blank">WPCD</a> ，請先安裝並啟用 <a href="https://wpclouddeploy.com/" target="_blank">WPCD</a></p>
-</div>
+		<div class="notice notice-error is-dismissible">
+			<p>使用 Power Partner Server 外掛必須先安裝並啟用 <a href="https://wpclouddeploy.com/" target="_blank">WPCD</a> ，請先安裝並啟用 <a href="https://wpclouddeploy.com/" target="_blank">WPCD</a></p>
+		</div>
 <?php
 }
 
@@ -116,7 +116,6 @@ class Bootstrap
         $server_id = $allowed_servers[ array_rand($allowed_servers) ];
         if (empty($server_id)) {
             return rest_ensure_response([
-                'success' => false,
                 'message' => 'No server is allowed to sync',
              ]);
         }
@@ -127,9 +126,11 @@ class Bootstrap
          ];
 
         $instance = new \WPCD_WORDPRESS_TABS_SITE_SYNC();
-        $result   = $instance->do_site_sync_action($id, $args);
+        $instance->do_site_sync_action($id, $args);
 
-        return rest_ensure_response($result);
+        return rest_ensure_response([
+            'message' => "Site {$id} sync to server {$server_id}",
+         ]);
     }
 
 }
