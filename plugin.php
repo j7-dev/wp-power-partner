@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Plugin Name:       Power Partner Server | 一些WPCD的額外設定，讓 partner 都可以輕鬆地販售網站模板
+ * Plugin Name:       Power Partner | 讓每個人都可以輕鬆地販售網站模板
  * Plugin URI:        https://cloud.luke.cafe/plugins/power-partner/
- * Description:       Power Partner Server版 是一個 WordPress 套件，安裝後，在 WPCD 選單會有額外的設定，可以指定讓 partner 們販售的網站要開在哪一台主機。
- * Version:           0.0.2
+ * Description:       Power Partner 是一個 WordPress 套件，安裝後，可以讓你的 Woocommerce 商品與 cloud.luke.cafe 的模板網站連結，並且可以讓使用者自訂商品的價格，當用戶在您的網站下單後，會自動在 cloud.luke.cafe 創建網站，並且自動發送通知給用戶跟您。
+ * Version:           0.1.0
  * Requires at least: 5.7
  * Requires PHP:      7.4
  * Author:            J7
@@ -16,14 +16,17 @@
  * Tags: WPCD
  */
 declare (strict_types = 1);
-namespace J7\PowerPartnerServer\Inc;
+namespace J7\PowerPartner\Inc;
+
+use J7\PowerPartner\Components\SiteSelector;
 
 \add_action('plugins_loaded', __NAMESPACE__ . '\checkDependency');
 function checkDependency()
 {
-    if (!class_exists('WPCD_Init', false)) {
+    if (!class_exists('WooCommerce', false)) {
         \add_action('admin_notices', __NAMESPACE__ . '\dependencyNotice');
     } else {
+        require_once __DIR__ . '/components/index.php';
         new Bootstrap();
     }
 }
@@ -33,115 +36,49 @@ function dependencyNotice(): void
 {
     ?>
 		<div class="notice notice-error is-dismissible">
-			<p>使用 Power Partner Server 外掛必須先安裝並啟用 <a href="https://wpclouddeploy.com/" target="_blank">WPCD</a> ，請先安裝並啟用 <a href="https://wpclouddeploy.com/" target="_blank">WPCD</a></p>
+			<p>使用 Power Partner 外掛必須先安裝並啟用 <a href="https://tw.wordpress.org/plugins/woocommerce/" target="_blank">Woocommerce</a> ，請先安裝並啟用 <a href="https://tw.wordpress.org/plugins/woocommerce/" target="_blank">Woocommerce</a></p>
 		</div>
 <?php
 }
 
 class Bootstrap
 {
-    const APP_NAME = 'Power Partner Server';
-    const KEBAB    = 'power-partner-server';
-    const SNAKE    = 'power_partner_server';
+    const APP_NAME = 'Power Partner';
+    const KEBAB    = 'power-partner';
+    const SNAKE    = 'power_partner';
     public function __construct()
     {
-        \add_filter('wpcd_settings_tabs', [ $this, 'powerPartnerServerSettingTab' ], 10, 1);
-        \add_filter('wpcd_settings_metaboxes', [ $this, 'powerPartnerServerSettingTabDisplay' ], 10, 1);
-        \add_action('rest_api_init', [ $this, 'siteSync' ]);
-
+        \add_action('add_meta_boxes', [ $this, 'add_metabox' ]);
+        \add_action("save_post", [ $this, "save_metabox" ]);
     }
 
-    public function powerPartnerServerSettingTab(array $tabs): array
+    public function add_metabox(): void
     {
-        $tabs[ self::KEBAB . '-tab' ] = self::APP_NAME . " 設定";
-        return $tabs;
-    }
-    public function powerPartnerServerSettingTabDisplay(array $meta_boxes): array
-    {
-        $meta_boxes[  ] = [
-            'id'             => self::KEBAB . '-metabox',
-            'title'          => self::APP_NAME . " 設定",
-            'settings_pages' => 'wpcd_settings',
-            'tab'            => self::KEBAB . '-tab',
-            'fields'         => [
-                [
-                    'name'            => '請選擇 partner 販售的網站要安裝在那些 Server 上',
-                    'id'              => self::SNAKE . '_allowed_servers',
-                    'type'            => 'select_advanced',
-                    'options'         => $this->getServerOptions(),
-                    'select_all_none' => true,
-                    'multiple'        => true,
-                    'desc'            => '',
-                    'placeholder'     => '請選擇 Server',
-                 ],
-             ],
-         ];
-        return $meta_boxes;
+        \add_meta_box(self::SNAKE . '_metabox', '選擇要連結的網站', [ $this, self::SNAKE . '_callback' ], 'product');
     }
 
-    private function getServerOptions(): array
+    public function power_partner_callback(): void
     {
-        $args = array(
-            'post_type'      => 'wpcd_app_server',
-            'post_status'    => 'private',
-            'posts_per_page' => -1,
-        );
-        $posts   = get_posts($args);
-        $servers = [  ];
-        foreach ($posts as $post) {
-            $servers[ $post->ID ] = $post->post_title;
-        }
-        return $servers;
-    }
-
-    private function getAllowedServers(): array
-    {
-        $wpcd_settings   = get_option('wpcd_settings');
-        $allowed_servers = $wpcd_settings[ self::SNAKE . '_allowed_servers' ] ?? [  ];
-        return $allowed_servers;
-    }
-
-    public function siteSync(): void
-    {
-        register_rest_route(self::KEBAB, "site-sync", array(
-            'methods'  => 'POST',
-            'callback' => [ $this, 'siteSyncCallback' ],
-        ));
-    }
-
-    public function siteSyncCallback($request)
-    {
-        $body_params        = $request->get_body_params() ?? [  ];
-        $id                 = $body_params[ 'site_id' ];
-        $assigned_server_id = $body_params[ 'server_id' ]; // 指定 server id
-
-        $allowed_servers = $this->getAllowedServers();
-        // 如果不指定 就 隨機
-        $server_id = empty($assigned_server_id) ? $allowed_servers[ array_rand($allowed_servers) ] : $assigned_server_id;
-        if (empty($server_id)) {
-            return rest_ensure_response([
-                'message' => 'No server is allowed to sync',
-             ]);
-        }
-        $args = [
-            'site_sync_destination'          => $server_id,
-            'sec_source_dest_check_override' => 1,
-         ];
-
-        try {
-            $instance = new \WPCD_WORDPRESS_TABS_SITE_SYNC();
-            $instance->do_site_sync_action($id, $args);
-
-            return rest_ensure_response([
-                'message' => "Site {$id} sync to server {$server_id}",
-             ]);
-        } catch (\Throwable $th) {
-            // throw $th;
-            return rest_ensure_response([
-                'message' => "Site {$id} or server {$server_id} invalid",
-             ]);
+        $post_id = $_GET[ 'post' ];
+        if (empty($post_id)) {
+            return;
         }
 
+        $siteSelector = SiteSelector::getInstance();
+        $defaultValue = \get_post_meta($post_id, "linked_site", true) ?? null;
+        echo $siteSelector->render($defaultValue);
+    }
+
+    public function save_metabox($post_id): void
+    {
+        $post_type = \get_post_type($post_id);
+
+        if ('product' !== $post_type) {
+            return;
+        }
+
+        $linked_site = $_POST[ 'linked_site' ] ?? null;
+        \update_post_meta($post_id, "linked_site", $linked_site);
     }
 
 }

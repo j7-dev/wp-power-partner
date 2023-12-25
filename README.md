@@ -1,24 +1,7 @@
-# Power Partner Server 版 | 一些WPCD的額外設定，讓 partner 都可以輕鬆地販售網站模板
-一句話講完 Power Partner Server 版 :
+# Power Partner | 讓每個人都可以輕鬆地販售網站模板
+一句話講完 Power Partner :
 
-> Power Partner Server版 是一個 WordPress 套件，安裝後，在 WPCD 選單會有額外的設定，可以指定讓 partner 們販售的網站要開在哪一台主機。
-
-<br><br><br>
-
-## 1. 擴充 WPCD 的 Tab
-
-![image](https://github.com/j7-dev/wp-power-partner-server/assets/9213776/cde8d3cf-7c9e-4fb7-aedd-969bd63a19f9)
+> Power Partner 是一個 WordPress 套件，安裝後，可以讓你的 Woocommerce 商品與 cloud.luke.cafe 的模板網站連結，並且可以讓使用者自訂商品的價格，當用戶在您的網站下單後，會自動在 cloud.luke.cafe 創建網站，並且自動發送通知給用戶跟您。
 
 <br><br><br>
 
-## 2. 提供 API 給接受外部呼叫來 sync site (即複製模板網站) 到指定 Server
-
-API endpoint: [POST] `{home_url}/wp-json/power-partner-server/site-sync`
-
-body form data:
-```
-"site_id": 123, // 必填，要複製的網站 ID
-"server_id": 456 // 選填，如果沒有指定，會從你的設定中隨機選擇一台 Server
-```
-
-將會複製 `site_id` 的網站複製在允許的 Server 其中一台(隨機)
