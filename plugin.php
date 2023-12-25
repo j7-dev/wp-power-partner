@@ -103,7 +103,7 @@ class Bootstrap
 
     public function siteSync(): void
     {
-        register_rest_route(self::KEBAB, "site-sync/(?P<id>\d+)", array(
+        register_rest_route(self::KEBAB, "site-sync", array(
             'methods'  => 'POST',
             'callback' => [ $this, 'siteSyncCallback' ],
         ));
@@ -111,26 +111,37 @@ class Bootstrap
 
     public function siteSyncCallback($request)
     {
+        $body_params        = $request->get_body_params() ?? [  ];
+        $id                 = $body_params[ 'site_id' ];
+        $assigned_server_id = $body_params[ 'server_id' ]; // 指定 server id
+
         $allowed_servers = $this->getAllowedServers();
-        // select a random server
-        $server_id = $allowed_servers[ array_rand($allowed_servers) ];
+        // 如果不指定 就 隨機
+        $server_id = empty($assigned_server_id) ? $allowed_servers[ array_rand($allowed_servers) ] : $assigned_server_id;
         if (empty($server_id)) {
             return rest_ensure_response([
                 'message' => 'No server is allowed to sync',
              ]);
         }
-        $id   = $request[ 'id' ];
         $args = [
             'site_sync_destination'          => $server_id,
             'sec_source_dest_check_override' => 1,
          ];
 
-        $instance = new \WPCD_WORDPRESS_TABS_SITE_SYNC();
-        $instance->do_site_sync_action($id, $args);
+        try {
+            $instance = new \WPCD_WORDPRESS_TABS_SITE_SYNC();
+            $instance->do_site_sync_action($id, $args);
 
-        return rest_ensure_response([
-            'message' => "Site {$id} sync to server {$server_id}",
-         ]);
+            return rest_ensure_response([
+                'message' => "Site {$id} sync to server {$server_id}",
+             ]);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return rest_ensure_response([
+                'message' => "Site {$id} or server {$server_id} invalid",
+             ]);
+        }
+
     }
 
 }

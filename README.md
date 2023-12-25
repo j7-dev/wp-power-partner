@@ -13,6 +13,12 @@
 
 ## 2. 提供 API 給接受外部呼叫來 sync site (即複製模板網站) 到指定 Server
 
-API endpoint: [POST] `{home_url}/power-partner-server/site-sync/{id}`
+API endpoint: [POST] `{home_url}/wp-json/power-partner-server/site-sync`
 
-將會複製 `site_id={id}` 的網站複製在允許的 Server 其中一台(隨機)
+body form data:
+```
+"site_id": 123, // 必填，要複製的網站 ID
+"server_id": 456 // 選填，如果沒有指定，會從你的設定中隨機選擇一台 Server
+```
+
+將會複製 `site_id` 的網站複製在允許的 Server 其中一台(隨機)
