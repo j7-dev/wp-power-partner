@@ -4,7 +4,7 @@
  * Plugin Name:       Power Partner Server | 一些WPCD的額外設定，讓 partner 都可以輕鬆地販售網站模板
  * Plugin URI:        https://cloud.luke.cafe/plugins/power-partner/
  * Description:       Power Partner Server版 是一個 WordPress 套件，安裝後，在 WPCD 選單會有額外的設定，可以指定讓 partner 們販售的網站要開在哪一台主機。
- * Version:           0.0.1
+ * Version:           0.0.2
  * Requires at least: 5.7
  * Requires PHP:      7.4
  * Author:            J7
