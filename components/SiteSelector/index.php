@@ -2,14 +2,11 @@
 declare (strict_types = 1);
 namespace J7\PowerPartner\Components;
 
-class SiteSelector
+use J7\PowerPartner\Utils;
+
+class SiteSelector extends Utils
 {
-    const API_URL            = 'https://cloud.luke.cafe';
-    const USER_NAME          = 'j7.dev.gg';
-    const PASSWORD           = 'YQLj xV2R js9p IWYB VWxp oL2E';
-    const TEMPLATE_SERVER_ID = 2202;
-    const CACHE_TIME         = 28800;
-    const TRANSIENT_KEY      = 'pp_cloud_sites';
+
     public static $instance;
 
     public static function getInstance()
@@ -92,16 +89,16 @@ class SiteSelector
 					<?php else:
             $linked_site_obj = reset($linked_site);
             ?>
-																			<div>目前連結的網站: <a href="https://<?=$linked_site_obj->domain;?>" target="_blank"><?=$linked_site_obj->name;?></a>  <span class="dashicons dashicons-wordpress"></span> <?=$linked_site_obj->wp_version;?></div>
-																		<?php endif;?>
+																							<div>目前連結的網站: <a href="https://<?=$linked_site_obj->domain;?>" target="_blank"><?=$linked_site_obj->name;?></a>  <span class="dashicons dashicons-wordpress"></span> <?=$linked_site_obj->wp_version;?></div>
+																						<?php endif;?>
 
 					<select name="linked_site" id="linked_site" style="margin-top: 1rem;">
 										<option value="">請選擇要連結的網站</option>
 										<?php foreach ($templateSites as $site):
             $selected = $site->id === (int) $defaultValue ? 'selected' : '';
             ?>
-																															<option value="<?php echo $site->id; ?>" <?=$selected?>><?php echo $site->name; ?></option>
-																														<?php endforeach;?>
+																																			<option value="<?php echo $site->id; ?>" <?=$selected?>><?php echo $site->name; ?></option>
+																																		<?php endforeach;?>
 					</select>
 
 				<?php

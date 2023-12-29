@@ -7,10 +7,8 @@ namespace J7\PowerPartner;
 2. List 顯示開站時間
  */
 
-class OrderView
+class OrderView extends Utils
 {
-
-    const ORDER_META_KEY = 'pp_create_site_responses';
     public function __construct()
     {
         \add_filter('manage_edit-shop_order_columns', [ $this, 'add_order_column' ]);
