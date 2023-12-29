@@ -9,14 +9,8 @@ class SiteSelector
     const PASSWORD           = 'YQLj xV2R js9p IWYB VWxp oL2E';
     const TEMPLATE_SERVER_ID = 2202;
     const CACHE_TIME         = 28800;
-
-    private $sites = [  ];
+    const TRANSIENT_KEY      = 'pp_cloud_sites';
     public static $instance;
-
-    public function __construct()
-    {
-        $this->fetchAllSites();
-    }
 
     public static function getInstance()
     {
@@ -43,23 +37,25 @@ class SiteSelector
                 $args
             );
 
-            error_log('⭐⭐ wp_remote_get: 執行了');
             if ((!\is_wp_error($response)) && (200 === \wp_remote_retrieve_response_code($response))) {
                 $responseBody = json_decode($response[ 'body' ]);
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    $this->sites = $responseBody;
+                    \set_transient(self::TRANSIENT_KEY, $responseBody, 12 * HOUR_IN_SECONDS);
                     return $responseBody;
                 }
             }
         } catch (\Exception $ex) {
-            //Handle Exception.
+            ob_start();
+            print_r($ex);
+            $error = ob_get_clean();
+            error_log('⭐⭐ wp_remote_get /wp-json/wpcd/v1/sites Error ' . $error);
             return [  ];
         }
     }
 
     public function getAllSites()
     {
-        $sites = $this->sites;
+        $sites = \get_transient(self::TRANSIENT_KEY);
         if (!empty($sites)) {
             return $sites;
         } else {
@@ -96,16 +92,16 @@ class SiteSelector
 					<?php else:
             $linked_site_obj = reset($linked_site);
             ?>
-													<div>目前連結的網站: <a href="https://<?=$linked_site_obj->domain;?>" target="_blank"><?=$linked_site_obj->name;?></a>  <span class="dashicons dashicons-wordpress"></span> <?=$linked_site_obj->wp_version;?></div>
-												<?php endif;?>
+																			<div>目前連結的網站: <a href="https://<?=$linked_site_obj->domain;?>" target="_blank"><?=$linked_site_obj->name;?></a>  <span class="dashicons dashicons-wordpress"></span> <?=$linked_site_obj->wp_version;?></div>
+																		<?php endif;?>
 
 					<select name="linked_site" id="linked_site" style="margin-top: 1rem;">
 										<option value="">請選擇要連結的網站</option>
 										<?php foreach ($templateSites as $site):
             $selected = $site->id === (int) $defaultValue ? 'selected' : '';
             ?>
-																									<option value="<?php echo $site->id; ?>" <?=$selected?>><?php echo $site->name; ?></option>
-																								<?php endforeach;?>
+																															<option value="<?php echo $site->id; ?>" <?=$selected?>><?php echo $site->name; ?></option>
+																														<?php endforeach;?>
 					</select>
 
 				<?php
