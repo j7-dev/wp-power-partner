@@ -3,6 +3,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import alias from "@rollup/plugin-alias";
 import path from "path";
 import liveReload from "vite-plugin-live-reload";
+import optimizer from "vite-plugin-optimizer";
 
 export default defineConfig({
   build: {
@@ -16,12 +17,19 @@ export default defineConfig({
     rollupOptions: {
       input: "js/src/main.ts", // Optional, defaults to 'src/main.js'.
       output: {
-        assetFileNames: "asset/[ext]/index.[ext]",
+        assetFileNames: "assets/[ext]/index.[ext]",
         entryFileNames: "index.js",
       },
     },
   },
-  plugins: [alias(), tsconfigPaths(), liveReload(__dirname + "/**/*.php")],
+  plugins: [
+    alias(),
+    tsconfigPaths(),
+    liveReload(__dirname + "/**/*.php"),
+    optimizer({
+      jquery: `const $ = window.jQuery; export { $ as default }`,
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "js/src"),
