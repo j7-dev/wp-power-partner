@@ -37,6 +37,7 @@ class Plugin
 		require_once __DIR__ . '/required_plugins/index.php';
 		require_once __DIR__ . '/vendor/autoload.php';
 		require_once __DIR__ . '/utils/index.php';
+		require_once __DIR__ . '/components/index.php';
 		require_once __DIR__ . '/class/index.php';
 
 		\register_activation_hook(__FILE__, [$this, 'activate']);
@@ -195,6 +196,9 @@ class Plugin
 
 	public function activate(): void
 	{
+		if (!get_term_by('slug', Bootstrap::PRODUCT_TYPE_SLUG, 'product_type')) {
+			\wp_insert_term(Bootstrap::PRODUCT_TYPE_SLUG, 'product_type');
+		}
 	}
 
 	public function deactivate(): void
