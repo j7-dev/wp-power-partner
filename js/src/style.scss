@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+// product-tab 的選單 icon
+#woocommerce-product-data ul.wc-tabs li.power_partner_options a::before {
+	content: "\f155";
+}
+// 商品屬性 > 選擇主機的內容
+.woocommerce_attribute.pa_host {
+	// 新增屬性的輸入框
+	.attributeValuesWrap,
+	// 建立值的按鈕
+	button.add_new_attribute {
+		display: none !important;
+	}
+}
