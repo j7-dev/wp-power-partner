@@ -25,7 +25,7 @@ export default defineConfig({
   plugins: [
     alias(),
     tsconfigPaths(),
-    liveReload(__dirname + "/**/*.php"),
+    liveReload([__dirname + "/**/*.php", __dirname + "/js/dist/**/*"]),
     optimizer({
       jquery: `const $ = window.jQuery; export { $ as default }`,
     }),
