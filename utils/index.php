@@ -9,6 +9,7 @@ class Utils
 	const APP_NAME       = 'Power Partner';
 	const KEBAB          = 'power-partner';
 	const SNAKE          = 'power_partner';
+	const TEXT_DOMAIN    = self::SNAKE;
 	const GITHUB_REPO         = 'https://github.com/j7-dev/wp-power-partner';
 	const GITHUB_PAT = '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';
 	const ORDER_META_KEY = 'pp_create_site_responses';
