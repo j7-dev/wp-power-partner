@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
@@ -10,35 +10,44 @@ namespace J7\PowerPartner;
 
 class SiteSync
 {
-	const API_URL = 'https://cloud.luke.cafe';
 
-	public static function fetch(int $site_id)
-	{
-		$args = [
-			'body'    => [
-				'site_id' => $site_id,
-			],
-			'headers' => [
-				'Content-Type' => 'multipart/form-data;',
-			],
-		];
-		$response = wp_remote_post(self::API_URL . '/wp-json/power-partner-server/site-sync', $args);
+    /**
+     * 發 API 開站
+     *
+     * @param array $props
+     * @param string $props['site_id']
+     * @param string $props['host_position']
+     *
+     * @return void
+     */
+    public static function fetch(array $props)
+    {
+        $args = [
+            'body'    => \wp_json_encode([
+                'site_id'       => $props[ 'site_id' ],
+                'host_position' => $props[ 'host_position' ],
+             ]),
+            'headers' => [
+                'Content-Type' => 'application/json',
+             ],
+         ];
+        $response = \wp_remote_post(Utils::API_URL . '/wp-json/power-partner-server/site-sync', $args);
 
-		try {
-			$responseObj = json_decode($response['body']);
-		} catch (\Throwable $th) {
-			//throw $th;
-			$responseObj = '';
-		}
-		if (empty($responseObj)) {
-			return 'json_decode($response[body]) Error';
-		}
-		return $responseObj;
-	}
+        try {
+            $responseObj = json_decode($response[ 'body' ]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            $responseObj = '';
+        }
+        if (empty($responseObj)) {
+            return 'json_decode($response[body]) Error';
+        }
+        return $responseObj;
+    }
 
-	public function has_enough_money(): bool
-	{
+    public function has_enough_money(): bool
+    {
 
-		return true;
-	}
+        return true;
+    }
 }

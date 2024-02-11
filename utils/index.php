@@ -14,13 +14,13 @@ class Utils
 	const GITHUB_PAT = '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';
 	const ORDER_META_KEY = 'pp_create_site_responses';
 
-	protected const API_URL   = WP_DEBUG ? 'http://luke.local' : 'https://cloud.luke.cafe';
-	protected const USER_NAME = 'j7.dev.gg';
-	protected const PASSWORD  = WP_DEBUG ? 'Hzn3 l5V8 FeRF qcBX EAmX A6w0' : 'YQLj xV2R js9p IWYB VWxp oL2E';
+	const API_URL   = WP_DEBUG ? 'http://luke.local' : 'https://cloud.luke.cafe';
+	const USER_NAME = 'j7.dev.gg';
+	const PASSWORD  = WP_DEBUG ? 'Hzn3 l5V8 FeRF qcBX EAmX A6w0' : 'YQLj xV2R js9p IWYB VWxp oL2E';
 
-	protected const TEMPLATE_SERVER_IDS = WP_DEBUG ? [2202] : [544413];
-	protected const TRANSIENT_KEY      = 'pp_cloud_sites' . WP_DEBUG ? '_local' : '';
-	protected const CACHE_TIME      =  12 * HOUR_IN_SECONDS;
+	const TEMPLATE_SERVER_IDS = WP_DEBUG ? [2202] : [544413];
+	const TRANSIENT_KEY      = 'pp_cloud_sites' . WP_DEBUG ? '_local' : '';
+	const CACHE_TIME      =  12 * HOUR_IN_SECONDS;
 
 
 

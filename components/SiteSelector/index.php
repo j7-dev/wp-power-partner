@@ -6,7 +6,7 @@ namespace J7\PowerPartner\Components;
 
 use J7\PowerPartner\Utils;
 
-class SiteSelector extends Utils
+class SiteSelector
 {
 
 	public static $instance;
@@ -26,26 +26,25 @@ class SiteSelector extends Utils
 		$args = [
 			'headers' => [
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode(self::USER_NAME . ':' . self::PASSWORD),
+				'Authorization' => 'Basic ' . \base64_encode(Utils::USER_NAME . ':' . Utils::PASSWORD),
 			],
 		];
 
 		try {
 			$response = \wp_remote_get(
-				\esc_url_raw(self::API_URL . '/wp-json/wpcd/v1/sites'),
+				\esc_url_raw(Utils::API_URL . '/wp-json/wpcd/v1/sites'),
 				$args
 			);
 
 			if ((!\is_wp_error($response)) && (200 === \wp_remote_retrieve_response_code($response))) {
 				$responseBody = json_decode($response['body']);
 				if (json_last_error() === JSON_ERROR_NONE) {
-					\set_transient(self::TRANSIENT_KEY, $responseBody, self::CACHE_TIME);
+					\set_transient(Utils::TRANSIENT_KEY, $responseBody, Utils::CACHE_TIME);
 					return $responseBody;
 				}
 			} else {
-				$responseBody = json_decode($response['body']);
 				ob_start();
-				print_r($responseBody);
+				print_r($response);
 				\J7\WpToolkit\Utils::debug_log('wp_remote_get [cloud]/wp-json/wpcd/v1/sites Error ' . ob_get_clean());
 				return [];
 			}
@@ -59,7 +58,7 @@ class SiteSelector extends Utils
 
 	public function getAllSites()
 	{
-		$sites = \get_transient(self::TRANSIENT_KEY);
+		$sites = \get_transient(Utils::TRANSIENT_KEY);
 		if (!empty($sites)) {
 			return $sites;
 		} else {
@@ -71,7 +70,7 @@ class SiteSelector extends Utils
 	{
 		$sites         = $this->getAllSites();
 		$templateSites = array_filter($sites, function ($site) {
-			return in_array($site->server_id, self::TEMPLATE_SERVER_IDS);
+			return in_array($site->server_id, Utils::TEMPLATE_SERVER_IDS);
 		});
 
 		return $templateSites;

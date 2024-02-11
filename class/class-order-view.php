@@ -10,7 +10,7 @@ namespace J7\PowerPartner;
 2. List 顯示開站時間
  */
 
-class OrderView extends Utils
+class OrderView
 {
 	public function __construct()
 	{
@@ -21,7 +21,7 @@ class OrderView extends Utils
 
 	public function add_order_column(array $columns): array
 	{
-		$columns[self::ORDER_META_KEY] = '開站狀態';
+		$columns[Utils::ORDER_META_KEY] = '開站狀態';
 		return $columns;
 	}
 
@@ -29,10 +29,10 @@ class OrderView extends Utils
 	{
 		global $post;
 
-		if (self::ORDER_META_KEY === $column) {
+		if (Utils::ORDER_META_KEY === $column) {
 			$order_id         = $post->ID;
 			$order            = \wc_get_order($order_id);
-			$responses_string = $order->get_meta(self::ORDER_META_KEY);
+			$responses_string = $order->get_meta(Utils::ORDER_META_KEY);
 
 			try {
 				$responses = json_decode($responses_string) ?? [];
@@ -51,7 +51,7 @@ class OrderView extends Utils
 
 	public function add_metabox(): void
 	{
-		\add_meta_box(self::ORDER_META_KEY . '_metabox', '此訂單的開站狀態', [$this, self::ORDER_META_KEY . '_callback'], 'shop_order', 'side', 'high');
+		\add_meta_box(Utils::ORDER_META_KEY . '_metabox', '此訂單的開站狀態', [$this, Utils::ORDER_META_KEY . '_callback'], 'shop_order', 'side', 'high');
 	}
 
 	public function pp_create_site_responses_callback(): void
@@ -59,7 +59,7 @@ class OrderView extends Utils
 		global $post;
 		$order_id         = $post->ID;
 		$order            = \wc_get_order($order_id);
-		$responses_string = $order->get_meta(self::ORDER_META_KEY);
+		$responses_string = $order->get_meta(Utils::ORDER_META_KEY);
 		try {
 			$responses = json_decode($responses_string) ?? [];
 		} catch (\Throwable $th) {
