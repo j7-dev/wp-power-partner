@@ -1716,9 +1716,10 @@ if (!empty($this->message) && is_string($this->message)) {
         {
             if (!empty($this->plugins[ $slug ][ 'external_url' ]) && preg_match(self::IS_URL_REGEX, $this->plugins[ $slug ][ 'external_url' ])) {
                 $link = sprintf(
-                    '<a href="%1$s" target="_blank">%2$s</a>',
+                    '<a href="%1$s" target="_blank">%2$s</a> %3$s',
                     esc_url($this->plugins[ $slug ][ 'external_url' ]),
-                    esc_html($this->plugins[ $slug ][ 'name' ])
+                    esc_html($this->plugins[ $slug ][ 'name' ]),
+                    esc_html($this->plugins[ $slug ][ 'version' ] ?? '')
                 );
             } elseif ('repo' === $this->plugins[ $slug ][ 'source_type' ]) {
                 $url = add_query_arg(
@@ -1733,12 +1734,14 @@ if (!empty($this->message) && is_string($this->message)) {
                 );
 
                 $link = sprintf(
-                    '<a href="%1$s" class="thickbox">%2$s</a>',
+                    '<a href="%1$s" class="thickbox">%2$s</a> %3$s',
                     esc_url($url),
-                    esc_html($this->plugins[ $slug ][ 'name' ])
+                    esc_html($this->plugins[ $slug ][ 'name' ]),
+                    esc_html($this->plugins[ $slug ][ 'version' ] ?? '')
                 );
             } else {
-                $link = esc_html($this->plugins[ $slug ][ 'name' ]); // No hyperlink.
+                $link = esc_html($this->plugins[ $slug ][ 'name' ]);
+                $link .= ' ' . esc_html($this->plugins[ $slug ][ 'version' ] ?? '');
             }
 
             return $link;
@@ -1848,7 +1851,7 @@ if (!empty($this->message) && is_string($this->message)) {
         {
             $complete = true;
             foreach ($this->plugins as $slug => $plugin) {
-                if (!$this->is_plugin_active($slug)) {
+                if (!$this->is_plugin_active($slug) || $this->does_plugin_require_update($slug)) {
                     $complete = false;
                     break;
                 }
@@ -1956,7 +1959,7 @@ if (!empty($this->message) && is_string($this->message)) {
         {
             $installed_plugins = $this->get_plugins(); // Retrieve a list of all installed plugins (WP cached).
 
-            if (!empty($installed_plugins[ $this->plugins[ $slug ][ 'file_path' ] ][ 'Version' ])) {
+            if (!empty($installed_plugins[ $this->plugins[ $slug ][ 'file_path' ] ?? '' ][ 'Version' ] ?? '')) {
                 return $installed_plugins[ $this->plugins[ $slug ][ 'file_path' ] ][ 'Version' ];
             }
 
@@ -2172,7 +2175,7 @@ if (!empty($this->message) && is_string($this->message)) {
     if (did_action('plugins_loaded')) {
         load_tgm_plugin_activation();
     } else {
-        add_action('plugins_loaded', 'load_tgm_plugin_activation');
+        add_action('plugins_loaded', __NAMESPACE__ . '\load_tgm_plugin_activation');
     }
 }
 
@@ -3234,7 +3237,7 @@ if (!class_exists(__NAMESPACE__ . 'TGM_Bulk_Installer_Skin')) {
  *
  * @since 2.2.0
  */
-add_action('admin_init', 'tgmpa_load_bulk_installer');
+add_action('admin_init', __NAMESPACE__ . '\tgmpa_load_bulk_installer');
 if (!function_exists(__NAMESPACE__ . '\tgmpa_load_bulk_installer')) {
     /**
      * Load bulk installer
