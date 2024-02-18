@@ -29,13 +29,7 @@ class Plugin
 {
     private static $instance;
 
-    public $plugins = [
-        [
-            'name'     => 'GamiPress',
-            'slug'     => 'gamipress',
-            'required' => true,
-            'version'  => '16.7.0',
-         ],
+    public $required_plugins = [
         [
             'name'     => 'WooCommerce',
             'slug'     => 'woocommerce',
@@ -47,7 +41,7 @@ class Plugin
             'slug'     => 'wp-toolkit',
             'source'   => 'https://github.com/j7-dev/wp-toolkit/releases/latest/download/wp-toolkit.zip',
             'required' => true,
-            'version'  => '0.3.0',
+            'version'  => '0.3.1',
          ],
      ];
 
@@ -186,7 +180,7 @@ class Plugin
                 'nag_type'                        => 'error', // Determines admin notice type - can only be one of the typical WP notice classes, such as 'updated', 'update-nag', 'notice-warning', 'notice-info' or 'error'. Some of which may not work as expected in older WP versions.
             ),
         );
-        call_user_func(__NAMESPACE__ . '\tgmpa', $this->plugins, $config);
+        call_user_func(__NAMESPACE__ . '\tgmpa', $this->required_plugins, $config);
     }
 
     public function activate(): void

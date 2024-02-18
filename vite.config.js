@@ -5,6 +5,7 @@ import path from "path";
 import liveReload from "vite-plugin-live-reload";
 import optimizer from "vite-plugin-optimizer";
 
+console.log("__dirname ".__dirname);
 export default defineConfig({
   build: {
     emptyOutDir: true,
@@ -15,7 +16,7 @@ export default defineConfig({
       exclude: "node_modules/**, .git/**, dist/**, .vscode/**",
     },
     rollupOptions: {
-      input: "js/src/main.ts", // Optional, defaults to 'src/main.js'.
+      input: "js/src/main.tsx", // Optional, defaults to 'src/main.js'.
       output: {
         assetFileNames: "assets/[ext]/index.[ext]",
         entryFileNames: "index.js",
