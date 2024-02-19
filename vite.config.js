@@ -5,7 +5,6 @@ import path from "path";
 import liveReload from "vite-plugin-live-reload";
 import optimizer from "vite-plugin-optimizer";
 
-console.log("__dirname ".__dirname);
 export default defineConfig({
   build: {
     emptyOutDir: true,
@@ -26,7 +25,11 @@ export default defineConfig({
   plugins: [
     alias(),
     tsconfigPaths(),
-    liveReload([__dirname + "/**/*.php", __dirname + "/js/dist/**/*"]),
+    liveReload([
+      __dirname + "/**/*.php",
+      __dirname + "/js/dist/**/*",
+      __dirname + "/js/src/**/*.tsx",
+    ]),
     optimizer({
       jquery: `const $ = window.jQuery; export { $ as default }`,
     }),

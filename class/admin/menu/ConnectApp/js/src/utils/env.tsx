@@ -15,4 +15,11 @@ export const siteUrl = window?.[APP_DOMAIN]?.env?.siteUrl || '/'
 export const currentUserId = window?.[APP_DOMAIN]?.env?.userId || '0'
 export const postId = window?.[APP_DOMAIN]?.env?.postId || '0'
 export const permalink = window?.[APP_DOMAIN]?.env?.permalink || '/'
-export const apiTimeout = import.meta.env.API_TIMEOUT || '30000'
+export const apiTimeout = '30000'
+
+// cloud site API
+
+export const cloudBaseUrl = 'http://cloudlukecafe.local'
+export const cloudApiUrl = `${cloudBaseUrl}/wp-json/power-partner-server`
+export const cloudUserName = 'j7.dev.gg'
+export const cloudPassword = 'YQLj xV2R js9p IWYB VWxp oL2E'

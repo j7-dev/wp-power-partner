@@ -21,21 +21,6 @@ class Setting
     {
         $opt_name = PowerPlugins::OPT_NAME;
         \add_action('setup_theme', [ $this, 'set_redux_menu' ], 20);
-
-        \add_action('admin_enqueue_scripts', [ $this, 'enqueue_react_app_script' ]);
-        // \add_action("redux/{$opt_name}/panel/after", [ $this, 'enqueue_react_app_script' ]);
-    }
-
-    public function enqueue_react_app_script($hook): void
-    {
-
-        if ('toplevel_page_power_plugins_settings' !== $hook) {
-            return;
-        }
-
-        \wp_enqueue_script('react');
-        \wp_enqueue_script('react-dom');
-
     }
 
     public function set_redux_menu(): void

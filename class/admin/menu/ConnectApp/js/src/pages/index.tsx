@@ -1,67 +1,24 @@
-import { useState } from 'react'
-import reactLogo from '../assets/images/react.svg'
-import viteLogo from '../assets/images/vite.svg'
-import wpLogo from '../assets/images/wp.png'
-import GetRestPostsPage from './GetRestPosts'
+import Login from '@/pages/Login'
+import Dashboard from '@/pages/Dashboard'
+
+import { useGetUsermetaIdentity } from '@/pages/hooks'
+
+import { Spin } from 'antd'
 
 function DefaultPage() {
-  const [
-    count,
-    setCount,
-  ] = useState(0)
-  const [
-    showRestPosts,
-    setShowRestPosts,
-  ] = useState(false)
+  const { data, isLoading } = useGetUsermetaIdentity()
 
-  return (
-    <div className="App py-20">
-      <div className="flex justify-center">
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer noopener">
-          <img src={viteLogo} className="logo  h-12 w-12" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank" rel="noreferrer noopener">
-          <img
-            src={reactLogo}
-            className="logo react  h-12 w-12"
-            alt="React logo"
-          />
-        </a>
-        <a
-          href="https://wordpress.org"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          <img
-            src={wpLogo}
-            className="logo wp  h-12 w-12"
-            alt="WordPress logo"
-          />
-        </a>
-      </div>
-      <h1>Vite + React + WordPress</h1>
-      <div className="flex justify-center mb-8">
-        <button
-          type="button"
-          onClick={() => setCount((theCount) => theCount + 1)}
-        >
-          Count is {count}
-        </button>
+  const accountInfo = data?.data?.data
 
-        <button type="button" onClick={() => setShowRestPosts(!showRestPosts)}>
-          Get Posts Example by REST API
-        </button>
-      </div>
-      <p>
-        Edit <code>src/App.tsx</code> and save to test HMR
-      </p>
-      <p className="read-the-docs">
-        Click on the Vite, React and WordPress logos to learn more
-      </p>
+  if (isLoading) {
+    return <Spin tip="Loading..." size="large" />
+  }
 
-      {showRestPosts && <GetRestPostsPage />}
-    </div>
-  )
+  if (!accountInfo) {
+    return <Login />
+  }
+
+  return <Dashboard />
 }
 
 export default DefaultPage
