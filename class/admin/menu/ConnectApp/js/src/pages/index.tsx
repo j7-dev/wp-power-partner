@@ -6,6 +6,10 @@ import { useGetUsermetaIdentity } from '@/pages/hooks'
 import { Spin } from 'antd'
 
 function DefaultPage() {
+  // TODO 要拿掉
+
+  return <Dashboard />
+
   const { data, isLoading } = useGetUsermetaIdentity()
 
   const accountInfo = data?.data?.data
