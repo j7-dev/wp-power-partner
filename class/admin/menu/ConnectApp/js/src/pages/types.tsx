@@ -7,6 +7,11 @@ export type TIdentityData = {
   user_id: number
   power_money_amount: string
   email: string
+  partner_lv?: {
+    key: string
+    title: string
+    discount: string
+  }
 } | null
 
 export type TIdentity = {

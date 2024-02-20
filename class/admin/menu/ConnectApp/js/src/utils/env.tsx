@@ -19,7 +19,7 @@ export const apiTimeout = '30000'
 
 // cloud site API
 
-export const cloudBaseUrl = 'http://cloudlukecafe.local'
+export const cloudBaseUrl = 'http://cloudlukecafe.local' // https://cloud.luke.cafe
 export const cloudApiUrl = `${cloudBaseUrl}/wp-json/power-partner-server`
 export const cloudUserName = 'j7.dev.gg'
 export const cloudPassword = 'YQLj xV2R js9p IWYB VWxp oL2E'
