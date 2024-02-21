@@ -25,7 +25,7 @@ const index: React.FC = () => {
     <Tabs
       type="card"
       tabBarExtraContent={<AccountIcon />}
-      defaultActiveKey="logList"
+      defaultActiveKey="siteList"
       items={items}
     />
   )

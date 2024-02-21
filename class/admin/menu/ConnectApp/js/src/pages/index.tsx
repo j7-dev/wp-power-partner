@@ -6,20 +6,30 @@ import { useGetUsermetaIdentity } from '@/pages/hooks'
 import { Spin } from 'antd'
 
 function DefaultPage() {
-  // TODO 要拿掉
-
-  return <Dashboard />
+  return (
+    <div className="w-full min-h-[24rem] grid place-items-center">
+      <Login />
+    </div>
+  )
 
   const { data, isLoading } = useGetUsermetaIdentity()
 
   const accountInfo = data?.data?.data
 
   if (isLoading) {
-    return <Spin tip="Loading..." size="large" />
+    return (
+      <div className="w-full min-h-[24rem] grid place-items-center">
+        <Spin tip="Loading..." size="large" />
+      </div>
+    )
   }
 
   if (!accountInfo) {
-    return <Login />
+    return (
+      <div className="w-full min-h-[24rem] grid place-items-center">
+        <Login />
+      </div>
+    )
   }
 
   return <Dashboard />

@@ -51,13 +51,8 @@ const index = () => {
   }
 
   return (
-    <div className="mx-auto">
-      <Form
-        style={{ maxWidth: 400 }}
-        onFinish={onFinish}
-        autoComplete="off"
-        layout="vertical"
-      >
+    <div className="w-full max-w-[20rem]">
+      <Form onFinish={onFinish} autoComplete="off" layout="vertical">
         <Form.Item<TAccountInfo>
           label="E-mail"
           name="email"
