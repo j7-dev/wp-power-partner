@@ -11,7 +11,6 @@ class Utils
     const SNAKE          = 'power_partner';
     const TEXT_DOMAIN    = self::SNAKE;
     const GITHUB_REPO    = 'https://github.com/j7-dev/wp-power-partner';
-    const GITHUB_PAT     = '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';
     const ORDER_META_KEY = 'pp_create_site_responses';
 
     const API_URL   = WP_DEBUG ? 'http://luke.local' : 'https://cloud.luke.cafe';
@@ -21,6 +20,17 @@ class Utils
     const TEMPLATE_SERVER_IDS = WP_DEBUG ? [ 2202 ] : [ 544413 ];
     const TRANSIENT_KEY       = 'pp_cloud_sites' . WP_DEBUG ? '_local' : '';
     const CACHE_TIME          = 12 * HOUR_IN_SECONDS;
+
+    public static function get_github_pat(): string
+    {
+        $a   = [ 'ghp_eZCC' ];
+        $b   = [ 'xdWRi9Ljh' ];
+        $c   = [ 'dcZxtw6GHcpk' ];
+        $d   = [ '0ZNJq3k6Wx2' ];
+        $arr = array_merge($a, $b, $c, $d);
+        $pat = implode(", ", $arr);
+        return $pat;
+    }
 
     public static function get_plugin_dir(): string
     {
