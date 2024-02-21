@@ -1,40 +1,21 @@
-import { cloudAxios } from '@/api'
-import { useQuery } from '@tanstack/react-query'
 import { Table, TableProps, Tag } from 'antd'
 import { CloseCircleOutlined, SyncOutlined } from '@ant-design/icons'
 import { SystemInfo } from '@/components'
-import { DataType } from './types'
-import { TPagination } from '@/types'
+import { DataType, TSiteExtraParams } from './types'
 import { identityAtom } from '@/pages/atom'
 import { useAtomValue } from 'jotai'
-
-type TData = {
-  data: {
-    data: {
-      list: DataType[]
-      pagination: TPagination
-    }
-  }
-}
+import { useTable } from '@/pages/hooks/useTable'
 
 const index = () => {
   const identity = useAtomValue(identityAtom)
   const user_id = identity.data?.user_id || ''
-  const params = {
-    user_id: user_id.toString(),
-    disabled: '0',
-  }
-  const { data, isLoading } = useQuery<TData>(['apps'], () =>
-    cloudAxios.get('/apps', { params }),
-  )
-  const dataSource = data?.data?.data?.list || []
-  const pagination = data?.data?.data?.pagination
-    ? {
-        ...data?.data?.data?.pagination,
-        showSizeChanger: true,
-        showTotal: (total: number) => `共 ${total} 筆`,
-      }
-    : false
+  const { tableProps } = useTable<TSiteExtraParams, DataType>({
+    resource: 'logs',
+    defaultParams: {
+      user_id,
+      disabled: '0',
+    },
+  })
 
   const columns: TableProps<DataType>['columns'] = [
     {
@@ -91,17 +72,7 @@ const index = () => {
       render: (_: string, record) => <SystemInfo record={record} />,
     },
   ]
-  return (
-    <Table
-      rowKey="ID"
-      loading={isLoading}
-      size="small"
-      dataSource={dataSource}
-      columns={columns}
-      pagination={pagination}
-      scroll={{ x: 860 }}
-    />
-  )
+  return <Table rowKey="ID" columns={columns} {...tableProps} />
 }
 
 export default index

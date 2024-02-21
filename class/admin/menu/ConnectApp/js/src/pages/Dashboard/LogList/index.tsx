@@ -1,10 +1,7 @@
-import { cloudAxios } from '@/api'
-import { useQuery } from '@tanstack/react-query'
 import { Table, TableProps, Tag, Typography } from 'antd'
-import { DataType, TData, TLogParams } from './types'
+import { DataType, TLogParams } from './types'
 import { identityAtom } from '@/pages/atom'
 import { useAtomValue } from 'jotai'
-import { useState } from 'react'
 import { useTable } from '@/pages/hooks/useTable'
 
 const { Paragraph } = Typography
@@ -25,11 +22,12 @@ const LogTypeTag: React.FC<{ record: DataType }> = ({ record }) => {
 
 const index = () => {
   const identity = useAtomValue(identityAtom)
-
   const user_id = identity.data?.user_id || ''
-
-  const { tableProps } = useTable<TLogParams, DataType>('logs', {
-    user_id,
+  const { tableProps } = useTable<TLogParams, DataType>({
+    resource: 'logs',
+    defaultParams: {
+      user_id,
+    },
   })
 
   const columns: TableProps<DataType>['columns'] = [

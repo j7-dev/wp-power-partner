@@ -9,7 +9,13 @@ import { TableProps } from 'antd'
  * K - table record 的資料型別
  */
 
-export const useTable = <T, K>(endpoint: string, defaultParams: T) => {
+export const useTable = <T, K>({
+  resource,
+  defaultParams,
+}: {
+  resource: string
+  defaultParams: T
+}) => {
   type TData = {
     data: {
       data: {
@@ -23,8 +29,8 @@ export const useTable = <T, K>(endpoint: string, defaultParams: T) => {
     ...defaultParams,
   } as T & TParamsBase)
 
-  const result = useQuery<TData>([`${endpoint}`, JSON.stringify(params)], () =>
-    cloudAxios.get(`/${endpoint}`, { params }),
+  const result = useQuery<TData>([`${resource}`, JSON.stringify(params)], () =>
+    cloudAxios.get(`/${resource}`, { params }),
   )
 
   const handlePaginationChange = (page: number, pageSize: number) => {
