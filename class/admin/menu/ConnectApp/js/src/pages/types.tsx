@@ -4,7 +4,7 @@ export type TAccountInfo = {
 }
 
 export type TIdentityData = {
-  user_id: number
+  user_id: string
   power_money_amount: string
   email: string
   partner_lv?: {

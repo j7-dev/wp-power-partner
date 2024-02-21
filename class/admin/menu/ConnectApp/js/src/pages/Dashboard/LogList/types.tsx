@@ -21,6 +21,12 @@ export type TData = {
   }
 }
 
+export type TLogExtraParams = {
+  user_id?: string
+  modified_by?: string
+  type?: 'cron' | 'modify' | 'purchase'
+}
+
 export type TLogParams = TParamsBase & {
   user_id?: string
   modified_by?: string

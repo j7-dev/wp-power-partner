@@ -5,6 +5,7 @@ import { DataType, TData, TLogParams } from './types'
 import { identityAtom } from '@/pages/atom'
 import { useAtomValue } from 'jotai'
 import { useState } from 'react'
+import { useTable } from '@/pages/hooks/useTable'
 
 const { Paragraph } = Typography
 
@@ -27,40 +28,9 @@ const index = () => {
 
   const user_id = identity.data?.user_id || ''
 
-  const [params, setParams] = useState<TLogParams>({
-    user_id: user_id.toString(),
+  const { tableProps } = useTable<TLogParams, DataType>('logs', {
+    user_id,
   })
-  const { data, isLoading } = useQuery<TData>(
-    ['logs', JSON.stringify(params)],
-    () => cloudAxios.get('/logs', { params }),
-  )
-
-  const dataSource = data?.data?.data?.list || []
-
-  const handlePaginationChange = (page: number, pageSize: number) => {
-    const offset = (page - 1) * (pageSize || 10)
-    setParams({
-      ...params,
-      offset,
-      numberposts: pageSize,
-    })
-  }
-
-  const pagination = data?.data?.data?.pagination
-    ? {
-        ...data?.data?.data?.pagination,
-        showSizeChanger: true,
-        showTotal: (total: number) => `共 ${total} 筆`,
-        onChange: handlePaginationChange,
-        pageSizeOptions: [
-          '2',
-          '10',
-          '20',
-          '50',
-          '100',
-        ],
-      }
-    : false
 
   const columns: TableProps<DataType>['columns'] = [
     {
@@ -104,17 +74,7 @@ const index = () => {
       ),
     },
   ]
-  return (
-    <Table
-      rowKey="id"
-      loading={isLoading}
-      size="small"
-      dataSource={dataSource}
-      columns={columns}
-      pagination={pagination}
-      scroll={{ x: 860 }}
-    />
-  )
+  return <Table rowKey="id" {...tableProps} columns={columns} />
 }
 
 export default index
