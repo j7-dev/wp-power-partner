@@ -2,15 +2,18 @@ import { Table, TableProps, Tag } from 'antd'
 import { CloseCircleOutlined, SyncOutlined } from '@ant-design/icons'
 import { SystemInfo } from '@/components'
 import { DataType, TSiteExtraParams } from './types'
-import { identityAtom } from '@/pages/atom'
-import { useAtomValue } from 'jotai'
+import { identityAtom, globalLoadingAtom } from '@/pages/atom'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { useTable } from '@/pages/hooks/useTable'
+import { useEffect } from 'react'
 
 const index = () => {
   const identity = useAtomValue(identityAtom)
+  const setGlobalLoading = useSetAtom(globalLoadingAtom)
+
   const user_id = identity.data?.user_id || ''
 
-  const { tableProps } = useTable<TSiteExtraParams, DataType>({
+  const { tableProps, result } = useTable<TSiteExtraParams, DataType>({
     resource: 'apps',
     defaultParams: {
       user_id,
@@ -19,6 +22,15 @@ const index = () => {
       enabled: !!user_id,
     },
   })
+
+  useEffect(() => {
+    if (!result?.isFetching) {
+      setGlobalLoading({
+        isLoading: false,
+        label: '',
+      })
+    }
+  }, [result?.isFetching])
 
   const columns: TableProps<DataType>['columns'] = [
     {

@@ -36,12 +36,14 @@ export const useGetUserIdentity = () => {
         })
       }
     },
-    onSettled: () => {
-      setGlobalLoading({
-        isLoading: false,
-        label: '',
-      })
-    },
+
+    // onSettled: () => {
+    //   setGlobalLoading({
+    //     isLoading: false,
+    //     label: '',
+    //   })
+    // },
+
     staleTime: 1000 * 60 * 60 * 24,
     cacheTime: 1000 * 60 * 60 * 24,
   } as any)
