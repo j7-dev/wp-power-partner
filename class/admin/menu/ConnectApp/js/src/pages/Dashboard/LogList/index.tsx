@@ -1,19 +1,10 @@
 import { cloudAxios } from '@/api'
 import { useQuery } from '@tanstack/react-query'
 import { Table, TableProps, Tag, Typography } from 'antd'
-import { DataType } from './types'
-import { TPagination } from '@/types'
+import { DataType, TData, TLogParams } from './types'
 import { identityAtom } from '@/pages/atom'
 import { useAtomValue } from 'jotai'
-
-type TData = {
-  data: {
-    data: {
-      list: DataType[]
-      pagination: TPagination
-    }
-  }
-}
+import { useState } from 'react'
 
 const { Paragraph } = Typography
 
@@ -33,19 +24,41 @@ const LogTypeTag: React.FC<{ record: DataType }> = ({ record }) => {
 
 const index = () => {
   const identity = useAtomValue(identityAtom)
+
   const user_id = identity.data?.user_id || ''
-  const params = {
+
+  const [params, setParams] = useState<TLogParams>({
     user_id: user_id.toString(),
-  }
-  const { data, isLoading } = useQuery<TData>(['logs'], () =>
-    cloudAxios.get('/logs', { params }),
+  })
+  const { data, isLoading } = useQuery<TData>(
+    ['logs', JSON.stringify(params)],
+    () => cloudAxios.get('/logs', { params }),
   )
+
   const dataSource = data?.data?.data?.list || []
+
+  const handlePaginationChange = (page: number, pageSize: number) => {
+    const offset = (page - 1) * (pageSize || 10)
+    setParams({
+      ...params,
+      offset,
+      numberposts: pageSize,
+    })
+  }
+
   const pagination = data?.data?.data?.pagination
     ? {
         ...data?.data?.data?.pagination,
         showSizeChanger: true,
         showTotal: (total: number) => `共 ${total} 筆`,
+        onChange: handlePaginationChange,
+        pageSizeOptions: [
+          '2',
+          '10',
+          '20',
+          '50',
+          '100',
+        ],
       }
     : false
 

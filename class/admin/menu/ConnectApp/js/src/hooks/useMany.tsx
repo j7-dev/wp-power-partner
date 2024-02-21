@@ -1,6 +1,7 @@
 import { getResources } from '@/api'
 import { useQuery } from '@tanstack/react-query'
-import { TPostsArgs, TDataProvider } from '@/types'
+import { TDataProvider } from '@/types'
+import { TPostsArgs } from '@/types/wpRestApi'
 import { AxiosRequestConfig } from 'axios'
 
 export const useMany = (options: {
