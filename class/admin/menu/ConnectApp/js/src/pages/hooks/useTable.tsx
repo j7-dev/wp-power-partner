@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useLayoutEffect } from 'react'
 import { TParamsBase, TPagination } from '@/types'
-import { useQuery } from '@tanstack/react-query'
+import { UseQueryOptions, useQuery } from '@tanstack/react-query'
 import { cloudAxios } from '@/api'
 import { TableProps } from 'antd'
 
@@ -12,9 +12,11 @@ import { TableProps } from 'antd'
 export const useTable = <T, K>({
   resource,
   defaultParams,
+  queryOptions,
 }: {
   resource: string
   defaultParams: T
+  queryOptions?: UseQueryOptions
 }) => {
   type TData = {
     data: {
@@ -29,9 +31,15 @@ export const useTable = <T, K>({
     ...defaultParams,
   } as T & TParamsBase)
 
-  const result = useQuery<TData>([`${resource}`, JSON.stringify(params)], () =>
-    cloudAxios.get(`/${resource}`, { params }),
-  )
+  useLayoutEffect(() => {
+    setParams({ ...defaultParams } as T & TParamsBase)
+  }, [JSON.stringify(defaultParams)])
+
+  const result = useQuery<T & TParamsBase, any, TData, any>({
+    queryKey: [`${resource}`, JSON.stringify(params)] as any,
+    queryFn: () => cloudAxios.get(`/${resource}`, { params }),
+    ...queryOptions,
+  })
 
   const handlePaginationChange = (page: number, pageSize: number) => {
     const offset = (page - 1) * (pageSize || 10)
@@ -49,7 +57,6 @@ export const useTable = <T, K>({
         showTotal: (total: number) => `共 ${total} 筆`,
         onChange: handlePaginationChange,
         pageSizeOptions: [
-          '2',
           '10',
           '20',
           '50',
@@ -61,7 +68,7 @@ export const useTable = <T, K>({
   const dataSource = result?.data?.data?.data?.list || []
 
   const tableProps: TableProps<K> = {
-    loading: result?.isLoading,
+    loading: result?.isFetching,
     size: 'small',
     dataSource,
     pagination,

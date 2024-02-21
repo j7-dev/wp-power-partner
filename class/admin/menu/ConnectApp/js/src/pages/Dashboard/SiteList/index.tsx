@@ -9,11 +9,14 @@ import { useTable } from '@/pages/hooks/useTable'
 const index = () => {
   const identity = useAtomValue(identityAtom)
   const user_id = identity.data?.user_id || ''
+
   const { tableProps } = useTable<TSiteExtraParams, DataType>({
     resource: 'apps',
     defaultParams: {
       user_id,
-      disabled: '0',
+    },
+    queryOptions: {
+      enabled: !!user_id,
     },
   })
 

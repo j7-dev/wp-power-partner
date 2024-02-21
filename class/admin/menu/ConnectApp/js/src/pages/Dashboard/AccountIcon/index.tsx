@@ -1,6 +1,6 @@
 import { Avatar, Dropdown, MenuProps, Tooltip } from 'antd'
-import { identityAtom } from '@/pages/atom'
-import { useAtomValue } from 'jotai'
+import { identityAtom, globalLoadingAtom, defaultIdentity } from '@/pages/atom'
+import { useAtomValue, useAtom } from 'jotai'
 import {
   UserOutlined,
   PoweroffOutlined,
@@ -8,34 +8,21 @@ import {
   PayCircleFilled,
   CrownFilled,
 } from '@ant-design/icons'
-import { useUpdate } from '@/hooks'
-import { currentUserId, snake } from '@/utils'
-import { useQueryClient } from '@tanstack/react-query'
+import { LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
+import { LoadingText } from '@/components'
 
 const index = () => {
-  const queryClient = useQueryClient()
-  const identity = useAtomValue(identityAtom)
+  const [identity, setIdentity] = useAtom(identityAtom)
   const powerMoney = identity.data?.power_money_amount || '0.00'
   const email = identity.data?.email
   const user_id = identity.data?.user_id || ''
   const partnerLvTitle = identity.data?.partner_lv?.title || ''
   const partnerLvKey = identity.data?.partner_lv?.key || '0'
-
-  const { mutate: updateUser, isLoading: updateUserIsLoading } = useUpdate({
-    resource: `users/${currentUserId}`,
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['get-user-identity'])
-      },
-    },
-  })
+  const globalLoading = useAtomValue(globalLoadingAtom)
 
   const handleDisconnect = () => {
-    updateUser({
-      meta: {
-        [`${snake}_identity`]: '',
-      },
-    })
+    localStorage.removeItem(LOCALSTORAGE_ACCOUNT_KEY)
+    setIdentity(defaultIdentity)
   }
 
   const items: MenuProps['items'] = [
@@ -93,7 +80,10 @@ const index = () => {
                 partnerLvKey === '2' ? 'text-yellow-500' : 'text-gray-300'
               }`}
             />
-            <span className="text-gray-800">{partnerLvTitle}</span>
+            <LoadingText
+              isLoading={globalLoading?.isLoading}
+              content={<span className="text-gray-800">{partnerLvTitle}</span>}
+            />
           </a>
         </Tooltip>
       )}
@@ -105,7 +95,10 @@ const index = () => {
           href="https://cloud.luke.cafe"
         >
           <span className="text-yellow-500 font-bold">￥</span>{' '}
-          <span className="text-gray-800">{powerMoney}</span>
+          <LoadingText
+            isLoading={globalLoading?.isLoading}
+            content={<span className="text-gray-800">{powerMoney}</span>}
+          />
         </a>
       </Tooltip>
 

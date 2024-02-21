@@ -1,38 +1,29 @@
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
-
-import { useGetUsermetaIdentity } from '@/pages/hooks'
-
+import { useGetUserIdentity } from '@/pages/hooks'
 import { Spin } from 'antd'
+import { globalLoadingAtom, identityAtom } from './atom'
+import { useAtomValue } from 'jotai'
 
 function DefaultPage() {
+  const mutation = useGetUserIdentity()
+  const globalLoading = useAtomValue(globalLoadingAtom)
+  const identity = useAtomValue(identityAtom)
+  const identityData = identity?.data
+  const status = identity?.status
+
   return (
-    <div className="w-full min-h-[24rem] grid place-items-center">
-      <Login />
+    <div className="flex min-h-[24rem]">
+      <Spin
+        size="large"
+        wrapperClassName="w-full"
+        spinning={globalLoading?.isLoading || mutation?.isLoading}
+        tip={globalLoading?.isLoading ? globalLoading?.label : 'Loading...'}
+      >
+        {status === 200 && identityData ? <Dashboard /> : <Login />}
+      </Spin>
     </div>
   )
-
-  const { data, isLoading } = useGetUsermetaIdentity()
-
-  const accountInfo = data?.data?.data
-
-  if (isLoading) {
-    return (
-      <div className="w-full min-h-[24rem] grid place-items-center">
-        <Spin tip="Loading..." size="large" />
-      </div>
-    )
-  }
-
-  if (!accountInfo) {
-    return (
-      <div className="w-full min-h-[24rem] grid place-items-center">
-        <Login />
-      </div>
-    )
-  }
-
-  return <Dashboard />
 }
 
 export default DefaultPage

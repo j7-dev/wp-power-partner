@@ -1,29 +1,31 @@
-import { Button, Form, Input, notification } from 'antd'
+import { Button, Form, Input, notification, Alert } from 'antd'
 import { cloudAxios } from '@/api'
-import { identityAtom } from '@/pages/atom'
+import { identityAtom, globalLoadingAtom } from '@/pages/atom'
 import { useSetAtom } from 'jotai'
-import { useUpdate } from '@/hooks'
-import { currentUserId, snake, renderHTML } from '@/utils'
+import { renderHTML, encrypt, LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
 import { TAccountInfo } from '@/pages/types'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 
 const index = () => {
-  const queryClient = useQueryClient()
   const setIdentity = useSetAtom(identityAtom)
-  const { mutate: updateUser, isLoading: updateUserIsLoading } = useUpdate({
-    resource: `users/${currentUserId}`,
-    mutationOptions: {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['get-user-identity'])
-      },
-    },
-  })
+  const setGlobalLoading = useSetAtom(globalLoadingAtom)
   const { mutate, isLoading } = useMutation({
     mutationFn: (values: TAccountInfo) => {
+      setGlobalLoading({
+        isLoading: true,
+        label: '正在獲取用戶資料...',
+      })
+
       return cloudAxios.post('/identity', values)
     },
     onError: (err) => {
       console.log('err', err)
+    },
+    onSettled: () => {
+      setGlobalLoading({
+        isLoading: false,
+        label: '',
+      })
     },
   })
 
@@ -33,13 +35,7 @@ const index = () => {
         const theIdentity = res?.data
         setIdentity(theIdentity)
         if (theIdentity?.status === 200) {
-          // 發 API 將 payload 存入 usermeta
-
-          updateUser({
-            meta: {
-              [`${snake}_identity`]: JSON.stringify(values),
-            },
-          })
+          localStorage.setItem(LOCALSTORAGE_ACCOUNT_KEY, encrypt(values))
         } else {
           notification.error({
             message: theIdentity?.message,
@@ -51,7 +47,13 @@ const index = () => {
   }
 
   return (
-    <div className="w-full max-w-[20rem]">
+    <div className="w-full max-w-[20rem] relative m-auto mt-12">
+      <Alert
+        message="請輸入你在 cloud.luke.cafe 的帳號密碼"
+        type="info"
+        showIcon
+        className="mb-8"
+      />
       <Form onFinish={onFinish} autoComplete="off" layout="vertical">
         <Form.Item<TAccountInfo>
           label="E-mail"
@@ -61,7 +63,7 @@ const index = () => {
             { type: 'email', message: '請輸入有效的 Email' },
           ]}
         >
-          <Input size="large" disabled={isLoading || updateUserIsLoading} />
+          <Input size="large" disabled={isLoading} />
         </Form.Item>
 
         <Form.Item<TAccountInfo>
@@ -69,10 +71,7 @@ const index = () => {
           name="password"
           rules={[{ required: true, message: '請輸入密碼' }]}
         >
-          <Input.Password
-            size="large"
-            disabled={isLoading || updateUserIsLoading}
-          />
+          <Input.Password size="large" disabled={isLoading} />
         </Form.Item>
 
         <Form.Item>
@@ -81,7 +80,7 @@ const index = () => {
             htmlType="submit"
             className="w-full"
             size="large"
-            loading={isLoading || updateUserIsLoading}
+            loading={isLoading}
           >
             連結帳號
           </Button>

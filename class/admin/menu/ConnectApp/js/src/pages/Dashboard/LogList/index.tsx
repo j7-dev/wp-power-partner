@@ -28,6 +28,9 @@ const index = () => {
     defaultParams: {
       user_id,
     },
+    queryOptions: {
+      enabled: !!user_id,
+    },
   })
 
   const columns: TableProps<DataType>['columns'] = [

@@ -1,2 +1,2 @@
-export * from './useGetUsermetaIdentity'
+export * from './useGetUserIdentity'
 export * from './useTable'

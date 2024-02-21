@@ -1,4 +1,7 @@
 import React from 'react'
+import { kebab } from '@/utils'
+import AES from 'crypto-js/aes'
+import CryptoJS from 'crypto-js'
 
 export const windowOuterWidth = window?.outerWidth || 1200
 
@@ -69,3 +72,22 @@ export const filterObjKeys = (
 
 export const isUsingBlockEditor =
   typeof window?.wp !== 'undefined' && typeof window?.wp?.blocks !== 'undefined'
+
+export const encrypt = (value: any) => {
+  if (typeof value === 'string') {
+    return AES.encrypt(value, kebab).toString()
+  }
+  if (typeof value === 'object') {
+    return AES.encrypt(JSON.stringify(value), kebab).toString()
+  }
+  return ''
+}
+
+export const decrypt = (encrypted = '', needJSONParse = false) => {
+  const decryptedBytes = CryptoJS.AES.decrypt(encrypted, kebab)
+  const decryptedMessage = decryptedBytes.toString(CryptoJS.enc.Utf8)
+  if (needJSONParse) {
+    return JSON.parse(decryptedMessage)
+  }
+  return decryptedMessage
+}

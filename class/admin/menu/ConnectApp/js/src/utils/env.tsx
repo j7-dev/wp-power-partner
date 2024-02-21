@@ -23,3 +23,4 @@ export const cloudBaseUrl = 'https://cloud.luke.cafe' // https://cloud.luke.cafe
 export const cloudApiUrl = `${cloudBaseUrl}/wp-json/power-partner-server`
 export const cloudUserName = 'j7.dev.gg'
 export const cloudPassword = 'YQLj xV2R js9p IWYB VWxp oL2E'
+export const LOCALSTORAGE_ACCOUNT_KEY = 'power-partner-account'
