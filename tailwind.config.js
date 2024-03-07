@@ -4,6 +4,7 @@ export default {
   corePlugins: {
     preflight: false,
   },
+  prefix: "tw-",
   content: ["./**/*.{php, html, js, ts}"],
   theme: {
     extend: {},

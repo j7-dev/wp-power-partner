@@ -1,4 +1,5 @@
 import $ from "jquery";
+import linkedSite from "./linkedSite.ts";
 
 /**
  * WC 產品類型下拉選單
@@ -17,6 +18,8 @@ function productTab() {
       tabContent.hide();
     }
   });
+
+  linkedSite();
 }
 
 export default productTab;

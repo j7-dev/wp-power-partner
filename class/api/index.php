@@ -4,6 +4,8 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
+require_once __DIR__ . '/fetch.php';
+
 class Api
 {
 
@@ -12,7 +14,7 @@ class Api
     public function __construct()
     {
         \add_action('rest_api_init', [ $this, 'register_user_meta_rest_support' ]);
-        \add_action('rest_api_init', [ $this, 'register_api_get_usermeta_identity' ]);
+        \add_action('rest_api_init', [ $this, 'register_api_set_partner_id' ]);
     }
 
     /**
@@ -20,7 +22,7 @@ class Api
      *
      * @return void
      */
-    public function register_user_meta_rest_support(): void
+    public function register_user_meta_rest_support()
     {
         \register_meta('user', self::USERMETA_IDENTITY, array(
             'type'              => 'string', // 根据你的实际数据类型调整
@@ -33,50 +35,35 @@ class Api
         ));
     }
 
-    public function register_api_get_usermeta_identity(): void
+		public function register_api_set_partner_id()
     {
-        \register_rest_route(Utils::KEBAB, "get-usermeta-identity", array(
-            'methods'             => 'GET',
-            'callback'            => [ $this, 'get_usermeta_identity_callback' ],
+        \register_rest_route(Utils::KEBAB, "partner-id", array(
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'set_partner_id_callback' ],
             'permission_callback' => function () {
-                return current_user_can('edit_users');
+                return current_user_can('manage_options');
             },
         ));
     }
 
-    public function get_usermeta_identity_callback()
-    {
-        $user_id  = \get_current_user_id();
-        $identity = \get_user_meta($user_id, self::USERMETA_IDENTITY, true);
-
-        if (empty($identity)) {
-            return \rest_ensure_response([
-                'status'  => 100,
-                'message' => "identity is empty",
-                'data'    => null,
-             ]);
-        }
-
-        try {
-            $identity_array = \json_decode($identity, true);
-            return \rest_ensure_response([
-                'status'  => 200,
-                'message' => "success",
-                'data'    => $identity_array,
-             ]);
-        } catch (\Throwable $th) {
-            ob_start();
-            print_r($th);
-            $th_string = ob_get_clean();
-            error_log($th_string);
-            return \rest_ensure_response([
-                'status'  => 500,
-                'message' => "error",
-                'data'    => $th_string,
-             ]);
-        }
-
-    }
+		public function set_partner_id_callback($request){
+			$body_params         = $request->get_json_params() ?? [  ];
+			$partner_id          = $body_params[ 'partner_id' ] ?? '';
+			if(!empty($partner_id)){
+				\update_option(Utils::SNAKE . '_partner_id', $partner_id);
+				return \rest_ensure_response([
+					'status'  => 200,
+					'message' => "success",
+					'data'    => null,
+				]);
+			}else{
+				return \rest_ensure_response([
+					'status'  => 100,
+					'message' => "partner_id is empty",
+					'data'    => null,
+				]);
+			}
+		}
 }
 
 new Api();

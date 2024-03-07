@@ -1,15 +1,15 @@
 import { Button, Form, Input, notification, Alert } from 'antd'
-import { cloudAxios } from '@/api'
+import { cloudAxios, axios } from '@/api'
 import { identityAtom, globalLoadingAtom } from '@/pages/atom'
 import { useSetAtom } from 'jotai'
 import { renderHTML, encrypt, LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
-import { TAccountInfo } from '@/pages/types'
+import { TAccountInfo, TIdentity } from '@/pages/types'
 import { useMutation } from '@tanstack/react-query'
 
 const index = () => {
   const setIdentity = useSetAtom(identityAtom)
   const setGlobalLoading = useSetAtom(globalLoadingAtom)
-  const { mutate, isLoading } = useMutation({
+  const { mutate: getIdentity, isLoading } = useMutation({
     mutationFn: (values: TAccountInfo) => {
       setGlobalLoading({
         isLoading: true,
@@ -29,17 +29,32 @@ const index = () => {
     },
   })
 
+  const { mutate: updatePartnerId } = useMutation({
+    mutationFn: (values: { partner_id: string }) =>
+      axios.post('/power-partner/partner-id', values),
+    onError: (err) => {
+      console.log('err', err)
+    },
+  })
+
   const onFinish = (values: TAccountInfo) => {
-    mutate(values, {
+    getIdentity(values, {
       onSuccess: (res) => {
-        const theIdentity = res?.data
+        const theIdentity = res?.data as TIdentity
         setIdentity(theIdentity)
         if (theIdentity?.status === 200) {
           localStorage.setItem(LOCALSTORAGE_ACCOUNT_KEY, encrypt(values))
+          if (theIdentity?.data?.user_id) {
+            // 存入 wp-options  SNAKE . '_partner_id'
+
+            updatePartnerId({
+              partner_id: theIdentity?.data?.user_id,
+            })
+          }
         } else {
           notification.error({
             message: theIdentity?.message,
-            description: renderHTML(theIdentity?.data || ''),
+            description: renderHTML(JSON.stringify(theIdentity?.data || '')),
           })
         }
       },
@@ -49,7 +64,7 @@ const index = () => {
   return (
     <div className="w-full max-w-[20rem] relative m-auto mt-12">
       <Alert
-        message="請輸入你在 cloud.luke.cafe 的帳號密碼"
+        message="請輸入你在 站長路可 cloud.luke.cafe 的帳號密碼"
         type="info"
         showIcon
         className="mb-8"

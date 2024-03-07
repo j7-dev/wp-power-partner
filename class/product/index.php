@@ -4,9 +4,9 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
+use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Components\SiteSelector;
 use J7\PowerPartner\Product\Attributes;
-use J7\PowerPartner\SiteSync;
 
 require_once __DIR__ . '/attributes.php';
 
@@ -25,11 +25,11 @@ final class Product
         \add_action('woocommerce_product_data_panels', array($this, 'add_product_tab_content'));
         \add_action('woocommerce_process_product_meta', array($this, 'save_product_tab_content'));
 
-        \add_action('woocommerce_order_status_completed', [ $this, 'do_site_sync' ]);
+        // \add_action('woocommerce_order_status_completed', [ $this, 'do_site_sync' ]);
         // \add_action('admin_init', [ $this, 'do_site_sync_test' ]);
     }
 
-    public function enqueue_assets(): void
+    public function enqueue_assets()
     {
         $screen = \get_current_screen();
         if ($screen->id !== 'product') {
@@ -42,7 +42,11 @@ final class Product
          ]);
     }
 
-    public function add_product_tab(array $tabs): array
+    /**
+     * @param array $tabs
+     * @return array
+     */
+    public function add_product_tab($tabs)
     {
         $tabs[ self::PRODUCT_TYPE_SLUG ] = array(
             'label'    => __('Power Partner', Utils::SNAKE),
@@ -56,28 +60,28 @@ final class Product
         return $tabs;
     }
 
-    public function add_product_tab_content(): void
+    public function add_product_tab_content()
     {
         $post_id      = $_GET[ 'post' ] ?? null;
-        $siteSelector = SiteSelector::getInstance();
+        $siteSelector = SiteSelector::get_instance();
         $defaultValue = \get_post_meta($post_id, "linked_site", true);
         ?>
-		<div id="<?=self::PRODUCT_TYPE_SLUG?>_product_data" style="float:left; width:80%;display:none;">
-			<div style="padding:1.5rem 1rem;">
-				<?=$siteSelector->render($defaultValue);?>
-			</div>
-		</div>
-		<?php
+<div id="<?=self::PRODUCT_TYPE_SLUG?>_product_data" style="float:left; width:80%;display:none;">
+	<div style="padding:1.5rem 1rem;">
+		<?=$siteSelector->render($defaultValue);?>
+	</div>
+</div>
+<?php
 }
 
-    public function save_product_tab_content($post_id): void
+    public function save_product_tab_content($post_id)
     {
         if (isset($_POST[ 'linked_site' ])) {
             \update_post_meta($post_id, "linked_site", $_POST[ 'linked_site' ]);
         }
     }
 
-    public function do_site_sync($order_id): void
+    public function do_site_sync($order_id)
     {
 
         $order = \wc_get_order($order_id);
@@ -101,9 +105,17 @@ final class Product
                 $host_position = $attributes[ Attributes::_taxonomy ] ?? '';
             }
 
-            $responseObj = SiteSync::fetch([
+            $responseObj = Fetch::site_sync([
                 'site_id'       => $linked_site_id,
                 'host_position' => $host_position,
+                'partner_id'    => \get_option(Utils::SNAKE . '_partner_id', '0'),
+                'customer'      => [
+                    'id'         => $order->get_customer_id(),
+                    'first_name' => $order->get_billing_first_name(),
+                    'last_name'  => $order->get_billing_last_name(),
+                    'email'      => $order->get_billing_email(),
+                    'phone'      => $order->get_billing_phone(),
+                 ],
              ]);
             $responses[  ] = [
                 'status'  => $responseObj->status,
@@ -124,15 +136,26 @@ final class Product
     }
 
     // TODO DELETE
-    public function do_site_sync_test(): void
+    public function do_site_sync_test()
     {
 
-        $order = \wc_get_order(1752);
+        // $order = \wc_get_order(1752);
+        $order = \wc_get_order(1774);
         if (!$order) {
             return;
         }
 
-        $items     = $order->get_items();
+        $items       = $order->get_items();
+
+        $customer_id = $order->get_customer_id();
+        $customer    = [
+            'id'         => $customer_id,
+            'username'   => \get_user_by('id', $customer_id)->user_login ?? '',
+            'first_name' => $order->get_billing_first_name(),
+            'last_name'  => $order->get_billing_last_name(),
+            'email'      => $order->get_billing_email(),
+            'phone'      => $order->get_billing_phone(),
+         ];
         $responses = [  ];
         foreach ($items as $item) {
             $product_id     = $item->get_product_id();
@@ -147,28 +170,32 @@ final class Product
                 $variation     = \wc_get_product($variation_id);
                 $attributes    = $variation->get_attributes(); // [pa_power_partner_host_position] => jp | tw
                 $host_position = $attributes[ Attributes::_taxonomy ] ?? '';
-
-                ob_start();
-                print_r($attributes);
-                \J7\WpToolkit\Utils::debug_log('' . ob_get_clean());
             }
-            // $responseObj   = SiteSync::fetch((int) $linked_site_id);
-            // $responses[  ] = [
-            //     'status'  => $responseObj->status,
-            //     'message' => $responseObj->message,
-            //     'data'    => $responseObj->data,
-            //  ];
+
+            $responseObj = Fetch::site_sync([
+                'site_id'       => $linked_site_id,
+                'host_position' => $host_position,
+                'partner_id'    => \get_option(Utils::SNAKE . '_partner_id', '174'),
+                'customer'      => $customer,
+             ]);
+
+            $responses[  ] = [
+                'status'  => $responseObj->status,
+                'message' => $responseObj->message,
+                'data'    => $responseObj->data,
+             ];
+
         }
-        // ob_start();
-        // print_r($responses);
-        // $responses_string = ob_get_clean();
-        // // 把網站建立成功與否的資訊存到訂單的 meta data
+        ob_start();
+        print_r($responses);
+        $responses_string = ob_get_clean();
+        // 把網站建立成功與否的資訊存到訂單的 meta data
 
-        // $order->add_order_note($responses_string);
+        $order->add_order_note($responses_string);
 
-        // $order->update_meta_data(Utils::ORDER_META_KEY, json_encode($responses));
+        $order->update_meta_data(Utils::ORDER_META_KEY, json_encode($responses));
 
-        // $order->save();
+        $order->save();
     }
 }
 

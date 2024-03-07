@@ -13,11 +13,11 @@ class Utils
     const GITHUB_REPO    = 'https://github.com/j7-dev/wp-power-partner';
     const ORDER_META_KEY = 'pp_create_site_responses';
 
-    const API_URL   = WP_DEBUG ? 'http://luke.local' : 'https://cloud.luke.cafe';
+    const API_URL   = WP_DEBUG ? 'http://cloudlukecafe.local' : 'https://cloud.luke.cafe';
     const USER_NAME = 'j7.dev.gg';
-    const PASSWORD  = WP_DEBUG ? 'Hzn3 l5V8 FeRF qcBX EAmX A6w0' : 'YQLj xV2R js9p IWYB VWxp oL2E';
+    const PASSWORD  = 'YQLj xV2R js9p IWYB VWxp oL2E';
 
-    const TEMPLATE_SERVER_IDS = WP_DEBUG ? [ 2202 ] : [ 544413 ];
+    const TEMPLATE_SERVER_IDS = [ 544413 ];
     const TRANSIENT_KEY       = 'pp_cloud_sites' . WP_DEBUG ? '_local' : '';
     const CACHE_TIME          = 12 * HOUR_IN_SECONDS;
 

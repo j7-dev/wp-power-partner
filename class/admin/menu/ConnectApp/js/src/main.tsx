@@ -40,7 +40,7 @@ mapping.forEach(({ els, App }) => {
             <StyleProvider hashPriority="high">
               <App />
             </StyleProvider>
-            <ReactQueryDevtools initialIsOpen={false} />
+            <ReactQueryDevtools initialIsOpen={true} />
           </QueryClientProvider>
         </React.StrictMode>,
       )

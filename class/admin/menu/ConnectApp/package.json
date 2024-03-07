@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@kucrut/vite-for-wp": "^0.8.0",
-    "@tanstack/react-query-devtools": "^4.24.9",
+    "@tanstack/react-query-devtools": "4",
     "@types/crypto-js": "^4.2.2",
     "@types/lodash-es": "^4.17.6",
     "@types/node": "^18.14.0",
