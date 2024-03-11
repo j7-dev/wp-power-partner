@@ -3,6 +3,7 @@
 declare (strict_types = 1);
 
 namespace J7\PowerPartner\Admin\Menu;
+use J7\PowerPartner\Shortcode;
 
 abstract class Utils
 {
@@ -13,7 +14,7 @@ abstract class Utils
 
     const BASE_URL    = '/';
     const RENDER_ID_1 = '.redux-group-tab.power-partner-connect-app';
-    const RENDER_ID_2 = '.connect-app';
+    const RENDER_ID_2 = '.' . Shortcode::CURRENT_USER_SITE_LIST_SHORTCODE;
     const API_TIMEOUT = '30000';
 
     const DEFAULT_IMAGE = 'http://1.gravatar.com/avatar/1c39955b5fe5ae1bf51a77642f052848?s=96&d=mm&r=g';

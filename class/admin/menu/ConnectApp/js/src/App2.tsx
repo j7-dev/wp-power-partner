@@ -1,8 +1,9 @@
 import '@/assets/scss/index.scss'
-import DefaultPage from './pages'
+import UserApp from '@/pages/UserApp'
+import { currentUserId } from '@/utils'
 
 function App2() {
-  return <DefaultPage />
+  return <UserApp />
 }
 
 export default App2

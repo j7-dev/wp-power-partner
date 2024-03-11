@@ -25,7 +25,7 @@ final class Product
         \add_action('woocommerce_product_data_panels', array($this, 'add_product_tab_content'));
         \add_action('woocommerce_process_product_meta', array($this, 'save_product_tab_content'));
 
-        // \add_action('woocommerce_order_status_completed', [ $this, 'do_site_sync' ]);
+        \add_action('woocommerce_order_status_completed', [ $this, 'do_site_sync' ]);
         // \add_action('admin_init', [ $this, 'do_site_sync_test' ]);
     }
 
@@ -102,7 +102,7 @@ final class Product
                 $variation_id  = $item->get_variation_id();
                 $variation     = \wc_get_product($variation_id);
                 $attributes    = $variation->get_attributes(); // [pa_power_partner_host_position] => jp | tw
-                $host_position = $attributes[ Attributes::_taxonomy ] ?? '';
+                $host_position = $attributes[ Attributes::TAXONOMY ] ?? '';
             }
 
             $responseObj = Fetch::site_sync([
@@ -113,6 +113,7 @@ final class Product
                     'id'         => $order->get_customer_id(),
                     'first_name' => $order->get_billing_first_name(),
                     'last_name'  => $order->get_billing_last_name(),
+										'username'   => \get_user_by('id', $order->get_customer_id())->user_login ?? 'admin',
                     'email'      => $order->get_billing_email(),
                     'phone'      => $order->get_billing_phone(),
                  ],
@@ -127,8 +128,17 @@ final class Product
         print_r($responses);
         $responses_string = ob_get_clean();
         // 把網站建立成功與否的資訊存到訂單的 meta data
+        if(is_array($responses) && count($responses) === 1){
+					$data = $responses[0]['data'] ?? [];
+					$note = '';
+					foreach($data as $key => $value){
+						$note .= $key . ': ' . $value . "<br />";
+					}
 
-        $order->add_order_note($responses_string);
+					$order->add_order_note($note);
+				}else{
+					$order->add_order_note($responses_string);
+				}
 
         $order->update_meta_data(Utils::ORDER_META_KEY, json_encode($responses));
 
@@ -150,7 +160,7 @@ final class Product
         $customer_id = $order->get_customer_id();
         $customer    = [
             'id'         => $customer_id,
-            'username'   => \get_user_by('id', $customer_id)->user_login ?? '',
+            'username'   => \get_user_by('id', $customer_id)->user_login ?? 'admin',
             'first_name' => $order->get_billing_first_name(),
             'last_name'  => $order->get_billing_last_name(),
             'email'      => $order->get_billing_email(),
@@ -169,7 +179,7 @@ final class Product
                 $variation_id  = $item->get_variation_id();
                 $variation     = \wc_get_product($variation_id);
                 $attributes    = $variation->get_attributes(); // [pa_power_partner_host_position] => jp | tw
-                $host_position = $attributes[ Attributes::_taxonomy ] ?? '';
+                $host_position = $attributes[ Attributes::TAXONOMY ] ?? '';
             }
 
             $responseObj = Fetch::site_sync([
@@ -191,7 +201,16 @@ final class Product
         $responses_string = ob_get_clean();
         // 把網站建立成功與否的資訊存到訂單的 meta data
 
-        $order->add_order_note($responses_string);
+				if(is_array($responses) && count($responses) === 1){
+					$note = '';
+					foreach($responses[0] as $key => $value){
+						$note .= $key . ': ' . $value . "<bt />";
+					}
+
+					$order->add_order_note($note);
+				}else{
+					$order->add_order_note($responses_string);
+				}
 
         $order->update_meta_data(Utils::ORDER_META_KEY, json_encode($responses));
 

@@ -12,32 +12,16 @@ class Bootstrap
     public function __construct()
     {
         require_once __DIR__ . '/api/index.php';
-        \add_action('admin_enqueue_scripts', [ $this, 'enqueue_script' ], 99);
-        // \add_action('wp_enqueue_scripts', [ $this, 'enqueue_script' ], 99);
+        \add_action('admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 100);
+        \add_action('wp_enqueue_scripts', [ $this, 'enqueue_script' ], 100);
     }
 
     /**
      * Enqueue script
      */
-    public function enqueue_script($hook): void
+
+		 public function enqueue_script(): void
     {
-        if ('toplevel_page_power_plugins_settings' !== $hook) {
-            return;
-        }
-
-        /*
-         * enquene script on demand
-        if (\is_admin()) {
-        // match wp-admin screen_id
-        $screen = \get_current_screen();
-        if (($screen->id !== Utils::KEBAB)) return;
-        } else {
-        // match front-end post_type slug {Utils::KEBAB}
-        if (strpos($_SERVER['REQUEST_URI'], Utils::KEBAB) === false) return;
-        }
-         */
-        \wp_enqueue_script('babel', 'https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js', [  ], '7.23.10', false);
-
         Vite\enqueue_asset(
             Utils::get_plugin_dir() . '/js/dist',
             'js/src/main.tsx',
@@ -54,7 +38,7 @@ class Bootstrap
             'env' => [
                 'siteUrl'     => \site_url(),
                 'ajaxUrl'     => \admin_url('admin-ajax.php'),
-                'userId'      => \wp_get_current_user()->data->ID ?? null,
+                'userId'      => \get_current_user_id(),
                 'postId'      => $post_id,
                 'permalink'   => $permalink,
                 "APP_NAME"    => Utils::APP_NAME,
@@ -71,5 +55,13 @@ class Bootstrap
             'root'  => \untrailingslashit(\esc_url_raw(rest_url())),
             'nonce' => \wp_create_nonce('wp_rest'),
         ));
+    }
+
+    public function admin_enqueue_script($hook): void
+    {
+        if ('toplevel_page_power_plugins_settings' !== $hook) {
+            return;
+        }
+				$this->enqueue_script();
     }
 }

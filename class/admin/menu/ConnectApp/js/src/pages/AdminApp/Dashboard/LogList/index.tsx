@@ -1,8 +1,8 @@
 import { Table, TableProps, Tag, Typography } from 'antd'
 import { DataType, TLogParams } from './types'
-import { identityAtom } from '@/pages/atom'
+import { identityAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue } from 'jotai'
-import { useTable } from '@/pages/hooks/useTable'
+import { useTable } from '@/hooks'
 
 const { Paragraph } = Typography
 

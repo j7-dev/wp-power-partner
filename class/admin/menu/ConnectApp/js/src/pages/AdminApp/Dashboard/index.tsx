@@ -1,9 +1,14 @@
 import React from 'react'
-import { MoneyCollectOutlined, ClusterOutlined } from '@ant-design/icons'
+import {
+  MoneyCollectOutlined,
+  ClusterOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons'
 import { Tabs, TabsProps } from 'antd'
 import AccountIcon from './AccountIcon'
 import SiteList from './SiteList'
 import LogList from './LogList'
+import Description from './Description'
 
 const index: React.FC = () => {
   const items: TabsProps['items'] = [
@@ -18,6 +23,12 @@ const index: React.FC = () => {
       icon: <MoneyCollectOutlined />,
       label: '點數 Log',
       children: <LogList />,
+    },
+    {
+      key: 'description',
+      icon: <InfoCircleOutlined />,
+      label: '其他資訊',
+      children: <Description />,
     },
   ]
 

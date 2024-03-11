@@ -56,8 +56,3 @@ export type DataType = {
   wpapp_wc_subscription_id: string
   wpapp_site_status: string
 }
-
-export type TSiteExtraParams = {
-  user_id?: string
-  disabled?: string
-}

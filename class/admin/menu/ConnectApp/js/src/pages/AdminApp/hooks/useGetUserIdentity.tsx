@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
 import { cloudAxios } from '@/api'
-import { identityAtom, globalLoadingAtom } from '@/pages/atom'
+import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
 import { useSetAtom } from 'jotai'
 import { notification } from 'antd'
 import { renderHTML, LOCALSTORAGE_ACCOUNT_KEY, decrypt } from '@/utils'
-import { TAccountInfo, TIdentity } from '@/pages/types'
+import { TAccountInfo, TIdentity } from '@/pages/AdminApp/types'
 import { useMutation } from '@tanstack/react-query'
 import { AxiosResponse } from 'axios'
 
@@ -36,14 +36,6 @@ export const useGetUserIdentity = () => {
         })
       }
     },
-
-    // onSettled: () => {
-    //   setGlobalLoading({
-    //     isLoading: false,
-    //     label: '',
-    //   })
-    // },
-
     staleTime: 1000 * 60 * 60 * 24,
     cacheTime: 1000 * 60 * 60 * 24,
   } as any)

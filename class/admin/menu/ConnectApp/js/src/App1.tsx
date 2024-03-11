@@ -1,8 +1,8 @@
 import '@/assets/scss/index.scss'
-import DefaultPage from './pages'
+import AdminApp from './pages/AdminApp'
 
 function App() {
-  return <DefaultPage />
+  return <AdminApp />
 }
 
 export default App

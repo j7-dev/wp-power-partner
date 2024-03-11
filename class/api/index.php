@@ -14,6 +14,7 @@ class Api
     public function __construct()
     {
         \add_action('rest_api_init', [ $this, 'register_user_meta_rest_support' ]);
+        \add_action('rest_api_init', [ $this, 'register_api_get_partner_id' ]);
         \add_action('rest_api_init', [ $this, 'register_api_set_partner_id' ]);
     }
 
@@ -34,6 +35,35 @@ class Api
             },
         ));
     }
+
+		public function register_api_get_partner_id()
+    {
+        \register_rest_route(Utils::KEBAB, "partner-id", array(
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'get_partner_id_callback' ],
+            'permission_callback' => '__return_true',
+        ));
+    }
+
+		public function get_partner_id_callback(){
+
+			$partner_id          = \get_option(Utils::SNAKE . '_partner_id', '0');
+			if(empty($partner_id)){
+				return \rest_ensure_response([
+					'status'  => 500,
+					'message' => "fail, partner_id is empty",
+					'data'    => null,
+				]);
+			}else{
+				return \rest_ensure_response([
+					'status'  => 200,
+					'message' => "success",
+					'data'    => [
+						'partner_id' => $partner_id
+					],
+				]);
+			}
+		}
 
 		public function register_api_set_partner_id()
     {

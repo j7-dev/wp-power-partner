@@ -1,11 +1,11 @@
-import Login from '@/pages/Login'
-import Dashboard from '@/pages/Dashboard'
-import { useGetUserIdentity } from '@/pages/hooks'
+import Login from '@/pages/AdminApp/Login'
+import Dashboard from '@/pages/AdminApp/Dashboard'
+import { useGetUserIdentity } from '@/pages/AdminApp/hooks'
 import { Spin } from 'antd'
 import { globalLoadingAtom, identityAtom } from './atom'
 import { useAtomValue } from 'jotai'
 
-function DefaultPage() {
+function AdminApp() {
   const mutation = useGetUserIdentity()
   const globalLoading = useAtomValue(globalLoadingAtom)
   const identity = useAtomValue(identityAtom)
@@ -26,4 +26,4 @@ function DefaultPage() {
   )
 }
 
-export default DefaultPage
+export default AdminApp

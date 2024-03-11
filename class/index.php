@@ -12,5 +12,6 @@ class Bootstrap
         require_once __DIR__ . '/api/index.php';
         require_once __DIR__ . '/class-order-view.php';
         require_once __DIR__ . '/product/index.php';
+        require_once __DIR__ . '/shortcode/index.php';
     }
 }

@@ -13,8 +13,8 @@ use J7\PowerPartner\Utils;
  */
 final class Attributes
 {
-    const _host_position_attributes = Utils::SNAKE . '_host_position';
-    const _taxonomy                 = 'pa_' . self::_host_position_attributes;
+    const HOST_POSITION_ATTRIBUTES = Utils::SNAKE . '_host_position';
+    const TAXONOMY                 = 'pa_' . self::HOST_POSITION_ATTRIBUTES;
 
     public function __construct()
     {
@@ -28,10 +28,10 @@ final class Attributes
 
         $slugs = \wp_list_pluck($attributes, 'attribute_name');
 
-        if (!in_array(self::_host_position_attributes, $slugs)) {
+        if (!in_array(self::HOST_POSITION_ATTRIBUTES, $slugs)) {
 
             $args = array(
-                'slug'         => self::_host_position_attributes,
+                'slug'         => self::HOST_POSITION_ATTRIBUTES,
                 'name'         => __('主機', Utils::TEXT_DOMAIN),
                 'type'         => 'select',
                 'orderby'      => 'menu_order',
@@ -50,12 +50,12 @@ final class Attributes
          ];
 
         foreach ($default_terms as $slug => $name) {
-            $parent_term = \term_exists($slug, self::_taxonomy);
+            $parent_term = \term_exists($slug, self::TAXONOMY);
 
             if (!$parent_term) {
                 \wp_insert_term(
                     $name, // the term
-                    self::_taxonomy, // the taxonomy
+                    self::TAXONOMY, // the taxonomy
                     array(
                         'slug' => $slug,
                     )

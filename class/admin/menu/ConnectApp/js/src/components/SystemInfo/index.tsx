@@ -1,8 +1,15 @@
 import { FC } from 'react'
 import { BooleanIndicator } from '@/components'
-import { DataType } from '@/pages/Dashboard/SiteList/types'
+import { DataType } from '@/components/SiteListTable/types'
 
 export const SystemInfo: FC<{ record: DataType }> = ({ record }) => {
+  const wpcd_app_disk_space_quota =
+    record?.wpcd_app_disk_space_quota &&
+    Number(record?.wpcd_app_disk_space_quota) !== 0
+      ? `${(
+          Number(record?.wpcd_app_disk_space_quota) / 1000
+        ).toLocaleString()} GB`
+      : 'N/A'
   return (
     <div className="grid grid-cols-[6rem_3rem_6rem_3rem] gap-1 text-xs">
       <span className="bg-gray-200 px-2">WordPress</span>
@@ -27,7 +34,7 @@ export const SystemInfo: FC<{ record: DataType }> = ({ record }) => {
       </div>
       <span className="bg-gray-200 px-2">硬碟空間限制</span>
       <span className="col-span-3 place-self-end">
-        {record?.wpcd_app_disk_space_quota}
+        {wpcd_app_disk_space_quota}
       </span>
     </div>
   )

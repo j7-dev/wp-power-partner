@@ -1,5 +1,5 @@
 import { atom } from 'jotai'
-import { TIdentity } from '@/pages/types'
+import { TIdentity } from '@/pages/AdminApp/types'
 
 export const defaultIdentity: TIdentity = {
   status: 100,

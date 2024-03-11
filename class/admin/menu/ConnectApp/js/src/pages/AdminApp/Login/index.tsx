@@ -1,9 +1,9 @@
 import { Button, Form, Input, notification, Alert } from 'antd'
 import { cloudAxios, axios } from '@/api'
-import { identityAtom, globalLoadingAtom } from '@/pages/atom'
+import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
 import { useSetAtom } from 'jotai'
 import { renderHTML, encrypt, LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
-import { TAccountInfo, TIdentity } from '@/pages/types'
+import { TAccountInfo, TIdentity } from '@/pages/AdminApp/types'
 import { useMutation } from '@tanstack/react-query'
 
 const index = () => {

@@ -1,5 +1,9 @@
 import { Avatar, Dropdown, MenuProps, Tooltip } from 'antd'
-import { identityAtom, globalLoadingAtom, defaultIdentity } from '@/pages/atom'
+import {
+  identityAtom,
+  globalLoadingAtom,
+  defaultIdentity,
+} from '@/pages/AdminApp/atom'
 import { useAtomValue, useAtom } from 'jotai'
 import {
   UserOutlined,

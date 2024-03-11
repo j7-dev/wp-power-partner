@@ -12,7 +12,7 @@ export const apiUrl = window?.wpApiSettings?.root || '/wp-json'
 export const ajaxUrl =
   window?.[APP_DOMAIN]?.env?.ajaxUrl || '/wp-admin/admin-ajax.php'
 export const siteUrl = window?.[APP_DOMAIN]?.env?.siteUrl || '/'
-export const currentUserId = window?.[APP_DOMAIN]?.env?.userId || '0'
+export const currentUserId = (window?.[APP_DOMAIN]?.env?.userId || 0) as number
 export const postId = window?.[APP_DOMAIN]?.env?.postId || '0'
 export const permalink = window?.[APP_DOMAIN]?.env?.permalink || '/'
 export const apiTimeout = '30000'
