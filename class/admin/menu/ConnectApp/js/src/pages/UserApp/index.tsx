@@ -25,9 +25,9 @@ const index = () => {
         spinning={globalLoading?.isLoading || isLoading}
         tip={globalLoading?.isLoading ? globalLoading?.label : 'Loading...'}
       >
-        {status === 200 && identityData ? (
-          <SiteList />
-        ) : (
+        {status === 200 && identityData && <SiteList />}
+
+        {(status === 500 || !identityData) && (
           <p>OOPS! something went wrong! </p>
         )}
       </Spin>

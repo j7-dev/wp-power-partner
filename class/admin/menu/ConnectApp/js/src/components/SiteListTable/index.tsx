@@ -107,9 +107,10 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
     }
   }
 
-  const isSslOn = chosenSSLRecord?.wpapp_ssl_status === 'on'
+  const isChosenRecordSslOn = chosenSSLRecord?.wpapp_ssl_status === 'on'
 
   const handleToggleSSL = (record: DataType) => () => {
+    const isSslOn = record?.wpapp_ssl_status === 'on'
     setChosenSSLRecord(record)
     toggleSSL(
       {
@@ -118,7 +119,6 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
       {
         onSuccess: (data) => {
           const status = data?.data?.status
-
           if (200 === status) {
             notification.success({
               message: isSslOn
@@ -159,7 +159,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
       dataIndex: 'post_title',
       render: (value: string, record) => (
         <>
-          <p className="mb-1">
+          <p className="mb-1 mt-0">
             <a target="_blank" href={record?.wpapp_domain} rel="noreferrer">
               {value}
             </a>
@@ -182,6 +182,18 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
             </Tag>
           )}
         </>
+      ),
+    },
+    {
+      title: '使用者',
+      dataIndex: 'wpapp_user',
+      render: (_: string, record) => (
+        <div className="grid grid-cols-[4rem_8rem] gap-1 text-xs">
+          <span className="bg-gray-200 px-2">使用者</span>
+          <span className="place-self-end">{record?.wpapp_user}</span>
+          <span className="bg-gray-200 px-2">Email</span>
+          <span className="place-self-end">{record?.wpapp_email}</span>
+        </div>
       ),
     },
     {
@@ -267,12 +279,17 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
       <Spin
         spinning={toggleSSLIsLoading}
         tip={
-          isSslOn
+          isChosenRecordSslOn
             ? `關閉 ${chosenSSLRecord?.wpapp_domain} SSL 中...`
             : `啟用 ${chosenSSLRecord?.wpapp_domain} SSL 中...`
         }
       >
-        <Table rowKey="ID" columns={columns} {...tableProps} />
+        <Table
+          rowKey="ID"
+          tableLayout="auto"
+          columns={columns}
+          {...tableProps}
+        />
       </Spin>
       <Modal
         centered
