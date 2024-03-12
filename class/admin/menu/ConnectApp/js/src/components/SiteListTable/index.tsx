@@ -20,6 +20,7 @@ import {
   EditOutlined,
   UnlockOutlined,
   LockOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons'
 import { SystemInfo } from '@/components'
 import { DataType } from './types'
@@ -31,11 +32,20 @@ const { Paragraph } = Typography
 type TChangeDomainParams = {
   id: string
   new_domain: string
+  record: DataType | null
+}
+
+type TToggleSSLParams = {
+  id: string
+  record: DataType | null
 }
 
 type TFormValues = {
   new_domain: string
 }
+
+const getSSLActionText = (record: DataType | null) =>
+  record?.wpapp_ssl_status === 'on' ? '關閉' : '啟用'
 
 export * from './types'
 
@@ -45,36 +55,110 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
   const [form] = Form.useForm()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [chosenRecord, setChosenRecord] = useState<DataType | null>(null)
-  const [chosenSSLRecord, setChosenSSLRecord] = useState<DataType | null>(null)
+  const [api, contextHolder] = notification.useNotification({
+    placement: 'bottomRight',
+    stack: { threshold: 1 },
+    duration: 10,
+  })
 
   const queryClient = useQueryClient()
-  const { mutate: changeDomain, isLoading } = useMutation({
-    mutationFn: (values: TChangeDomainParams) =>
-      cloudAxios.post('/change-domain', values),
-    onSettled: () => {
-      setIsModalOpen(false)
+  const { mutate: changeDomain } = useMutation({
+    mutationFn: (values: TChangeDomainParams) => {
+      const { record: _, ...rest } = values
+      return cloudAxios.post('/change-domain', rest)
     },
-    onSuccess: (data) => {
+    onMutate: (values) => {
+      const { record, id, new_domain } = values
+      setIsModalOpen(false)
+      api.open({
+        key: `loading-change-domain-${id}`,
+        message: '域名變更中...',
+        description: `正在將 ${record?.wpapp_domain} 變更為 ${new_domain} ...網域變更有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。`,
+        duration: 0,
+        icon: <LoadingOutlined className="text-primary" />,
+      })
+
+      return record
+    },
+    onSuccess: (data, values) => {
+      const { record, id, new_domain } = values
       const status = data?.data?.status
 
       if (200 === status) {
-        notification.success({
+        api.success({
+          key: `loading-change-domain-${id}`,
           message: '域名變更成功',
-          description: `域名已成功變更為 ${form.getFieldValue('new_domain')}`,
+          description: `${record?.wpapp_domain} 已成功變更為 ${new_domain}`,
         })
         queryClient.invalidateQueries(['apps'])
       } else {
-        notification.error({
+        api.error({
+          key: `loading-change-domain-${id}`,
           message: 'OOPS! 域名變更時發生問題',
-          description: data?.data?.message,
+          description: `${record?.wpapp_domain} 已變更為 ${new_domain} 失敗， ${data?.data?.message}`,
         })
       }
     },
+    onError: (err, values) => {
+      const { record, id, new_domain } = values
+      console.log('err', err)
+      api.error({
+        key: `loading-change-domain-${id}`,
+        message: 'OOPS! 域名變更時發生問題',
+        description: `${record?.wpapp_domain} 已變更為 ${new_domain} 失敗`,
+      })
+    },
   })
 
-  const { mutate: toggleSSL, isLoading: toggleSSLIsLoading } = useMutation({
-    mutationFn: (values: { id: string }) =>
-      cloudAxios.post('/toggle-ssl', values),
+  const { mutate: toggleSSL } = useMutation({
+    mutationFn: (values: TToggleSSLParams) => {
+      const { record: _, ...rest } = values
+      return cloudAxios.post('/toggle-ssl', rest)
+    },
+    onMutate: (values: TToggleSSLParams) => {
+      const { record, id } = values
+      const text = getSSLActionText(record)
+      setIsModalOpen(false)
+      api.open({
+        key: `loading-toggle-SSL-${id}`,
+        message: `SSL ${text} 中...`,
+        description: `${text} ${record?.wpapp_domain} SSL 有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。`,
+        duration: 0,
+        icon: <LoadingOutlined className="text-primary" />,
+      })
+
+      return record
+    },
+    onSuccess: (data, values) => {
+      const status = data?.data?.status
+      const { record, id } = values
+      const text = getSSLActionText(record)
+
+      if (200 === status) {
+        api.success({
+          key: `loading-toggle-SSL-${id}`,
+          message: `SSL 已${text}`,
+          description: `${text} ${record?.wpapp_domain} SSL 成功`,
+        })
+        queryClient.invalidateQueries(['apps'])
+      } else {
+        api.error({
+          key: `loading-toggle-SSL-${id}`,
+          message: `SSL ${text} 失敗`,
+          description: `${text} ${record?.wpapp_domain} SSL 失敗，${data?.data?.message}`,
+        })
+      }
+    },
+    onError: (err, values) => {
+      const { record, id } = values
+      const text = getSSLActionText(record)
+      console.log('err', err)
+      api.error({
+        key: `loading-toggle-SSL-${id}`,
+        message: `SSL ${text} 失敗`,
+        description: `${text} ${record?.wpapp_domain} SSL 失敗`,
+      })
+    },
   })
 
   const showModal = (record: DataType) => () => {
@@ -82,69 +166,25 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
     setChosenRecord(record)
   }
 
-  const handleOk = () => {
-    form.validateFields().then((values: TFormValues) => {
-      changeDomain(
-        {
-          id: chosenRecord?.ID.toString() || '',
-          new_domain: values?.new_domain,
-        },
-        {
-          onError: (err) => {
-            console.log('err', err)
-            notification.error({
-              message: `OOPS! 變更 ${chosenRecord?.wpapp_domain} 網域時 時發生問題`,
-            })
-          },
-        },
-      )
+  const handleChangeDomain = () => {
+    form.validateFields().then((formValues: TFormValues) => {
+      changeDomain({
+        id: chosenRecord?.ID.toString() || '',
+        new_domain: formValues?.new_domain,
+        record: chosenRecord,
+      })
     })
   }
 
   const handleCancel = () => {
-    if (!isLoading) {
-      setIsModalOpen(false)
-    }
+    setIsModalOpen(false)
   }
 
-  const isChosenRecordSslOn = chosenSSLRecord?.wpapp_ssl_status === 'on'
-
   const handleToggleSSL = (record: DataType) => () => {
-    const isSslOn = record?.wpapp_ssl_status === 'on'
-    setChosenSSLRecord(record)
-    toggleSSL(
-      {
-        id: record?.ID.toString() || '',
-      },
-      {
-        onSuccess: (data) => {
-          const status = data?.data?.status
-          if (200 === status) {
-            notification.success({
-              message: isSslOn
-                ? `${record?.wpapp_domain} SSL 已關閉`
-                : `${record?.wpapp_domain} SSL 已啟用`,
-            })
-            queryClient.invalidateQueries(['apps'])
-          } else {
-            notification.error({
-              message: isSslOn
-                ? `OOPS! 關閉 ${record?.wpapp_domain} SSL 時發生問題`
-                : `OOPS! 啟用 ${record?.wpapp_domain} SSL 時發生問題`,
-              description: data?.data?.message,
-            })
-          }
-        },
-        onError: (err) => {
-          console.log('err', err)
-          notification.error({
-            message: isSslOn
-              ? `OOPS! 關閉 ${record?.wpapp_domain} SSL 時發生問題`
-              : `OOPS! 啟用 ${record?.wpapp_domain} SSL 時發生問題`,
-          })
-        },
-      },
-    )
+    toggleSSL({
+      id: record?.ID.toString() || '',
+      record,
+    })
   }
 
   useEffect(() => {
@@ -153,6 +193,16 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
     })
   }, [chosenRecord?.wpapp_domain])
 
+  // 重開 Modal 時清空 input
+
+  useEffect(() => {
+    if (isModalOpen) {
+      form.setFieldsValue({
+        new_domain: '',
+      })
+    }
+  }, [isModalOpen])
+
   const columns: TableProps<DataType>['columns'] = [
     {
       title: '網站名稱',
@@ -160,7 +210,13 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
       render: (value: string, record) => (
         <>
           <p className="mb-1 mt-0">
-            <a target="_blank" href={record?.wpapp_domain} rel="noreferrer">
+            <a
+              target="_blank"
+              href={`${
+                record?.wpapp_ssl_status === 'on' ? 'https' : 'http'
+              }://${record?.wpapp_domain}`}
+              rel="noreferrer"
+            >
               {value}
             </a>
           </p>
@@ -260,7 +316,6 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
                 }
               >
                 <Button
-                  disabled={toggleSSLIsLoading}
                   type="primary"
                   className={isRecordSslOn ? 'bg-lime-500' : 'bg-rose-500'}
                   size="small"
@@ -276,21 +331,8 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
   ]
   return (
     <>
-      <Spin
-        spinning={toggleSSLIsLoading}
-        tip={
-          isChosenRecordSslOn
-            ? `關閉 ${chosenSSLRecord?.wpapp_domain} SSL 中...`
-            : `啟用 ${chosenSSLRecord?.wpapp_domain} SSL 中...`
-        }
-      >
-        <Table
-          rowKey="ID"
-          tableLayout="auto"
-          columns={columns}
-          {...tableProps}
-        />
-      </Spin>
+      {contextHolder}
+      <Table rowKey="ID" tableLayout="auto" columns={columns} {...tableProps} />
       <Modal
         centered
         title="變更域名 ( domain name )"
@@ -300,8 +342,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
           <Button
             type="primary"
             danger
-            onClick={handleOk}
-            loading={isLoading}
+            onClick={handleChangeDomain}
             className="mr-0"
           >
             確認變更域名 ( domain name )
@@ -309,22 +350,12 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
         }
       >
         <Form form={form} layout="vertical" className="mt-8">
-          {isLoading ? (
-            <Alert
-              message="請耐心等待"
-              description="網域變更有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。"
-              type="warning"
-              showIcon
-            />
-          ) : (
-            <Alert
-              message="提醒："
-              description="請先將網域DNS設定中的A紀錄(A Record) 指向 [ip]，再變更網域"
-              type="info"
-              showIcon
-            />
-          )}
-
+          <Alert
+            message="提醒："
+            description="請先將網域DNS設定中的A紀錄(A Record) 指向 [ip]，再變更網域"
+            type="info"
+            showIcon
+          />
           <div className="mb-6 mt-8">
             <p className="text-[0.875rem] mt-0 mb-2">當前域名</p>
             <Paragraph
@@ -352,7 +383,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
               },
             ]}
           >
-            <Input disabled={isLoading} placeholder="請輸入新的 domain name" />
+            <Input placeholder="請輸入新的 domain name" />
           </Form.Item>
         </Form>
       </Modal>
