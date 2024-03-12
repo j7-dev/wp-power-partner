@@ -79,15 +79,20 @@ class SiteSelector
         return $sites;
     }
 
-    public function render(?string $defaultValue): string
+    public function render(string $defaultValue): string
     {
 
         $template_sites = $this->get_template_sites();
-        $post_id        = $_GET[ 'post' ];
-        $linked_site_id = (int) \get_post_meta($post_id, 'linked_site', true);
-        $linked_site    = array_filter($template_sites, function ($site) use ($linked_site_id) {
-            return $site->ID === $linked_site_id;
-        });
+        $post_id        = $_GET[ 'post' ] ?? '';
+				if(!empty($post_id)){
+					$linked_site_id = (int) \get_post_meta($post_id, 'linked_site', true);
+					$linked_site    = array_filter($template_sites, function ($site) use ($linked_site_id) {
+							return $site->ID === $linked_site_id;
+					});
+				}else{
+					$linked_site = [];
+				}
+
         ob_start();
         ?>
 <?php if (empty($linked_site)): ?>

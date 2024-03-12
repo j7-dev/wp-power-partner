@@ -60,11 +60,11 @@ final class Product
         return $tabs;
     }
 
-    public function add_product_tab_content()
+    public function add_product_tab_content():void
     {
         $post_id      = $_GET[ 'post' ] ?? null;
         $siteSelector = SiteSelector::get_instance();
-        $defaultValue = \get_post_meta($post_id, "linked_site", true);
+        $defaultValue = (string) \get_post_meta($post_id, "linked_site", true);
         ?>
 <div id="<?=self::PRODUCT_TYPE_SLUG?>_product_data" style="float:left; width:80%;display:none;">
 	<div style="padding:1.5rem 1rem;">
@@ -74,16 +74,16 @@ final class Product
 <?php
 }
 
-    public function save_product_tab_content($post_id)
+    public function save_product_tab_content($post_id):void
     {
         if (isset($_POST[ 'linked_site' ])) {
-            \update_post_meta($post_id, "linked_site", $_POST[ 'linked_site' ]);
+					$linked_site = \sanitize_text_field($_POST[ 'linked_site' ]);
+            \update_post_meta($post_id, "linked_site", $linked_site);
         }
     }
 
     public function do_site_sync($order_id)
     {
-
         $order = \wc_get_order($order_id);
         if (!$order) {
             return;
