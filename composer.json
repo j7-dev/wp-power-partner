@@ -1,5 +1,15 @@
 {
-    "require": {
-        "yahnis-elsts/plugin-update-checker": "^5.3"
+  "require": {
+    "yahnis-elsts/plugin-update-checker": "^5.3"
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "@stable",
+    "wp-coding-standards/wpcs": "@stable",
+    "dealerdirect/phpcodesniffer-composer-installer": "@stable"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
     }
+  }
 }
