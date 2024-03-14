@@ -104,9 +104,9 @@ final class SiteSelector {
 		<?php endif; ?>
 		<select id="linked_site">
 			<option value="">請選擇要連結的網站</option>
-			<?php foreach ( $template_sites as $site ) : ?>
+		<?php foreach ( $template_sites as $site ) : ?>
 				<option value="<?php echo $site->ID; ?>" <?php echo selected( $defaultValue, $site->ID ); ?>>
-					<?php echo $site->post_title; ?></option>
+			<?php echo $site->post_title; ?></option>
 			<?php endforeach; ?>
 		</select>
 

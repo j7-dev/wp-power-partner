@@ -6,31 +6,32 @@ namespace J7\PowerPartner\Admin\Menu;
 
 use J7\PowerPartner\Admin\Menu\Utils;
 
-class Api
-{
-    const AJAXNONCE_API_ENDPOINT = 'ajaxnonce';
+final class Api {
 
-    function __construct()
-    {
-        foreach ([ self::AJAXNONCE_API_ENDPOINT ] as $action) {
-            \add_action('rest_api_init', [ $this, "register_{$action}_api" ]);
-        }
-    }
+	const AJAXNONCE_API_ENDPOINT = 'ajaxnonce';
 
-    public function ajaxnonce_callback($request)
-    {
-        $nonce = \wp_create_nonce(Utils::KEBAB);
-        return \rest_ensure_response($nonce);
-    }
+	function __construct() {
+		foreach ( array( self::AJAXNONCE_API_ENDPOINT ) as $action ) {
+			\add_action( 'rest_api_init', array( $this, "register_{$action}_api" ) );
+		}
+	}
 
-    public function register_ajaxnonce_api()
-    {
-        $endpoint = self::AJAXNONCE_API_ENDPOINT;
-        \register_rest_route(Utils::KEBAB, "{$endpoint}", array(
-            'methods'  => 'GET',
-            'callback' => [ $this, "{$endpoint}_callback" ],
-        ));
-    }
+	public function ajaxnonce_callback( $request ) {
+		$nonce = \wp_create_nonce( Utils::KEBAB );
+		return \rest_ensure_response( $nonce );
+	}
+
+	public function register_ajaxnonce_api() {
+		$endpoint = self::AJAXNONCE_API_ENDPOINT;
+		\register_rest_route(
+			Utils::KEBAB,
+			"{$endpoint}",
+			array(
+				'methods'  => 'GET',
+				'callback' => array( $this, "{$endpoint}_callback" ),
+			)
+		);
+	}
 }
 
 new Api();
