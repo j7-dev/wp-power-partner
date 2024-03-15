@@ -226,7 +226,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
               color="#f50"
               className="text-xs"
             >
-              網站已停用
+              服務已停用
             </Tag>
           ) : (
             <Tag
@@ -234,7 +234,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
               color="#2db7f5"
               className="text-xs"
             >
-              網站運作中
+              服務已啟用
             </Tag>
           )}
         </>
