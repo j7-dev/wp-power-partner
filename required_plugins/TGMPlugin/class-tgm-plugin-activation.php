@@ -881,13 +881,13 @@ if ( ! class_exists( __NAMESPACE__ . '\TGM_Plugin_Activation' ) ) {
 
 				if ( 'update' === $install_type ) {
 					$skin_args['plugin'] = $this->plugins[ $slug ]['file_path'];
-					$skin                = new Plugin_Upgrader_Skin( $skin_args );
+					$skin                = new \Plugin_Upgrader_Skin( $skin_args );
 				} else {
-					$skin = new Plugin_Installer_Skin( $skin_args );
+					$skin = new \Plugin_Installer_Skin( $skin_args );
 				}
 
 				// Create a new instance of Plugin_Upgrader.
-				$upgrader = new Plugin_Upgrader( $skin );
+				$upgrader = new \Plugin_Upgrader( $skin );
 
 				// Perform the action and install the plugin from the $source urldecode().
 				add_filter( 'upgrader_source_selection', array( $this, 'maybe_adjust_source_dir' ), 1, 3 );
@@ -951,14 +951,14 @@ if ( ! class_exists( __NAMESPACE__ . '\TGM_Plugin_Activation' ) ) {
 			$repo_updates = get_site_transient( 'update_plugins' );
 
 			if ( ! is_object( $repo_updates ) ) {
-				$repo_updates = new stdClass();
+				$repo_updates = new \stdClass();
 			}
 
 			foreach ( $plugins as $slug => $plugin ) {
 				$file_path = $plugin['file_path'];
 
 				if ( empty( $repo_updates->response[ $file_path ] ) ) {
-					$repo_updates->response[ $file_path ] = new stdClass();
+					$repo_updates->response[ $file_path ] = new \stdClass();
 				}
 
 				// We only really need to set package, but let's do all we can in case WP changes something.
@@ -1028,7 +1028,7 @@ if ( ! class_exists( __NAMESPACE__ . '\TGM_Plugin_Activation' ) ) {
 					if ( true === $GLOBALS['wp_filesystem']->move( $from_path, $to_path ) ) {
 						return trailingslashit( $to_path );
 					} else {
-						return new WP_Error(
+						return new \WP_Error(
 							'rename_failed',
 							esc_html__( 'The remote plugin package does not contain a folder with the desired slug and renaming did not work.', 'tgmpa' ) . ' ' . esc_html__( 'Please contact the plugin provider and ask them to package their plugin according to the WordPress guidelines.', 'tgmpa' ),
 							array(
@@ -1038,7 +1038,7 @@ if ( ! class_exists( __NAMESPACE__ . '\TGM_Plugin_Activation' ) ) {
 						);
 					}
 				} elseif ( empty( $subdir_name ) ) {
-					return new WP_Error(
+					return new \WP_Error(
 						'packaged_wrong',
 						esc_html__( 'The remote plugin package consists of more than one file, but the files are not packaged in a folder.', 'tgmpa' ) . ' ' . esc_html__( 'Please contact the plugin provider and ask them to package their plugin according to the WordPress guidelines.', 'tgmpa' ),
 						array(
