@@ -20,7 +20,7 @@ final class Fetch {
 	 *
 	 * @return array|\WP_Error — The response or WP_Error on failure.
 	 */
-	public static function site_sync( array $props ): array|\WP_Error {
+	public static function site_sync( array $props ) {
 		$args     = array(
 			'body'    => \wp_json_encode( $props ),
 			'headers' => array(
@@ -36,7 +36,7 @@ final class Fetch {
 			return $response_obj;
 		} catch ( \Throwable $th ) {
 			ob_start();
-			print_r( $th );
+			print_r( $response );
 			return \rest_ensure_response(
 				array(
 					'status'  => 500,

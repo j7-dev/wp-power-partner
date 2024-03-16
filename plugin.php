@@ -4,7 +4,7 @@
  * Plugin Name:       Power Partner | 讓每個人都可以輕鬆地販售網站模板
  * Plugin URI:        https://cloud.luke.cafe/plugins/power-partner/
  * Description:       Power Partner 是一個 WordPress 套件，安裝後，可以讓你的 Woocommerce 商品與 cloud.luke.cafe 的模板網站連結，並且可以讓使用者自訂商品的價格，當用戶在您的網站下單後，會自動在 cloud.luke.cafe 創建網站，並且自動發送通知給用戶跟您。
- * Version:           0.2.1
+ * Version:           1.0.0
  * Requires at least: 5.7
  * Requires PHP:      7.4
  * Author:            J7
@@ -53,7 +53,7 @@ final class Plugin {
 
 		\register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		\register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
-		\add_action( 'tgmpa_register', array( $this, 'register_required_plugins' ) );
+		\add_action( 'plugins_loaded', array( $this, 'register_required_plugins' ) );
 		\add_action( 'plugins_loaded', array( $this, 'check_required_plugins' ), 200 );
 
 		$this->plugin_update_checker();
@@ -76,7 +76,7 @@ final class Plugin {
 	}
 
 	/**
-	 * wp plugin 更新檢查 update checker
+	 * Wp plugin 更新檢查 update checker
 	 */
 	public function plugin_update_checker(): void {
 		$updateChecker = PucFactory::buildUpdateChecker(
@@ -178,11 +178,20 @@ final class Plugin {
 		call_user_func( __NAMESPACE__ . '\tgmpa', $this->required_plugins, $config );
 	}
 
+	/**
+	 * Do something on activate
+	 *
+	 * @return void
+	 */
 	public function activate(): void {
 	}
 
+	/**
+	 * Do something on deactivate
+	 *
+	 * @return void
+	 */
 	public function deactivate(): void {
-		// 刪除會員等級 post type 或是 transient
 	}
 }
 

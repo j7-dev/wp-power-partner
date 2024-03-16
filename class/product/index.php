@@ -120,6 +120,11 @@ final class Product {
 					),
 				)
 			);
+
+			ob_start();
+			print_r( $responseObj );
+			\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
+
 			$responses[] = array(
 				'status'  => $responseObj->status,
 				'message' => $responseObj->message,

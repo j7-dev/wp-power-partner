@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner;
 
+require_once __DIR__ . '/fetch.php';
+
 /**
  * Class Api
  *
