@@ -1,5 +1,5 @@
 import React from 'react'
-import { kebab } from '@/utils'
+import { kebab, LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
 import AES from 'crypto-js/aes'
 import CryptoJS from 'crypto-js'
 
@@ -84,10 +84,17 @@ export const encrypt = (value: any) => {
 }
 
 export const decrypt = (encrypted = '', needJSONParse = false) => {
-  const decryptedBytes = CryptoJS.AES.decrypt(encrypted, kebab)
-  const decryptedMessage = decryptedBytes.toString(CryptoJS.enc.Utf8)
-  if (needJSONParse) {
-    return JSON.parse(decryptedMessage)
+  try {
+    const decryptedBytes = CryptoJS.AES.decrypt(encrypted, kebab)
+    const decryptedMessage = decryptedBytes.toString(CryptoJS.enc.Utf8)
+    if (needJSONParse) {
+      const result = JSON.parse(decryptedMessage)
+      return result
+    }
+    return decryptedMessage
+  } catch (error) {
+    localStorage.removeItem(LOCALSTORAGE_ACCOUNT_KEY)
+    window.location.reload()
+    return {}
   }
-  return decryptedMessage
 }

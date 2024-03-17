@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 
-const APP_DOMAIN = 'connect_app_data' as string
+const APP_DOMAIN = 'power_partner_data' as string
 export const snake = window?.[APP_DOMAIN]?.env?.SNAKE || 'my_app'
 export const appName = window?.[APP_DOMAIN]?.env?.APP_NAME || 'My App'
 export const kebab = window?.[APP_DOMAIN]?.env?.KEBAB || 'my-app'
