@@ -1,42 +1,44 @@
-import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
-import alias from "@rollup/plugin-alias";
-import path from "path";
-import liveReload from "vite-plugin-live-reload";
-import optimizer from "vite-plugin-optimizer";
+/* eslint-disable quote-props */
+/* eslint-disable prettier/prettier */
+import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
+import alias from '@rollup/plugin-alias'
+import path from 'path'
+import liveReload from 'vite-plugin-live-reload'
+import { v4wp } from '@kucrut/vite-for-wp'
+import jotaiDebugLabel from 'jotai/babel/plugin-debug-label'
+import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh'
 
-export default defineConfig({
-  build: {
-    emptyOutDir: true,
-    minify: true,
-    outDir: path.resolve(__dirname, "js/dist"),
-    watch: {
-      include: "js/src/**",
-      exclude: "node_modules/**, .git/**, dist/**, .vscode/**",
-    },
-    rollupOptions: {
-      input: "js/src/main.ts", // Optional, defaults to 'src/main.js'.
-      output: {
-        assetFileNames: "assets/[ext]/index.[ext]",
-        entryFileNames: "index.js",
-      },
-    },
-  },
+export default {
   plugins: [
     alias(),
-    tsconfigPaths(),
-    liveReload([
-      __dirname + "/**/*.php",
-      __dirname + "/js/dist/**/*",
-      __dirname + "/js/src/**/*.tsx",
-    ]),
-    optimizer({
-      jquery: `const $ = window.jQuery; export { $ as default }`,
+    react({
+      babel: {
+        plugins: [
+          jotaiDebugLabel,
+          jotaiReactRefresh,
+        ],
+      },
     }),
+    tsconfigPaths(),
+    liveReload(__dirname + '/**/*.php'),
+    v4wp({
+      input: 'js/src/main.tsx', // Optional, defaults to 'src/main.js'.
+      outDir: 'js/dist', // Optional, defaults to 'dist'.
+    }),
+
+    // {
+    //   name: 'debug-resolve',
+    //   configureServer(server) {
+    //     server.middlewares.use((req, res, next) => {
+    //       next()
+    //     })
+    //   },
+    // },
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "js/src"),
+      '@': path.resolve(__dirname, 'js/src'),
     },
   },
-});
+}

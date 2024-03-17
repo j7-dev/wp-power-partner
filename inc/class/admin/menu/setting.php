@@ -2,7 +2,7 @@
 
 declare (strict_types = 1);
 
-namespace J7\PowerPartner\Admin\Menu;
+namespace J7\PowerPartner;
 
 use J7\PowerPartner\Utils;
 use J7\WpToolkit\PowerPlugins;

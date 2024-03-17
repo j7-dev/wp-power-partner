@@ -2,12 +2,12 @@
 /**
  * Bootstrap
  *
- * @package J7\PowerPartner\Admin\Menu
+ * @package J7\PowerPartner
  */
 
 declare (strict_types = 1);
 
-namespace J7\PowerPartner\Admin\Menu;
+namespace J7\PowerPartner;
 
 use Kucrut\Vite;
 
@@ -20,7 +20,13 @@ final class Bootstrap {
 	 * Constructor
 	 */
 	public function __construct() {
-		require_once __DIR__ . '/api/index.php';
+		require_once __DIR__ . '/admin/index.php';
+		require_once __DIR__ . '/api/class-api.php';
+		require_once __DIR__ . '/class-order-view.php';
+		require_once __DIR__ . '/product/index.php';
+		require_once __DIR__ . '/shortcode/index.php';
+		require_once __DIR__ . '/components/index.php';
+
 		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 100 );
 		\add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_script' ), 100 );
 	}

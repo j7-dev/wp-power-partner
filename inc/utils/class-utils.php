@@ -1,9 +1,17 @@
 <?php
+/**
+ * Utils
+ */
 
 declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
+use J7\PowerPartner\Shortcode;
+
+/**
+ * Class Utils
+ */
 final class Utils {
 
 	const APP_NAME       = 'Power Partner';
@@ -13,14 +21,22 @@ final class Utils {
 	const GITHUB_REPO    = 'https://github.com/j7-dev/wp-power-partner';
 	const ORDER_META_KEY = 'pp_create_site_responses';
 
-	const API_URL   = WP_DEBUG ? 'http://cloudlukecafe.local' : 'https://cloud.luke.cafe';
-	const USER_NAME = 'j7.dev.gg';
-	const PASSWORD  = 'YQLj xV2R js9p IWYB VWxp oL2E';
+	const BASE_URL    = '/';
+	const RENDER_ID_1 = '.redux-group-tab.power-partner-connect-app';
+	const RENDER_ID_2 = '.' . Shortcode::CURRENT_USER_SITE_LIST_SHORTCODE;
+	const API_TIMEOUT = '30000';
+
+	const DEFAULT_IMAGE = 'http://1.gravatar.com/avatar/1c39955b5fe5ae1bf51a77642f052848?s=96&d=mm&r=g';
 
 	const TEMPLATE_SERVER_IDS = array( 544413 );
 	const TRANSIENT_KEY       = 'pp_cloud_sites' . WP_DEBUG ? '_local' : '';
 	const CACHE_TIME          = 12 * HOUR_IN_SECONDS;
 
+	/**
+	 * Get github pat
+	 *
+	 * @return string
+	 */
 	public static function get_github_pat(): string {
 		$a   = array( 'ghp_eZCC' );
 		$b   = array( 'xdWRi9Ljh' );
@@ -31,16 +47,31 @@ final class Utils {
 		return $pat;
 	}
 
+	/**
+	 * Get plugin dir
+	 *
+	 * @return string
+	 */
 	public static function get_plugin_dir(): string {
 		$plugin_dir = \untrailingslashit( \wp_normalize_path( ABSPATH . 'wp-content/plugins/power-partner' ) );
 		return $plugin_dir;
 	}
 
+	/**
+	 * Get plugin url
+	 *
+	 * @return string
+	 */
 	public static function get_plugin_url(): string {
 		$plugin_url = \untrailingslashit( \plugin_dir_url( self::get_plugin_dir() . '/plugin.php' ) );
 		return $plugin_url;
 	}
 
+	/**
+	 * Get plugin ver
+	 *
+	 * @return string
+	 */
 	public static function get_plugin_ver(): string {
 		$plugin_data = \get_plugin_data( self::get_plugin_dir() . '/plugin.php' );
 		$plugin_ver  = $plugin_data['Version'];

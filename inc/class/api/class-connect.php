@@ -1,27 +1,23 @@
 <?php
 /**
- * This file is part of the Power Partner plugin.
- *
- * @package J7\PowerPartner
+ * Connect Api
  */
 
 declare(strict_types=1);
 
-namespace J7\PowerPartner;
-
-require_once __DIR__ . '/fetch.php';
+namespace J7\PowerPartner\Api;
 
 /**
- * Class Api
+ * Class Connect
  *
  * @package J7\PowerPartner
  */
-final class Api {
+final class Connect {
 
 	const USERMETA_IDENTITY = 'connect_app_identity';
 
 	/**
-	 * Api constructor.
+	 * Connect constructor.
 	 */
 	public function __construct() {
 		\add_action( 'rest_api_init', array( $this, 'register_user_meta_rest_support' ) );
@@ -146,4 +142,4 @@ final class Api {
 	}
 }
 
-new Api();
+new Connect();

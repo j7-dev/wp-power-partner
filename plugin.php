@@ -4,7 +4,7 @@
  * Plugin Name:       Power Partner | 讓每個人都可以輕鬆地販售網站模板
  * Plugin URI:        https://cloud.luke.cafe/plugins/power-partner/
  * Description:       Power Partner 是一個 WordPress 套件，安裝後，可以讓你的 Woocommerce 商品與 cloud.luke.cafe 的模板網站連結，並且可以讓使用者自訂商品的價格，當用戶在您的網站下單後，會自動在 cloud.luke.cafe 創建網站，並且自動發送通知給用戶跟您。
- * Version:           1.0.1
+ * Version:           1.1.0
  * Requires at least: 5.7
  * Requires PHP:      7.4
  * Author:            J7
@@ -46,7 +46,7 @@ final class Plugin {
 		array(
 			'name'     => 'Woo Subscriptions',
 			'slug'     => 'woocommerce-subscriptions',
-			// 'source'   => 'https://github.com/j7-dev/wp-toolkit/releases/latest/download/wp-toolkit.zip',
+			// 'source'   => '',
 			'required' => true,
 			'version'  => '5.9.0',
 		),
@@ -54,9 +54,8 @@ final class Plugin {
 
 	public function __construct() {
 		require_once __DIR__ . '/required_plugins/index.php';
-		require_once __DIR__ . '/utils/index.php';
-		require_once __DIR__ . '/components/index.php';
-		require_once __DIR__ . '/class/index.php';
+		require_once __DIR__ . '/inc/utils/class-utils.php';
+		require_once __DIR__ . '/inc/class/class-bootstrap.php';
 
 		\register_activation_hook( __FILE__, array( $this, 'activate' ) );
 		\register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
