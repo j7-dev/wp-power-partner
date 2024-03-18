@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner\Api;
 
+use J7\PowerPartner\Utils;
+
 /**
  * Class Connect
  *

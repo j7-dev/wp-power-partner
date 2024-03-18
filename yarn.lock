@@ -1616,6 +1616,13 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.5.tgz#a6ce3e556e00fd9895dd872dd172ad0d4bd687f4"
   integrity sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==
 
+"@types/jquery@^3.5.29":
+  version "3.5.29"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.5.29.tgz#3c06a1f519cd5fc3a7a108971436c00685b5dcea"
+  integrity sha512-oXQQC9X9MOPRrMhPHHOsXqeQDnWeCDT3PelUIg/Oy8FAbzSZtFHRjc7IpbfFVmpLtJ+UOoywpRsuO5Jxjybyeg==
+  dependencies:
+    "@types/sizzle" "*"
+
 "@types/json-schema@*", "@types/json-schema@^7.0.9":
   version "7.0.15"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
@@ -1685,6 +1692,11 @@
   version "7.5.8"
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.8.tgz#8268a8c57a3e4abd25c165ecd36237db7948a55e"
   integrity sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==
+
+"@types/sizzle@*":
+  version "2.3.8"
+  resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.8.tgz#518609aefb797da19bf222feb199e8f653ff7627"
+  integrity sha512-0vWLNK2D5MT9dg0iOo8GlKguPAU02QjmZitPEsXRuJXU/OGIOt9vT9Fc26wtYuavLxtO45v9PGleoL9Z0k1LHg==
 
 "@typescript-eslint/eslint-plugin@^5.3.0", "@typescript-eslint/eslint-plugin@^5.48.1":
   version "5.62.0"
@@ -3794,6 +3806,11 @@ jotai@^2.6.0:
   resolved "https://registry.yarnpkg.com/jotai/-/jotai-2.7.1.tgz#5d0db56e75375d4f41a2e9f1a23750e9e5d8cb24"
   integrity sha512-bsaTPn02nFgWNP6cBtg/htZhCu4s0wxqoklRHePp6l/vlsypR9eLn7diRliwXYWMXDpPvW/LLA2afI8vwgFFaw==
 
+jquery@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.7.1.tgz#083ef98927c9a6a74d05a6af02806566d16274de"
+  integrity sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==
+
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
@@ -5709,6 +5726,11 @@ vite-plugin-live-reload@^3.0.2:
   dependencies:
     chokidar "^3.5.0"
     picocolors "^1.0.0"
+
+vite-plugin-optimizer@^1.4.3:
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/vite-plugin-optimizer/-/vite-plugin-optimizer-1.4.3.tgz#0a44c40676c7f76f795401c4c92841876bd0ff61"
+  integrity sha512-m1AFakemDxSNIwxsTYykBFuQxkKJLI8207RNAg33N5km2aE29cP+Jt41xbfdrALOU2VKYWGFlBz64GMbIser4A==
 
 vite-tsconfig-paths@^4.0.5:
   version "4.3.2"

@@ -77,7 +77,7 @@ const index = () => {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://cloud.luke.cafe"
+            href="https://cloud.luke.cafe/product/power-partner/"
           >
             <CrownFilled
               className={`mr-2 text-lg ${
@@ -96,7 +96,7 @@ const index = () => {
         <a
           target="_blank"
           rel="noopener noreferrer"
-          href="https://cloud.luke.cafe"
+          href="https://cloud.luke.cafe/product/power-partner/"
         >
           <span className="text-yellow-500 font-bold">￥</span>{' '}
           <LoadingText

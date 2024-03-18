@@ -1,4 +1,7 @@
 <?php
+/**
+ * Api
+ */
 
 declare (strict_types = 1);
 
@@ -6,14 +9,17 @@ namespace J7\PowerPartner;
 
 use J7\PowerPartner\Utils;
 
+/**
+ * Class Api
+ */
 final class Api {
 
 	const AJAXNONCE_API_ENDPOINT = 'ajaxnonce';
 
-	function __construct() {
-		require_once __DIR__ . '/class-fetch.php';
-		require_once __DIR__ . '/class-connect.php';
-
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
 		foreach ( array( self::AJAXNONCE_API_ENDPOINT ) as $action ) {
 			\add_action( 'rest_api_init', array( $this, "register_{$action}_api" ) );
 		}

@@ -5,7 +5,9 @@ module.exports = {
   corePlugins: {
     preflight: false,
   },
-  prefix: 'tw-',
+
+  // prefix: 'tw-',
+
   content: ['./js/src/**/*.{js,ts,jsx,tsx}', './**/*.{php, html, js, ts}'],
   theme: {
     extend: {

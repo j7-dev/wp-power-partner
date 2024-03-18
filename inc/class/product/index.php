@@ -33,10 +33,10 @@ final class Product {
 		if ( $screen->id !== 'product' ) {
 			return;
 		}
-		\wp_enqueue_style( Utils::KEBAB . '-css', Utils::get_plugin_url() . '/js/dist/assets/css/index.css', array(), Utils::get_plugin_ver() );
+		\wp_enqueue_style( Utils::KEBAB . '-product-tab-css', Utils::get_plugin_url() . '/js/dist_product_tab/assets/css/index.css', array(), Utils::get_plugin_ver() );
 		\wp_enqueue_script(
-			Utils::KEBAB . '-js',
-			Utils::get_plugin_url() . '/js/dist/index.js',
+			Utils::KEBAB . '-product-tab-js',
+			Utils::get_plugin_url() . '/js/dist_product_tab/index.js',
 			array(),
 			Utils::get_plugin_ver(),
 			array(
@@ -52,7 +52,7 @@ final class Product {
 	 */
 	public function add_product_tab( $tabs ) {
 		$tabs[ self::PRODUCT_TYPE_SLUG ] = array(
-			'label'    => __( 'Power Partner', Utils::SNAKE ),
+			'label'    => __( 'Power Partner', Utils::TEXT_DOMAIN ),
 			'target'   => self::PRODUCT_TYPE_SLUG,
 			'class'    => array(
 				'show_if_variable-subscription', // 僅在可變訂閱顯示

@@ -21,7 +21,7 @@ final class Bootstrap {
 	 */
 	public function __construct() {
 		require_once __DIR__ . '/admin/index.php';
-		require_once __DIR__ . '/api/class-api.php';
+		require_once __DIR__ . '/api/index.php';
 		require_once __DIR__ . '/class-order-view.php';
 		require_once __DIR__ . '/product/index.php';
 		require_once __DIR__ . '/shortcode/index.php';
