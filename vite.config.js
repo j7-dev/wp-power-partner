@@ -38,7 +38,7 @@ export default {
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'js/src'),
-    },
+			'@': path.resolve(__dirname, 'js/src'),
+		},
   },
 }

@@ -1,8 +1,7 @@
-/* eslint-disable no-undef */
+import $ from 'jquery'
 import './style.scss'
 import productTab from './productTab.ts'
-;(function ($) {
-  $(document).ready(function () {
-    productTab()
-  })
-})(jQuery)
+
+$(function () {
+  productTab()
+})

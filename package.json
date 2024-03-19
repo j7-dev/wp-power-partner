@@ -8,7 +8,7 @@
     "dev": "vite",
     "prebuild": "echo 'todo: remove console'",
     "build": "yarn build:main && yarn build:product_tab",
-    "build:main": "vite build && mv js/dist/.vite/manifest.json js/dist/",
+    "build:main": "vite build --config vite.config.js && mv js/dist/.vite/manifest.json js/dist/",
     "build:product_tab": "vite build --config vite.config.product_tab.js",
     "preview": "vite preview",
     "format": "prettier-eslint --write \"js/src/**/*.tsx\"",
