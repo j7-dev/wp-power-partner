@@ -1,4 +1,7 @@
 <?php
+/**
+ * OrderView
+ */
 
 declare(strict_types=1);
 
@@ -10,19 +13,37 @@ namespace J7\PowerPartner;
 2. List 顯示開站時間
 */
 
+/**
+ * Class OrderView
+ */
 final class OrderView {
 
+	/**
+	 * Constructor.
+	 */
 	public function __construct() {
 		\add_filter( 'manage_edit-shop_order_columns', array( $this, 'add_order_column' ) );
 		\add_action( 'manage_shop_order_posts_custom_column', array( $this, 'render_order_column' ) );
 		\add_action( 'add_meta_boxes', array( $this, 'add_metabox' ) );
 	}
 
+	/**
+	 * Add order column.
+	 *
+	 * @param array $columns Columns.
+	 * @return array
+	 */
 	public function add_order_column( array $columns ): array {
 		$columns[ Utils::ORDER_META_KEY ] = '開站狀態';
 		return $columns;
 	}
 
+	/**
+	 * Render order column.
+	 *
+	 * @param string $column Column.
+	 * @return void
+	 */
 	public function render_order_column( $column ): void {
 		global $post;
 
@@ -41,22 +62,37 @@ final class OrderView {
 
 			if ( ! empty( $data ) ) {
 				foreach ( $data as $key => $value ) {
-					echo "<span>$key: $value</span><br />";
+					echo '<span>' . esc_html( $key ) . ': ' . esc_html( $value ) . '</span><br />';
 				}
 			}
-
-			// foreach ($responses as $response) {
-			// $status_text = $response->status == 200 ? '開站成功' : '開站失敗';
-			// echo "狀態: $status_text<br>";
-			// echo "網址: abc.com<br>";
-			// }
 		}
 	}
 
+	/**
+	 * Add metabox to order page
+	 *
+	 * @return void
+	 */
 	public function add_metabox(): void {
+		global $post;
+		$order_id = $post->ID;
+		$order    = \wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+		$responses_string = $order->get_meta( Utils::ORDER_META_KEY );
+		if ( ! $responses_string ) {
+			return;
+		}
+
 		\add_meta_box( Utils::ORDER_META_KEY . '_metabox', '此訂單的開站狀態', array( $this, Utils::ORDER_META_KEY . '_callback' ), 'shop_order', 'side', 'high' );
 	}
 
+	/**
+	 * Callback for metabox
+	 *
+	 * @return void
+	 */
 	public function pp_create_site_responses_callback(): void {
 		global $post;
 		$order_id         = $post->ID;
@@ -72,7 +108,7 @@ final class OrderView {
 
 		if ( ! empty( $data ) ) {
 			foreach ( $data as $key => $value ) {
-				echo "<span>$key: $value</span><br />";
+				echo '<span>' . esc_html( $key ) . ': ' . esc_html( $value ) . '</span><br />';
 			}
 		}
 	}

@@ -121,10 +121,6 @@ final class Product {
 				)
 			);
 
-			ob_start();
-			print_r( $responseObj );
-			\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
-
 			$responses[] = array(
 				'status'  => $responseObj->status,
 				'message' => $responseObj->message,
@@ -150,79 +146,30 @@ final class Product {
 		$order->update_meta_data( Utils::ORDER_META_KEY, json_encode( $responses ) );
 
 		$order->save();
+
+		$this->send_email( $order, $responses );
 	}
 
-	// TODO DELETE
-	public function do_site_sync_test() {
+	/**
+	 * Send email to customer
+	 *
+	 * @param \WC_Order $order  Order.
+	 * @param array     $responses [ [ 'status' => 'success', 'message' => 'message', 'data' => [] ] ]
+	 * @return void
+	 */
+	public function send_email( $order, $responses ) {
 
-		// $order = \wc_get_order(1752);
-		$order = \wc_get_order( 1774 );
-		if ( ! $order ) {
+		if ( '200' !== $responses['status'] ) {
 			return;
 		}
-
-		$items = $order->get_items();
-
-		$customer_id = $order->get_customer_id();
-		$customer    = array(
-			'id'         => $customer_id,
-			'username'   => \get_user_by( 'id', $customer_id )->user_login ?? 'admin',
-			'first_name' => $order->get_billing_first_name(),
-			'last_name'  => $order->get_billing_last_name(),
-			'email'      => $order->get_billing_email(),
-			'phone'      => $order->get_billing_phone(),
-		);
-		$responses   = array();
-		foreach ( $items as $item ) {
-			$product_id     = $item->get_product_id();
-			$product        = \wc_get_product( $product_id );
-			$linked_site_id = \get_post_meta( $product_id, 'linked_site', true );
-			if ( empty( $linked_site_id ) ) {
-				continue;
-			}
-
-			if ( $product->is_type( 'variable' ) ) {
-				$variation_id  = $item->get_variation_id();
-				$variation     = \wc_get_product( $variation_id );
-				$attributes    = $variation->get_attributes(); // [pa_power_partner_host_position] => jp | tw
-				$host_position = $attributes[ Attributes::TAXONOMY ] ?? '';
-			}
-
-			$responseObj = Fetch::site_sync(
-				array(
-					'site_id'       => $linked_site_id,
-					'host_position' => $host_position,
-					'partner_id'    => \get_option( Utils::SNAKE . '_partner_id', '174' ),
-					'customer'      => $customer,
-				)
-			);
-
-			$responses[] = array(
-				'status'  => $responseObj->status,
-				'message' => $responseObj->message,
-				'data'    => $responseObj->data,
-			);
-
+		$to      = $order->get_billing_email();
+		$subject = 'Power Partner Site Sync Result';
+		$message = '';
+		foreach ( $responses as $response ) {
+			$message .= $response['message'] . PHP_EOL;
 		}
-		ob_start();
-		print_r( $responses );
-		$responses_string = ob_get_clean();
-		// 把網站建立成功與否的資訊存到訂單的 meta data
-
-		if ( is_array( $responses ) && count( $responses ) === 1 ) {
-			$note = '';
-			foreach ( $responses[0] as $key => $value ) {
-				$note .= $key . ': ' . $value . '<bt />';
-			}
-
-			$order->add_order_note( $note );
-		} else {
-			$order->add_order_note( $responses_string );
-		}
-
-		$order->update_meta_data( Utils::ORDER_META_KEY, json_encode( $responses ) );
-
-		$order->save();
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		\wp_mail( $to, $subject, $message, $headers );
 	}
 }
 

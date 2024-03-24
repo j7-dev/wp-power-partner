@@ -27,11 +27,19 @@
 		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag" />
 		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_print_r" />
 	</rule>
-	<rule ref="WordPress-Docs" />
+	<rule ref="WordPress-Docs">
+		<exclude-pattern>*/tests/*</exclude-pattern>
+	</rule>
 	<rule ref="WordPress-Extra" />
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName"/>
+		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+		<exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+	</rule>
 
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
 	<rule ref="Generic.WhiteSpace.ScopeIndent">
 		<properties>
 			<property name="indent" value="4" />
@@ -75,8 +83,16 @@
 		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
 	</rule>
 
-	<!-- <rule ref="Universal.Arrays.DisallowShortArraySyntax">
-		<exclude name="Universal.Arrays.DisallowShortArraySyntax.Found" />
-	</rule> -->
+	<rule ref="Generic.Arrays.DisallowLongArraySyntax">
+		<exclude name="Generic.Arrays.DisallowLongArraySyntax.Found"/>
+	</rule>
+
+	<rule ref="Universal.Arrays.DisallowShortArraySyntax">
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax.Found"/>
+	</rule>
+
+	<rule ref="Generic.Files.LineEndings">
+		<exclude name="Generic.Files.LineEndings.InvalidEOLChar"/>
+	</rule>
 
 </ruleset>
