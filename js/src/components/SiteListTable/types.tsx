@@ -1,5 +1,7 @@
 export type DataType = {
   ID: number
+  ipv4: string
+  ipv6: string
   post_author: string
   post_date: string
   post_title: string

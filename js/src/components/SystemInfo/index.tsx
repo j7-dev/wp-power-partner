@@ -1,6 +1,9 @@
 import { FC } from 'react'
 import { BooleanIndicator } from '@/components'
 import { DataType } from '@/components/SiteListTable/types'
+import { Typography } from 'antd'
+
+const { Text } = Typography
 
 export const SystemInfo: FC<{ record: DataType }> = ({ record }) => {
   const wpcd_app_disk_space_quota =
@@ -16,7 +19,7 @@ export const SystemInfo: FC<{ record: DataType }> = ({ record }) => {
       <span className="place-self-end">{record?.wpapp_current_version}</span>
       <span className="bg-gray-200 px-2">php</span>
       <span className="place-self-end">{record?.wpapp_php_version}</span>
-      <span className="bg-gray-200 px-2">wp_debug</span>
+      <span className="bg-gray-200 px-2">WP_DEBUG</span>
       <div className="place-self-end">
         <BooleanIndicator enabled={record?.wpapp_wp_debug === '1'} />
       </div>
@@ -35,6 +38,12 @@ export const SystemInfo: FC<{ record: DataType }> = ({ record }) => {
       <span className="bg-gray-200 px-2">硬碟空間限制</span>
       <span className="col-span-3 place-self-end">
         {wpcd_app_disk_space_quota}
+      </span>
+      <span className="bg-gray-200 px-2">IPv4</span>
+      <span className="col-span-3 place-self-end">
+        <Text className="text-xs" copyable>
+          {record?.ipv4}
+        </Text>
       </span>
     </div>
   )
