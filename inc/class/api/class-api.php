@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Api
  */
 
-declare (strict_types = 1);
+declare(strict_types=1);
 
 namespace J7\PowerPartner;
 
@@ -14,31 +15,77 @@ use J7\PowerPartner\Utils;
  */
 final class Api {
 
-	const AJAXNONCE_API_ENDPOINT = 'ajaxnonce';
+
 
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		foreach ( array( self::AJAXNONCE_API_ENDPOINT ) as $action ) {
-			\add_action( 'rest_api_init', array( $this, "register_{$action}_api" ) );
-		}
+		\add_action( 'rest_api_init', array( $this, 'register_api_customer_notification' ) );
 	}
 
-	public function ajaxnonce_callback( $request ) {
-		$nonce = \wp_create_nonce( Utils::KEBAB );
-		return \rest_ensure_response( $nonce );
-	}
-
-	public function register_ajaxnonce_api() {
-		$endpoint = self::AJAXNONCE_API_ENDPOINT;
+	/**
+	 * Register customer notification API
+	 *
+	 * @return void
+	 */
+	public function register_api_customer_notification(): void {
 		\register_rest_route(
 			Utils::KEBAB,
-			"{$endpoint}",
+			'customer-notification',
 			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, "{$endpoint}_callback" ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'customer_notification_callback' ),
+				// TODO 'permission_callback' => array( $this, 'check_basic_auth' ),
+				'permission_callback' => '__return_true',
 			)
+		);
+	}
+
+	/**
+	 * Customer notification callback
+	 * 發 Email 通知客戶
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return void
+	 */
+	public function customer_notification_callback( $request ) {
+
+		$body_params = $request->get_json_params() ?? array();
+		$customer_id = $body_params['CUSTOMER_ID'];
+		$customer    = \get_user_by( 'id', $customer_id );
+		if ( ! $customer ) {
+			return;
+		}
+
+		$tokens                                   = array();
+		$tokens['FIRST_NAME']                     = $customer->first_name;
+		$tokens['LAST_NAME']                      = $customer->last_name;
+		$tokens['NICE_NAME']                      = $customer->user_nicename;
+		$tokens['EMAIL']                          = $customer->user_email;
+		$tokens['WORDPRESSAPPWCSITESACCOUNTPAGE'] = $body_params['WORDPRESSAPPWCSITESACCOUNTPAGE'];
+		$tokens['IPV4']                           = $body_params['IPV4'];
+		$tokens['DOMAIN']                         = $body_params['DOMAIN'];
+		$tokens['FRONTURL']                       = $body_params['FRONTURL'];
+		$tokens['ADMINURL']                       = $body_params['ADMINURL'];
+		$tokens['SITEUSERNAME']                   = $body_params['SITEUSERNAME'];
+		$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
+
+		// 取得 subject
+		$email_subject = 'Your site is ready!';
+
+		// 取得 message
+		$email_body = '網站開好了，網址是 ##FRONTURL##，帳號是 ##SITEUSERNAME##，密碼是 ##SITEPASSWORD##。';
+
+		// Replace tokens in email..
+		$email_body = Utils::replace_script_tokens( $email_body, $tokens );
+
+		$email_headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		\wp_mail(
+			$customer->user_email,
+			$email_subject,
+			$email_body,
+			$email_headers
 		);
 	}
 }

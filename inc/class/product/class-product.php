@@ -154,34 +154,6 @@ final class Product {
 		$order->update_meta_data( Utils::ORDER_META_KEY, json_encode( $responses ) );
 
 		$order->save();
-
-		$this->send_email( $order, $responses );
-	}
-
-	/**
-	 * TODO for test
-	 *
-	 * Send email to customer
-	 *
-	 * @param \WC_Order $order  Order.
-	 * @param array     $responses [ [ 'status' => 'success', 'message' => 'message', 'data' => [] ] ]
-	 * @return void
-	 */
-	public function send_email( $order, $responses ): void {
-		$to          = $order->get_billing_email();
-		$subject     = 'Power Partner Site Sync Result';
-		$message     = '';
-		$should_send = true;
-		foreach ( $responses as $response ) {
-			$message .= $response['message'] . PHP_EOL;
-			if ( '200' !== $response['status'] ) {
-				$should_send = false;
-			}
-		}
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-		if ( $should_send ) {
-			\wp_mail( $to, $subject, $message, $headers );
-		}
 	}
 }
 
