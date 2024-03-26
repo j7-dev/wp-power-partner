@@ -1,4 +1,7 @@
 <?php
+/**
+ * Fetch
+ */
 
 declare(strict_types=1);
 
@@ -6,17 +9,28 @@ namespace J7\PowerPartner\Api;
 
 use J7\PowerPartner\Utils;
 
+/**
+ * Class Fetch
+ */
 final class Fetch {
-
-
-
 
 	/**
 	 * 發 API 開站
 	 *
-	 * @param array  $props — The properties of the site.
-	 * @param string $props['site_id']
-	 * @param string $props['host_position']
+	 * @param array $props {
+	 *   @type string $site_url      網站網址
+	 *   @type string $site_id       網站 ID
+	 *   @type string $host_position 網站位置
+	 *   @type string $partner_id    合作夥伴 ID
+	 *   @type array  $customer {
+	 *       @type int    $id         顧客 ID
+	 *       @type string $first_name 顧客名
+	 *       @type string $last_name  顧客姓
+	 *       @type string $username   顧客帳號
+	 *       @type string $email      顧客 Email
+	 *       @type string $phone      顧客電話
+	 *   }
+	 * }
 	 *
 	 * @return array|\WP_Error — The response or WP_Error on failure.
 	 */
