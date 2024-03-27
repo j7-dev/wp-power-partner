@@ -14,8 +14,8 @@ use J7\PowerPartner\Utils;
  * Class Api
  */
 final class Api {
-
-
+	const DEFAULT_SUBJECT = '網站已開通';
+	const DEFAULT_BODY    = '<p>嗨 ##FIRST_NAME##</p><p>你的網站開好囉，<a href="https://cloud.luke.cafe/docs" rel="noopener noreferrer" target="_blank">點此可以打開網站的使用說明書</a>，建議把基礎的都看完</p><p>如果是下單SIMPLE網站，說明書還在建置中，暫時先看POWER網站的</p><p>另外如果要將網站換成正式的網域，請參考<a href="https://cloud.luke.cafe/docs/domain-change/" rel="noopener noreferrer" target="_blank">這篇教學</a></p><p>有網站的問題都可以直接回覆這封信，或是到<a href="https://cloud.luke.cafe/" rel="noopener noreferrer" target="_blank">站長路可網站</a>的右下角對話框私訊</p><p>&nbsp;</p><p>以下是你的網站資訊</p><p>網站暫時網址：</p><p>##FRONTURL##</p><p>之後可換成你自己的網址</p><p>網站後台：</p><p>##ADMINURL##</p><p>帳號：</p><p>##SITEUSERNAME##</p><p>密碼：</p><p>##SITEPASSWORD##</p><p>進去後請記得改成自己的密碼喔</p><p>網站列表 + 進階設置：</p><p>##WORDPRESSAPPWCSITESACCOUNTPAGE##</p><p>網站主機ip：</p><p>##IPV4##</p><p>&nbsp;</p><p>這封信很重要，不要刪掉，這樣之後才找得到喔～</p><p>有問題請直接回覆這封信：）</p><p>&nbsp;</p><p>站長路可</p>';
 
 	/**
 	 * Constructor.
@@ -85,9 +85,11 @@ final class Api {
 		$power_plugins_settings = \get_option( 'power_plugins_settings' );
 		// 取得 subject
 		$email_subject = $power_plugins_settings['power_partner_email_subject'];
+		$email_subject = empty( $email_subject ) ? self::DEFAULT_SUBJECT : $email_subject;
 
 		// 取得 message
 		$email_body = $power_plugins_settings['power_partner_email_body'];
+		$email_body = empty( $email_body ) ? self::DEFAULT_BODY : $email_body;
 
 		// Replace tokens in email..
 		$email_subject = Utils::replace_script_tokens( $email_subject, $tokens );
