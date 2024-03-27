@@ -47,6 +47,7 @@ final class Api {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_customer_notification_callback' ),
+				// TODO 'permission_callback' => array( $this, 'check_basic_auth' ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -81,14 +82,16 @@ final class Api {
 		$tokens['SITEUSERNAME']                   = $body_params['SITEUSERNAME'];
 		$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
 
+		$power_plugins_settings = \get_option( 'power_plugins_settings' );
 		// 取得 subject
-		$email_subject = 'Your site is ready!';
+		$email_subject = $power_plugins_settings['power_partner_email_subject'];
 
 		// 取得 message
-		$email_body = '網站開好了，網址是 ##FRONTURL##，帳號是 ##SITEUSERNAME##，密碼是 ##SITEPASSWORD##。';
+		$email_body = $power_plugins_settings['power_partner_email_body'];
 
 		// Replace tokens in email..
-		$email_body = Utils::replace_script_tokens( $email_body, $tokens );
+		$email_subject = Utils::replace_script_tokens( $email_subject, $tokens );
+		$email_body    = Utils::replace_script_tokens( $email_body, $tokens );
 
 		$email_headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		\wp_mail(
