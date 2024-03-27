@@ -3,7 +3,7 @@ declare global {
     root: string
     nonce: string
   }
-  var appData: {
+  var power_partner_data: {
     env: {
       siteUrl: string
       ajaxUrl: string
@@ -18,10 +18,12 @@ declare global {
       RENDER_ID_1: string
       RENDER_ID_2: string
       API_TIMEOUT: string
+      nonce: string
     }
   }
   var wp: {
     blocks: any
+    editor: any
   }
 }
 

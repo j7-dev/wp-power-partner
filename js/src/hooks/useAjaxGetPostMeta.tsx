@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminAjax } from '@/api'
 import { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios'
-import { useAjaxNonce } from '@/hooks'
+import { nonce as ajaxNonce } from '@/utils'
 
 type TProps = {
   post_id: string
@@ -25,7 +25,6 @@ type TFnProps = {
 }
 
 export function useAjaxGetPostMeta<T>(props: TProps) {
-  const ajaxNonce = useAjaxNonce()
   const queryClient = useQueryClient()
 
   const [

@@ -3,12 +3,14 @@ import {
   MoneyCollectOutlined,
   ClusterOutlined,
   InfoCircleOutlined,
+  MailOutlined,
 } from '@ant-design/icons'
 import { Tabs, TabsProps } from 'antd'
 import AccountIcon from './AccountIcon'
 import SiteList from './SiteList'
 import LogList from './LogList'
 import Description from './Description'
+import EmailSetting from './EmailSetting'
 
 const index: React.FC = () => {
   const items: TabsProps['items'] = [
@@ -23,6 +25,12 @@ const index: React.FC = () => {
       icon: <MoneyCollectOutlined />,
       label: '點數 Log',
       children: <LogList />,
+    },
+    {
+      key: 'email',
+      icon: <MailOutlined />,
+      label: 'Email 設定',
+      children: <EmailSetting />,
     },
     {
       key: 'description',

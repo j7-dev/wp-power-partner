@@ -33,6 +33,7 @@ final class Bootstrap {
 
 	/**
 	 * Enqueue script
+	 * TODO 按需載入
 	 *
 	 * @return void
 	 */
@@ -66,6 +67,7 @@ final class Bootstrap {
 					'RENDER_ID_1' => Utils::RENDER_ID_1,
 					'RENDER_ID_2' => Utils::RENDER_ID_2,
 					'API_TIMEOUT' => Utils::API_TIMEOUT,
+					'nonce'       => \wp_create_nonce( Utils::KEBAB ),
 				),
 			)
 		);

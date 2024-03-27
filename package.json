@@ -28,7 +28,8 @@
     "jotai": "^2.6.0",
     "jquery": "^3.7.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-quill": "^2.0.0"
   },
   "devDependencies": {
     "@kucrut/vite-for-wp": "^0.8.0",
