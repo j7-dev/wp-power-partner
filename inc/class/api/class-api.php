@@ -35,21 +35,31 @@ final class Api {
 			'customer-notification',
 			array(
 				'methods'             => 'POST',
-				'callback'            => array( $this, 'customer_notification_callback' ),
+				'callback'            => array( $this, 'post_customer_notification_callback' ),
 				// TODO 'permission_callback' => array( $this, 'check_basic_auth' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+
+		\register_rest_route(
+			Utils::KEBAB,
+			'customer-notification',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_customer_notification_callback' ),
 				'permission_callback' => '__return_true',
 			)
 		);
 	}
 
 	/**
-	 * Customer notification callback
+	 * Post customer notification callback
 	 * 發 Email 通知客戶
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return void
 	 */
-	public function customer_notification_callback( $request ) {
+	public function post_customer_notification_callback( $request ) {
 
 		$body_params = $request->get_json_params() ?? array();
 		$customer_id = $body_params['CUSTOMER_ID'];
@@ -86,6 +96,26 @@ final class Api {
 			$email_subject,
 			$email_body,
 			$email_headers
+		);
+	}
+
+	/**
+	 * Get customer notification callback
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_customer_notification_callback( $request ) { // phpcs:ignore
+		$power_plugins_settings = \get_option( 'power_plugins_settings' );
+		return \rest_ensure_response(
+			array(
+				'status'  => 200,
+				'message' => 'get customer notification success',
+				'data'    => array(
+					'subject' => $power_plugins_settings['power_partner_email_subject'],
+					'body'    => $power_plugins_settings['power_partner_email_body'],
+				),
+			)
 		);
 	}
 }

@@ -1,8 +1,21 @@
-import { useState } from 'react'
-import { Form, Input, Tag, Tooltip, message } from 'antd'
+import { useState, useEffect } from 'react'
+import { Input, Spin, Tag, Tooltip, message } from 'antd'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { TBase } from 'types'
+import { snake, siteUrl } from '@/utils'
+import { useQuery } from '@tanstack/react-query'
+import { axios } from '@/api'
+import { AxiosResponse } from 'axios'
+
+type TEmail = {
+  status: number
+  message: string
+  data: {
+    subject: string
+    body: string
+  }
+}
 
 const tokens: TBase[] = [
   {
@@ -51,9 +64,24 @@ const tokens: TBase[] = [
   },
 ]
 
+const REDUX_OPT_NAME = 'power_plugins_settings'
+const EMAIL_SUBJECT_FIELD_NAME = `${snake}_email_subject`
+const EMAIL_BODY_FIELD_NAME = `${snake}_email_body`
+const DEFAULT_SUBJECT = '網站已開通'
+const DEFAULT_BODY = `
+<p>嗨 ##FIRST_NAME##</p><p>你的網站開好囉，<a href="https://cloud.luke.cafe/docs" rel="noopener noreferrer" target="_blank">點此可以打開網站的使用說明書</a>，建議把基礎的都看完</p><p>如果是下單SIMPLE網站，說明書還在建置中，暫時先看POWER網站的</p><p>另外如果要將網站換成正式的網域，請參考<a href="https://cloud.luke.cafe/docs/domain-change/" rel="noopener noreferrer" target="_blank">這篇教學</a></p><p>有網站的問題都可以直接回覆這封信，或是到<a href="https://cloud.luke.cafe/" rel="noopener noreferrer" target="_blank">站長路可網站</a>的右下角對話框私訊</p><p>&nbsp;</p><p>以下是你的網站資訊</p><p>網站暫時網址：</p><p>##FRONTURL##</p><p>之後可換成你自己的網址</p><p>網站後台：</p><p>##ADMINURL##</p><p>帳號：</p><p>##SITEUSERNAME##</p><p>密碼：</p><p>##SITEPASSWORD##</p><p>進去後請記得改成自己的密碼喔</p><p>網站列表 + 進階設置：</p><p>##WORDPRESSAPPWCSITESACCOUNTPAGE##</p><p>網站主機ip：</p><p>##IPV4##</p><p>&nbsp;</p><p>這封信很重要，不要刪掉，這樣之後才找得到喔～</p><p>有問題請直接回覆這封信：）</p><p>&nbsp;</p><p>站長路可</p>
+`
+
 const index = () => {
-  const [value, setValue] = useState('')
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
   const [messageApi, contextHolder] = message.useMessage()
+  const { data: email, isLoading } = useQuery<AxiosResponse<TEmail>>({
+    queryKey: ['customer_notification'],
+    queryFn: () =>
+      axios.get(`${siteUrl}/wp-json/power-partner/customer-notification`),
+  })
+
   const handleCopy = (token: TBase) => () => {
     if (!navigator.clipboard) {
       messageApi.open({
@@ -80,23 +108,38 @@ const index = () => {
       })
   }
 
+  useEffect(() => {
+    if (!isLoading) {
+      setSubject(email?.data?.data?.subject || DEFAULT_SUBJECT)
+      setBody(email?.data?.data?.body || DEFAULT_BODY)
+    }
+  }, [isLoading])
+
   return (
-    <>
+    <Spin spinning={isLoading}>
       {contextHolder}
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="max-w-[600px] w-full">
-          <Form layout="vertical">
-            <Form.Item label="信件主旨">
-              <Input />
-            </Form.Item>
-          </Form>
-          <p className="mt-0 mb-2 text-[14px]">信件內文</p>
+          <p className="mt-0 mb-2 text-[14px]">信件主旨</p>
+          <Input
+            value={subject}
+            onChange={(e) => setSubject(e?.target?.value)}
+            name={`${REDUX_OPT_NAME}[${EMAIL_SUBJECT_FIELD_NAME}]`}
+          />
+
+          <p className="mt-8 mb-2 text-[14px]">信件內文</p>
           <div className="mb-16">
             <ReactQuill
               className="h-[500px]"
               theme="snow"
-              value={value}
-              onChange={setValue}
+              value={body}
+              onChange={setBody}
+            />
+            <Input
+              hidden
+              className="hidden"
+              value={body}
+              name={`${REDUX_OPT_NAME}[${EMAIL_BODY_FIELD_NAME}]`}
             />
           </div>
         </div>
@@ -115,7 +158,7 @@ const index = () => {
           ))}
         </div>
       </div>
-    </>
+    </Spin>
   )
 }
 

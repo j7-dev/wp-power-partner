@@ -3,4 +3,13 @@
 		min-height: unset;
 		line-height: 1.5;
 	}
+
+	.ql-container {
+		border-bottom-right-radius: 6px;
+		border-bottom-left-radius: 6px;
+	}
+	.ql-toolbar {
+		border-top-right-radius: 6px;
+		border-top-left-radius: 6px;
+	}
 }
