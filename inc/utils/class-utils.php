@@ -83,26 +83,26 @@ final class Utils {
 	}
 
 
-		/**
-		 * Replaces placeholder tokens in a script.
-		 *
-		 * A script is usually a server provisioning startup script
-		 * Tokens are of the format ##TOKEN## and it is expected that
-		 * the 'TOKEN' is uppercase.
-		 *
-		 * As of Version 4.2.5 of WPCD, this function also handles
-		 * replacing similar tokens in EMAIL templates.
-		 *
-		 * @param string $script The full text of the script contents.
-		 * @param array  $tokens Key-value array of tokens to replace.
-		 *
-		 * @return $string The updated script contents
-		 */
+	/**
+	 * Replaces placeholder tokens in a script.
+	 *
+	 * A script is usually a server provisioning startup script
+	 * Tokens are of the format ##TOKEN## and it is expected that
+	 * the 'TOKEN' is uppercase.
+	 *
+	 * As of Version 4.2.5 of WPCD, this function also handles
+	 * replacing similar tokens in EMAIL templates.
+	 *
+	 * @param string $script The full text of the script contents.
+	 * @param array  $tokens Key-value array of tokens to replace.
+	 *
+	 * @return $string The updated script contents
+	 */
 	public static function replace_script_tokens( $script, $tokens ) {
 		$updated_script = $script;
 
 		foreach ( $tokens as $name => $value ) {
-			if ( is_array( $value ) ) {
+			if ( is_array( $value ) || empty( $value ) ) {
 				continue;
 			}
 
