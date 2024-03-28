@@ -67,10 +67,6 @@ const tokens: TBase[] = [
 const REDUX_OPT_NAME = 'power_plugins_settings'
 const EMAIL_SUBJECT_FIELD_NAME = `${snake}_email_subject`
 const EMAIL_BODY_FIELD_NAME = `${snake}_email_body`
-const DEFAULT_SUBJECT = '網站已開通'
-const DEFAULT_BODY = `
-<p>嗨 ##FIRST_NAME##</p><p>你的網站開好囉，<a href="https://cloud.luke.cafe/docs" rel="noopener noreferrer" target="_blank">點此可以打開網站的使用說明書</a>，建議把基礎的都看完</p><p>如果是下單SIMPLE網站，說明書還在建置中，暫時先看POWER網站的</p><p>另外如果要將網站換成正式的網域，請參考<a href="https://cloud.luke.cafe/docs/domain-change/" rel="noopener noreferrer" target="_blank">這篇教學</a></p><p>有網站的問題都可以直接回覆這封信，或是到<a href="https://cloud.luke.cafe/" rel="noopener noreferrer" target="_blank">站長路可網站</a>的右下角對話框私訊</p><p>&nbsp;</p><p>以下是你的網站資訊</p><p>網站暫時網址：</p><p>##FRONTURL##</p><p>之後可換成你自己的網址</p><p>網站後台：</p><p>##ADMINURL##</p><p>帳號：</p><p>##SITEUSERNAME##</p><p>密碼：</p><p>##SITEPASSWORD##</p><p>進去後請記得改成自己的密碼喔</p><p>網站列表 + 進階設置：</p><p>##WORDPRESSAPPWCSITESACCOUNTPAGE##</p><p>網站主機ip：</p><p>##IPV4##</p><p>&nbsp;</p><p>這封信很重要，不要刪掉，這樣之後才找得到喔～</p><p>有問題請直接回覆這封信：）</p><p>&nbsp;</p><p>站長路可</p>
-`
 
 const index = () => {
   const [subject, setSubject] = useState('')
@@ -110,8 +106,8 @@ const index = () => {
 
   useEffect(() => {
     if (!isLoading) {
-      setSubject(email?.data?.data?.subject || DEFAULT_SUBJECT)
-      setBody(email?.data?.data?.body || DEFAULT_BODY)
+      setSubject(email?.data?.data?.subject || '')
+      setBody(email?.data?.data?.body || '')
     }
   }, [isLoading])
 
