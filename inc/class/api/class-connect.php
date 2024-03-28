@@ -23,8 +23,7 @@ final class Connect {
 	 */
 	public function __construct() {
 		\add_action( 'rest_api_init', array( $this, 'register_user_meta_rest_support' ) );
-		\add_action( 'rest_api_init', array( $this, 'register_api_get_partner_id' ) );
-		\add_action( 'rest_api_init', array( $this, 'register_api_set_partner_id' ) );
+		\add_action( 'rest_api_init', array( $this, 'register_api_partner_id' ) );
 	}
 
 	/**
@@ -49,11 +48,11 @@ final class Connect {
 	}
 
 	/**
-	 * Register get_partner_id API
+	 * Register partner id API
 	 *
 	 * @return void
 	 */
-	public function register_api_get_partner_id(): void {
+	public function register_api_partner_id(): void {
 		\register_rest_route(
 			Utils::KEBAB,
 			'partner-id',
@@ -61,6 +60,18 @@ final class Connect {
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_partner_id_callback' ),
 				'permission_callback' => '__return_true',
+			)
+		);
+
+		\register_rest_route(
+			Utils::KEBAB,
+			'partner-id',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'set_partner_id_callback' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
 			)
 		);
 	}
@@ -94,24 +105,6 @@ final class Connect {
 		}
 	}
 
-	/**
-	 * Register set_partner_id API
-	 *
-	 * @return void
-	 */
-	public function register_api_set_partner_id(): void {
-		\register_rest_route(
-			Utils::KEBAB,
-			'partner-id',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'set_partner_id_callback' ),
-				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
-				},
-			)
-		);
-	}
 
 	/**
 	 * Callback of set_partner_id API

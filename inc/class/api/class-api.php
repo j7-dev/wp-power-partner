@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Api
  */
@@ -58,50 +57,73 @@ final class Api {
 	 * 發 Email 通知客戶
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return void
+	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function post_customer_notification_callback( $request ) {
+		try {
+			$body_params = $request->get_json_params() ?? array();
+			$customer_id = $body_params['CUSTOMER_ID'];
+			$customer    = \get_user_by( 'id', $customer_id );
+			if ( ! $customer || empty( $customer_id ) ) {
+				return \rest_ensure_response(
+					array(
+						'status'  => 500,
+						'message' => 'missing customer id',
+					)
+				);
+			}
 
-		$body_params = $request->get_json_params() ?? array();
-		$customer_id = $body_params['CUSTOMER_ID'];
-		$customer    = \get_user_by( 'id', $customer_id );
-		if ( ! $customer ) {
-			return;
+			$tokens                                   = array();
+			$tokens['FIRST_NAME']                     = $customer->first_name;
+			$tokens['LAST_NAME']                      = $customer->last_name;
+			$tokens['NICE_NAME']                      = $customer->user_nicename;
+			$tokens['EMAIL']                          = $customer->user_email;
+			$tokens['WORDPRESSAPPWCSITESACCOUNTPAGE'] = $body_params['WORDPRESSAPPWCSITESACCOUNTPAGE'];
+			$tokens['IPV4']                           = $body_params['IPV4'];
+			$tokens['DOMAIN']                         = $body_params['DOMAIN'];
+			$tokens['FRONTURL']                       = $body_params['FRONTURL'];
+			$tokens['ADMINURL']                       = $body_params['ADMINURL'];
+			$tokens['SITEUSERNAME']                   = $body_params['SITEUSERNAME'];
+			$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
+
+			$power_plugins_settings = \get_option( 'power_plugins_settings' );
+			// 取得 subject
+			$email_subject = $power_plugins_settings['power_partner_email_subject'];
+			$email_subject = empty( $email_subject ) ? self::DEFAULT_SUBJECT : $email_subject;
+
+			// 取得 message
+			$email_body = $power_plugins_settings['power_partner_email_body'];
+			$email_body = empty( $email_body ) ? self::DEFAULT_BODY : $email_body;
+
+			// Replace tokens in email..
+			$email_subject = Utils::replace_script_tokens( $email_subject, $tokens );
+			$email_body    = Utils::replace_script_tokens( $email_body, $tokens );
+
+			$email_headers = array( 'Content-Type: text/html; charset=UTF-8' );
+			\wp_mail(
+				$customer->user_email,
+				$email_subject,
+				$email_body,
+				$email_headers
+			);
+
+			return \rest_ensure_response(
+				array(
+					'status'  => 200,
+					'message' => 'post customer notification success',
+				)
+			);
+		} catch ( \Throwable $th ) {
+			ob_start();
+			print_r( $th );
+			\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
+			return \rest_ensure_response(
+				array(
+					'status'  => 500,
+					'message' => 'post customer notification fail',
+				)
+			);
 		}
-
-		$tokens                                   = array();
-		$tokens['FIRST_NAME']                     = $customer->first_name;
-		$tokens['LAST_NAME']                      = $customer->last_name;
-		$tokens['NICE_NAME']                      = $customer->user_nicename;
-		$tokens['EMAIL']                          = $customer->user_email;
-		$tokens['WORDPRESSAPPWCSITESACCOUNTPAGE'] = $body_params['WORDPRESSAPPWCSITESACCOUNTPAGE'];
-		$tokens['IPV4']                           = $body_params['IPV4'];
-		$tokens['DOMAIN']                         = $body_params['DOMAIN'];
-		$tokens['FRONTURL']                       = $body_params['FRONTURL'];
-		$tokens['ADMINURL']                       = $body_params['ADMINURL'];
-		$tokens['SITEUSERNAME']                   = $body_params['SITEUSERNAME'];
-		$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
-
-		$power_plugins_settings = \get_option( 'power_plugins_settings' );
-		// 取得 subject
-		$email_subject = $power_plugins_settings['power_partner_email_subject'];
-		$email_subject = empty( $email_subject ) ? self::DEFAULT_SUBJECT : $email_subject;
-
-		// 取得 message
-		$email_body = $power_plugins_settings['power_partner_email_body'];
-		$email_body = empty( $email_body ) ? self::DEFAULT_BODY : $email_body;
-
-		// Replace tokens in email..
-		$email_subject = Utils::replace_script_tokens( $email_subject, $tokens );
-		$email_body    = Utils::replace_script_tokens( $email_body, $tokens );
-
-		$email_headers = array( 'Content-Type: text/html; charset=UTF-8' );
-		\wp_mail(
-			$customer->user_email,
-			$email_subject,
-			$email_body,
-			$email_headers
-		);
 	}
 
 	/**
