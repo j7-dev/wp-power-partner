@@ -30,8 +30,10 @@ const index = () => {
   })
 
   const { mutate: updatePartnerId } = useMutation({
-    mutationFn: (values: { partner_id: string }) =>
-      axios.post('/power-partner/partner-id', values),
+    mutationFn: (values: {
+      partner_id: string
+      encrypted_account_info: string
+    }) => axios.post('/power-partner/partner-id', values),
     onError: (err) => {
       console.log('err', err)
     },
@@ -43,12 +45,14 @@ const index = () => {
         const theIdentity = res?.data as TIdentity
         setIdentity(theIdentity)
         if (theIdentity?.status === 200) {
-          localStorage.setItem(LOCALSTORAGE_ACCOUNT_KEY, encrypt(values))
+          const encrypted_account_info = encrypt(values)
+          localStorage.setItem(LOCALSTORAGE_ACCOUNT_KEY, encrypted_account_info)
           if (theIdentity?.data?.user_id) {
             // 存入 wp-options  SNAKE . '_partner_id'
 
             updatePartnerId({
               partner_id: theIdentity?.data?.user_id,
+              encrypted_account_info,
             })
           }
         } else {
