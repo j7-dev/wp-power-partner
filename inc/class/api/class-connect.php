@@ -41,7 +41,7 @@ final class Connect {
 				'show_in_rest'      => true,
 				'sanitize_callback' => 'sanitize_text_field',
 				'auth_callback'     => function () {
-					return current_user_can( 'edit_users' );
+					return \current_user_can( 'edit_users' );
 				},
 			)
 		);
@@ -114,10 +114,12 @@ final class Connect {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function set_partner_id_callback( $request ) {
-		$body_params = $request->get_json_params() ?? array();
-		$partner_id  = $body_params['partner_id'] ?? '';
+		$body_params            = $request->get_json_params() ?? array();
+		$partner_id             = $body_params['partner_id'] ?? '';
+		$encrypted_account_info = $body_params['encrypted_account_info'] ?? '';
 		if ( ! empty( $partner_id ) ) {
 			\update_option( Utils::SNAKE . '_partner_id', $partner_id );
+			\update_option( Utils::SNAKE . '_account_info', $encrypted_account_info );
 			return \rest_ensure_response(
 				array(
 					'status'  => 200,
