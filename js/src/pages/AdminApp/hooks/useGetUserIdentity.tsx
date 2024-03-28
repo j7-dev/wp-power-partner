@@ -1,19 +1,52 @@
-import { useEffect } from 'react'
-import { cloudAxios } from '@/api'
+import { useEffect, useState } from 'react'
+import { cloudAxios, axios } from '@/api'
 import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
 import { useSetAtom } from 'jotai'
 import { notification } from 'antd'
 import { renderHTML, LOCALSTORAGE_ACCOUNT_KEY, decrypt } from '@/utils'
 import { TAccountInfo, TIdentity } from '@/pages/AdminApp/types'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { AxiosResponse } from 'axios'
+
+/**
+ * 登入流程
+ * 看 localStorage 有沒有 account 資訊
+ * 有 -> 直接自動登入
+ * 沒有 -> 看 經銷站的 option 有沒有紀錄  account 資訊
+ *
+ * 有 -> 直接自動登入
+ * 沒有 -> 輸入帳密
+ */
+
+type TGetAccountInfo = {
+  status: number
+  message: string
+  data: {
+    encrypted_account_info: string
+  }
+}
 
 export const useGetUserIdentity = () => {
   const setIdentity = useSetAtom(identityAtom)
   const setGlobalLoading = useSetAtom(globalLoadingAtom)
   const accountInLocalStorage = localStorage.getItem(LOCALSTORAGE_ACCOUNT_KEY)
 
-  const mutation = useMutation({
+  const { data } = useQuery<AxiosResponse<TGetAccountInfo>>({
+    queryKey: ['account-info'],
+    queryFn: () => {
+      setGlobalLoading({
+        isLoading: true,
+        label: '正在獲取用戶資料...',
+      })
+      return axios.get('/power-partner/account-info')
+    },
+    enabled: !accountInLocalStorage,
+  })
+
+  const encryptedAccountInfo =
+    accountInLocalStorage || data?.data?.data?.encrypted_account_info
+
+  const mutation = useMutation<unknown, unknown, TAccountInfo, unknown>({
     mutationKey: ['identity'],
     mutationFn: (values: TAccountInfo) => {
       setGlobalLoading({
@@ -41,11 +74,11 @@ export const useGetUserIdentity = () => {
   } as any)
 
   useEffect(() => {
-    if (accountInLocalStorage) {
-      const theAccountInfo = decrypt(accountInLocalStorage, true)
+    if (encryptedAccountInfo) {
+      const theAccountInfo: TAccountInfo = decrypt(encryptedAccountInfo, true)
       mutation.mutate(theAccountInfo)
     }
-  }, [accountInLocalStorage])
+  }, [encryptedAccountInfo])
 
   return mutation
 }

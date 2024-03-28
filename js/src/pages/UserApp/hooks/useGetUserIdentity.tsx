@@ -11,7 +11,7 @@ export const useGetUserIdentity = () => {
   const setIdentity = useSetAtom(identityAtom)
   const setGlobalLoading = useSetAtom(globalLoadingAtom)
 
-  const result = useQuery({
+  const result = useQuery<AxiosResponse<TIdentity>>({
     queryKey: ['identity'],
     queryFn: () => {
       setGlobalLoading({
@@ -21,10 +21,10 @@ export const useGetUserIdentity = () => {
 
       return axios.get('/power-partner/partner-id')
     },
-    onError: (err: any) => {
+    onError: (err) => {
       console.log('err', err)
     },
-    onSuccess: (res: AxiosResponse<TIdentity>) => {
+    onSuccess: (res) => {
       const theIdentity = res?.data as TIdentity
       setIdentity(theIdentity)
       if (theIdentity?.status !== 200) {

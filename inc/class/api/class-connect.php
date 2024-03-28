@@ -24,6 +24,7 @@ final class Connect {
 	public function __construct() {
 		\add_action( 'rest_api_init', array( $this, 'register_user_meta_rest_support' ) );
 		\add_action( 'rest_api_init', array( $this, 'register_api_partner_id' ) );
+		\add_action( 'rest_api_init', array( $this, 'register_api_account_info' ) );
 	}
 
 	/**
@@ -136,6 +137,45 @@ final class Connect {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Register account info API
+	 *
+	 * @return void
+	 */
+	public function register_api_account_info(): void {
+		\register_rest_route(
+			Utils::KEBAB,
+			'account-info',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_account_info_callback' ),
+				'permission_callback' => '__return_true',
+				// 'permission_callback' => function () {
+				// return \current_user_can( 'manage_options' );
+				// },
+			)
+		);
+	}
+
+	/**
+	 * Callback of get_account_info API
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_account_info_callback() {
+		$encrypted_account_info = \get_option( Utils::SNAKE . '_account_info' );
+
+		return \rest_ensure_response(
+			array(
+				'status'  => 200,
+				'message' => 'success',
+				'data'    => array(
+					'encrypted_account_info' => $encrypted_account_info,
+				),
+			)
+		);
 	}
 }
 
