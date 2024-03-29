@@ -1,10 +1,9 @@
 <?php
-
 /**
  * Plugin Name:       Power Partner | 讓每個人都可以輕鬆地販售網站模板
  * Plugin URI:        https://cloud.luke.cafe/plugins/power-partner/
  * Description:       Power Partner 是一個 WordPress 套件，安裝後，可以讓你的 Woocommerce 商品與 cloud.luke.cafe 的模板網站連結，並且可以讓使用者自訂商品的價格，當用戶在您的網站下單後，會自動在 cloud.luke.cafe 創建網站，並且自動發送通知給用戶跟您。
- * Version:           1.3.0
+ * Version:           1.3.1
  * Requires at least: 5.7
  * Requires PHP:      7.4
  * Author:            J7
@@ -25,10 +24,23 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+/**
+ * Class Plugin
+ */
 final class Plugin {
 
+	/**
+	 * Instance
+	 *
+	 * @var Plugin
+	 */
 	private static $instance;
 
+	/**
+	 * Required plugins
+	 *
+	 * @var array
+	 */
 	public $required_plugins = array(
 		array(
 			'name'     => 'WooCommerce',
@@ -52,9 +64,12 @@ final class Plugin {
 		),
 	);
 
+	/**
+	 * Constructor
+	 */
 	public function __construct() {
 		require_once __DIR__ . '/required_plugins/index.php';
-		require_once __DIR__ . '/inc/utils/class-utils.php';
+		require_once __DIR__ . '/inc/utils/index.php';
 		require_once __DIR__ . '/inc/class/class-bootstrap.php';
 
 		\register_activation_hook( __FILE__, array( $this, 'activate' ) );
@@ -65,6 +80,11 @@ final class Plugin {
 		$this->plugin_update_checker();
 	}
 
+	/**
+	 * Check required plugins
+	 *
+	 * @return void
+	 */
 	public function check_required_plugins() {
 		$instance          = call_user_func( array( __NAMESPACE__ . '\TGM_Plugin_Activation', 'get_instance' ) );
 		$is_tgmpa_complete = $instance->is_tgmpa_complete();
@@ -74,6 +94,11 @@ final class Plugin {
 		}
 	}
 
+	/**
+	 * Instance
+	 *
+	 * @return Plugin
+	 */
 	public static function instance() {
 		if ( empty( self::$instance ) ) {
 			self::$instance = new self();
@@ -83,20 +108,32 @@ final class Plugin {
 
 	/**
 	 * Wp plugin 更新檢查 update checker
+	 *
+	 * @return void
 	 */
 	public function plugin_update_checker(): void {
-		$updateChecker = PucFactory::buildUpdateChecker(
+		$update_checker = PucFactory::buildUpdateChecker(
 			Utils::GITHUB_REPO,
 			__FILE__,
 			Utils::KEBAB
 		);
-		$updateChecker->setBranch( 'master' );
-		$updateChecker->setAuthentication( Utils::get_github_pat() );
-		$updateChecker->getVcsApi()->enableReleaseAssets();
+		/**
+		 * Type
+		 *
+		 * @var \Puc_v4p4_VcsApi_GitHub $update_checker
+		 */
+		$update_checker->setBranch( 'master' );
+		$update_checker->setAuthentication( Utils::get_github_pat() );
+		$update_checker->getVcsApi()->enableReleaseAssets();
 	}
 
+	/**
+	 * Register required plugins
+	 *
+	 * @return void
+	 */
 	public function register_required_plugins(): void {
-
+		// phpcs:disable
 		$config = array(
 			'id'           => Utils::KEBAB, // Unique ID for hashing notices for multiple instances of TGMPA.
 			'default_path' => '', // Default absolute path to bundled plugins.
@@ -105,78 +142,78 @@ final class Plugin {
 			'capability'   => 'manage_options', // Capability needed to view plugin install page, should be a capability associated with the parent menu used.
 			'has_notices'  => true, // Show admin notices or not.
 			'dismissable'  => false, // If false, a user cannot dismiss the nag message.
-			'dismiss_msg'  => __( '這個訊息將在依賴套件被安裝並啟用後消失。' . Utils::APP_NAME . ' 沒有這些依賴套件的情況下將無法運作！', Utils::SNAKE ), // If 'dismissable' is false, this message will be output at top of nag.
+			'dismiss_msg'  => __( '這個訊息將在依賴套件被安裝並啟用後消失。' . Utils::APP_NAME . ' 沒有這些依賴套件的情況下將無法運作！', 'power_partner' ), // If 'dismissable' is false, this message will be output at top of nag.
 			'is_automatic' => true, // Automatically activate plugins after installation or not.
 			'message'      => '', // Message to output right before the plugins table.
 			'strings'      => array(
-				'page_title'                      => __( '安裝依賴套件', Utils::SNAKE ),
-				'menu_title'                      => __( '安裝依賴套件', Utils::SNAKE ),
-				'installing'                      => __( '安裝套件: %s', Utils::SNAKE ), // translators: %s: plugin name.
-				'updating'                        => __( '更新套件: %s', Utils::SNAKE ), // translators: %s: plugin name.
-				'oops'                            => __( 'OOPS! plugin API 出錯了', Utils::SNAKE ),
+				'page_title'                      => __( '安裝依賴套件', 'power_partner' ),
+				'menu_title'                      => __( '安裝依賴套件', 'power_partner' ),
+				'installing'                      => __( '安裝套件: %s', 'power_partner' ), // translators: %s: plugin name.
+				'updating'                        => __( '更新套件: %s', 'power_partner' ), // translators: %s: plugin name.
+				'oops'                            => __( 'OOPS! plugin API 出錯了', 'power_partner' ),
 				'notice_can_install_required'     => _n_noop(
 					// translators: 1: plugin name(s).
 					Utils::APP_NAME . ' 依賴套件: %1$s.',
 					Utils::APP_NAME . ' 依賴套件: %1$s.',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'notice_can_install_recommended'  => _n_noop(
 					// translators: 1: plugin name(s).
 					Utils::APP_NAME . ' 推薦套件: %1$s.',
 					Utils::APP_NAME . ' 推薦套件: %1$s.',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'notice_ask_to_update'            => _n_noop(
 					// translators: 1: plugin name(s).
 					'以下套件需要更新版本來兼容 ' . Utils::APP_NAME . ': %1$s.',
 					'以下套件需要更新版本來兼容 ' . Utils::APP_NAME . ': %1$s.',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'notice_ask_to_update_maybe'      => _n_noop(
 					// translators: 1: plugin name(s).
 					'以下套件有更新: %1$s.',
 					'以下套件有更新: %1$s.',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'notice_can_activate_required'    => _n_noop(
 					// translators: 1: plugin name(s).
 					'以下依賴套件目前為停用狀態: %1$s.',
 					'以下依賴套件目前為停用狀態: %1$s.',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'notice_can_activate_recommended' => _n_noop(
 					// translators: 1: plugin name(s).
 					'以下推薦套件目前為停用狀態: %1$s.',
 					'以下推薦套件目前為停用狀態: %1$s.',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'install_link'                    => _n_noop(
 					'安裝套件',
 					'安裝套件',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'update_link'                     => _n_noop(
 					'更新套件',
 					'更新套件',
-					Utils::SNAKE
+					'power_partner'
 				),
 				'activate_link'                   => _n_noop(
 					'啟用套件',
 					'啟用套件',
-					Utils::SNAKE
+					'power_partner'
 				),
-				'return'                          => __( '回到安裝依賴套件', Utils::SNAKE ),
-				'plugin_activated'                => __( '套件啟用成功', Utils::SNAKE ),
-				'activated_successfully'          => __( '以下套件已成功啟用:', Utils::SNAKE ),
+				'return'                          => __( '回到安裝依賴套件', 'power_partner' ),
+				'plugin_activated'                => __( '套件啟用成功', 'power_partner' ),
+				'activated_successfully'          => __( '以下套件已成功啟用:', 'power_partner' ),
 				// translators: 1: plugin name.
-				'plugin_already_active'           => __( '沒有執行任何動作 %1$s 已啟用', Utils::SNAKE ),
+				'plugin_already_active'           => __( '沒有執行任何動作 %1$s 已啟用', 'power_partner' ),
 				// translators: 1: plugin name.
-				'plugin_needs_higher_version'     => __( Utils::APP_NAME . ' 未啟用。' . Utils::APP_NAME . ' 需要新版本的 %s 。請更新套件。', Utils::SNAKE ),
+				'plugin_needs_higher_version'     => __( Utils::APP_NAME . ' 未啟用。' . Utils::APP_NAME . ' 需要新版本的 %s 。請更新套件。', 'power_partner' ),
 				// translators: 1: dashboard link.
-				'complete'                        => __( '所有套件已成功安裝跟啟用 %1$s', Utils::SNAKE ),
-				'dismiss'                         => __( '關閉通知', Utils::SNAKE ),
-				'notice_cannot_install_activate'  => __( '有一個或以上的依賴/推薦套件需要安裝/更新/啟用', Utils::SNAKE ),
-				'contact_admin'                   => __( '請聯繫網站管理員', Utils::SNAKE ),
+				'complete'                        => __( '所有套件已成功安裝跟啟用 %1$s', 'power_partner' ),
+				'dismiss'                         => __( '關閉通知', 'power_partner' ),
+				'notice_cannot_install_activate'  => __( '有一個或以上的依賴/推薦套件需要安裝/更新/啟用', 'power_partner' ),
+				'contact_admin'                   => __( '請聯繫網站管理員', 'power_partner' ),
 
 				'nag_type'                        => 'error', // Determines admin notice type - can only be one of the typical WP notice classes, such as 'updated', 'update-nag', 'notice-warning', 'notice-info' or 'error'. Some of which may not work as expected in older WP versions.
 			),

@@ -11,8 +11,8 @@
     "build:main": "vite build --config vite.config.js && mv js/dist/.vite/manifest.json js/dist/",
     "preview": "vite preview",
     "format": "prettier-eslint --write \"js/src/**/*.tsx\"",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "lint": "eslint . --ext .ts,.tsx && phpcbf",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix  && phpcbf",
     "push": "npm version patch && git push"
   },
   "pre-commit": [

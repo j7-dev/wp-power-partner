@@ -39,7 +39,7 @@ final class Fetch {
 			'body'    => \wp_json_encode( $props ),
 			'headers' => array(
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode( Utils::USER_NAME . ':' . Utils::PASSWORD ),
+				'Authorization' => 'Basic ' . \base64_encode( Utils::USER_NAME . ':' . Utils::PASSWORD ), // phpcs:ignore
 			),
 			'timeout' => 600,
 		);

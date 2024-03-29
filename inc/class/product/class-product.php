@@ -79,7 +79,7 @@ final class Product {
 			$host_position = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
 			$host_position = empty( $host_position ) ? 'jp' : $host_position;
 
-			$responseObj = Fetch::site_sync(
+			$response_obj = Fetch::site_sync(
 				array(
 					'site_url'      => \site_url(),
 					'site_id'       => $linked_site_id,
@@ -97,9 +97,9 @@ final class Product {
 			);
 
 			$responses[] = array(
-				'status'  => $responseObj->status,
-				'message' => $responseObj->message,
-				'data'    => $responseObj->data,
+				'status'  => $response_obj->status,
+				'message' => $response_obj->message,
+				'data'    => $response_obj->data,
 			);
 		}
 		ob_start();
