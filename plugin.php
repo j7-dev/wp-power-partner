@@ -11,7 +11,7 @@
  * Author URI:        https://github.com/j7-dev
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       power-partner-server
+ * Text Domain:       power_partner
  * Domain Path:       /languages
  * Tags: WPCD
  */

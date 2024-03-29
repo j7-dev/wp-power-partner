@@ -28,7 +28,7 @@ final class Setting {
 			'title' => Utils::APP_NAME,
 			'id'    => Utils::KEBAB,
 			'class' => self::CONNECT_APP_CLASS,
-			'desc'  => '<p><span class="dashicons dashicons-info" style="color: #52accc;"></span>' . sprintf( esc_html__( '可以到 %1$s 查看主要功能與使用方式', 'power-partner' ), '<a href="' . Utils::GITHUB_REPO . '" target="_blank">Github 頁面</a>' ) . '<p>',
+			'desc'  => '<p><span class="dashicons dashicons-info" style="color: #52accc;"></span>' . sprintf( \esc_html__( '可以到 %1$s 查看主要功能與使用方式', 'power_partner' ), '<a href="' . Utils::GITHUB_REPO . '" target="_blank">Github 頁面</a>' ) . '<p>',
 			'icon'  => 'el el-digg',
 		);
 
