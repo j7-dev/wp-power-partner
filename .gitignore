@@ -9,8 +9,6 @@ lerna-debug.log*
 
 node_modules
 vendor
-/js/dist
-/js/dist_product_tab
 dist-ssr
 *.local
 

@@ -1,10 +1,17 @@
 <?php
+/**
+ * SiteSelector
+ *
+ * @deprecated
+ * 路可說直接用文字輸入框就好，避免經銷商賣到別人的 template
+ */
 
 declare(strict_types=1);
 
 namespace J7\PowerPartner\Components;
 
 use J7\PowerPartner\Utils;
+use J7\PowerPartner\Product\DataTabs;
 
 final class SiteSelector {
 
@@ -81,7 +88,7 @@ final class SiteSelector {
 		$template_sites = $this->get_template_sites();
 		$post_id        = $_GET['post'] ?? '';
 		if ( ! empty( $post_id ) ) {
-			$linked_site_id = (int) \get_post_meta( $post_id, 'linked_site', true );
+			$linked_site_id = (int) \get_post_meta( $post_id, DataTabs::DataTabs::LINKED_SITE_FIELD_NAME, true );
 			$linked_site    = array_filter(
 				$template_sites,
 				function ( $site ) use ( $linked_site_id ) {

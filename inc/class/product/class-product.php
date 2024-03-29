@@ -8,28 +8,30 @@ declare (strict_types = 1);
 namespace J7\PowerPartner;
 
 use J7\PowerPartner\Api\Fetch;
-use J7\PowerPartner\Components\SiteSelector;
-use J7\PowerPartner\Product\Attributes;
+use J7\PowerPartner\Product\DataTabs;
 
 /**
- * 新增 product tab 當商品類型為可變訂閱時
+ * Class Product
  */
 final class Product {
 
-	const PRODUCT_TYPE_SLUG = Utils::SNAKE;
 	const PRODUCT_TYPE_NAME = Utils::APP_NAME . ' 產品';
 
+	/**
+	 * Constructor
+	 */
 	public function __construct() {
 		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-		\add_filter( 'woocommerce_product_data_tabs', array( $this, 'add_product_tab' ), 50, 1 );
-		\add_action( 'woocommerce_product_data_panels', array( $this, 'add_product_tab_content' ) );
-		\add_action( 'woocommerce_process_product_meta', array( $this, 'save_product_tab_content' ) );
-
 		\add_action( 'woocommerce_order_status_completed', array( $this, 'do_site_sync' ) );
 		// \add_action('admin_init', [ $this, 'do_site_sync_test' ]);
 	}
 
-	public function enqueue_assets() {
+	/**
+	 * Enqueue assets
+	 *
+	 * @return void
+	 */
+	public function enqueue_assets(): void {
 		$screen = \get_current_screen();
 		if ( $screen->id !== 'product' ) {
 			return;
@@ -47,50 +49,14 @@ final class Product {
 		);
 	}
 
-	/**
-	 * @param array $tabs
-	 * @return array
-	 */
-	public function add_product_tab( $tabs ) {
-		$tabs[ self::PRODUCT_TYPE_SLUG ] = array(
-			'label'    => __( 'Power Partner', Utils::TEXT_DOMAIN ),
-			'target'   => self::PRODUCT_TYPE_SLUG,
-			'class'    => array(
-				'show_if_variable-subscription', // 僅在可變訂閱顯示
-			),
-			'priority' => 80,
-		);
-
-		return $tabs;
-	}
-
-	public function add_product_tab_content(): void {
-		$post_id      = $_GET['post'] ?? null;
-		$siteSelector = SiteSelector::get_instance();
-		$defaultValue = (string) \get_post_meta( $post_id, 'linked_site', true );
-		?>
-<div id="<?php echo self::PRODUCT_TYPE_SLUG; ?>_product_data" style="float:left; width:80%;display:none;">
-	<div style="padding:1.5rem 1rem;">
-		<?php echo $siteSelector->render( $defaultValue ); ?>
-	</div>
-</div>
-		<?php
-	}
-
-	public function save_product_tab_content( $post_id ): void {
-		if ( isset( $_POST['linked_site'] ) ) {
-			$linked_site = \sanitize_text_field( $_POST['linked_site'] );
-			\update_post_meta( $post_id, 'linked_site', $linked_site );
-		}
-	}
 
 	/**
 	 * Do site sync
 	 *
-	 * @param int $order_id
+	 * @param int $order_id order id
 	 * @return void
 	 */
-	public function do_site_sync( $order_id ) {
+	public function do_site_sync( $order_id ): void {
 		$order = \wc_get_order( $order_id );
 		if ( ! $order ) {
 			return;
@@ -98,19 +64,20 @@ final class Product {
 		$items     = $order->get_items();
 		$responses = array();
 		foreach ( $items as $item ) {
+			/**
+			 * Type
+			 *
+			 * @var \WC_Order_Item_Product $item
+			 */
 			$product_id     = $item->get_product_id();
 			$product        = \wc_get_product( $product_id );
-			$linked_site_id = \get_post_meta( $product_id, 'linked_site', true );
+			$linked_site_id = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
 			if ( empty( $linked_site_id ) ) {
 				continue;
 			}
 
-			if ( $product->is_type( 'variable' ) ) {
-				$variation_id  = $item->get_variation_id();
-				$variation     = \wc_get_product( $variation_id );
-				$attributes    = $variation->get_attributes(); // [pa_power_partner_host_position] => jp | tw
-				$host_position = $attributes[ Attributes::TAXONOMY ] ?? '';
-			}
+			$host_position = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+			$host_position = empty( $host_position ) ? 'jp' : $host_position;
 
 			$responseObj = Fetch::site_sync(
 				array(
@@ -151,7 +118,7 @@ final class Product {
 			$order->add_order_note( $responses_string );
 		}
 
-		$order->update_meta_data( Utils::ORDER_META_KEY, json_encode( $responses ) );
+		$order->update_meta_data( Utils::ORDER_META_KEY, \wp_json_encode( $responses ) );
 
 		$order->save();
 	}

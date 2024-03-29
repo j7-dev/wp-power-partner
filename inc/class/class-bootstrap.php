@@ -25,7 +25,7 @@ final class Bootstrap {
 		require_once __DIR__ . '/class-order-view.php';
 		require_once __DIR__ . '/product/index.php';
 		require_once __DIR__ . '/shortcode/index.php';
-		require_once __DIR__ . '/components/index.php';
+		// require_once __DIR__ . '/components/index.php'; // deprecated
 
 		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 100 );
 		\add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_script' ), 100 );
