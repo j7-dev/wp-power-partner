@@ -31,7 +31,7 @@ export const useGetUserIdentity = () => {
   const setGlobalLoading = useSetAtom(globalLoadingAtom)
   const accountInLocalStorage = localStorage.getItem(LOCALSTORAGE_ACCOUNT_KEY)
 
-  const { data } = useQuery<AxiosResponse<TGetAccountInfo>>({
+  const { data, isLoading } = useQuery<AxiosResponse<TGetAccountInfo>>({
     queryKey: ['account-info'],
     queryFn: () => {
       setGlobalLoading({
@@ -69,6 +69,12 @@ export const useGetUserIdentity = () => {
         })
       }
     },
+    onSettled: () => {
+      setGlobalLoading({
+        isLoading: false,
+        label: '',
+      })
+    },
     staleTime: 1000 * 60 * 60 * 24,
     cacheTime: 1000 * 60 * 60 * 24,
   } as any)
@@ -79,6 +85,15 @@ export const useGetUserIdentity = () => {
       mutation.mutate(theAccountInfo)
     }
   }, [encryptedAccountInfo])
+
+  useEffect(() => {
+    if (!isLoading) {
+      setGlobalLoading({
+        isLoading: false,
+        label: '',
+      })
+    }
+  }, [isLoading])
 
   return mutation
 }

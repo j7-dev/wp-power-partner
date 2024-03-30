@@ -80,7 +80,6 @@ final class Product {
 				$variation_id  = $item->get_variation_id();
 				$host_position = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
 			} elseif ( 'subscription' === $product->get_type() ) {
-				// TODO 簡單訂閱  待驗證
 				$host_position = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
 			} else {
 				continue;
