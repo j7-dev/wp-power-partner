@@ -50,6 +50,14 @@ final class DataTabs {
 	 * @return void
 	 */
 	public function custom_field( $loop, $variation_data, $variation ): void { // phpcs:ignore
+		global $post;
+		$post_id      = $post->ID;
+		$product      = \wc_get_product( $post_id );
+		$product_type = $product->get_type();
+		if ( 'variable-subscription' !== $product_type ) {
+			return;
+		}
+
 		$variation_id        = $variation->ID;
 		$host_position_value = \get_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? 'jp' : $host_position_value;
