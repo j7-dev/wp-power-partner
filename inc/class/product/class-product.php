@@ -113,12 +113,21 @@ final class Product {
 		ob_start();
 		print_r( $responses );
 		$responses_string = ob_get_clean();
+
 		// 把網站建立成功與否的資訊存到訂單的 meta data
-		if ( is_array( $responses ) && count( $responses ) === 1 ) {
-			$data = $responses[0]['data'] ?? array();
-			$note = '';
-			foreach ( $data as $key => $value ) {
-				$note .= $key . ': ' . $value . '<br />';
+		if ( is_array( $responses ) && count( $responses ) >= 1 ) {
+			$note     = '';
+			$response = $responses[0];
+			if ( $response['status'] === 200 ) {
+				$data = $response['data'] ?? array();
+
+				foreach ( $data as $key => $value ) {
+					$note .= $key . ': ' . $value . '<br />';
+				}
+			} else {
+				ob_start();
+				print_r( $response );
+				$note = ob_get_clean();
 			}
 
 			$order->add_order_note( $note );
