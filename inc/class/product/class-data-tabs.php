@@ -36,7 +36,7 @@ final class DataTabs {
 	public function __construct() {
 		// \add_action( 'woocommerce_subscriptions_product_options_pricing', array( $this, 'custom_field' ), 20 );
 		\add_action( 'woocommerce_product_after_variable_attributes', array( $this, 'custom_field' ), 20, 3 );
-		\add_action( 'woocommerce_save_product_variation', array( $this, 'save_product_tab_content' ), 20 );
+		\add_action( 'woocommerce_save_product_variation', array( $this, 'save_product_tab_content' ), 20, 2 );
 	}
 
 	/**
@@ -50,10 +50,8 @@ final class DataTabs {
 	 * @return void
 	 */
 	public function custom_field( $loop, $variation_data, $variation ): void { // phpcs:ignore
-
-		global $post;
-		$post_id             = $post->ID;
-		$host_position_value = \get_post_meta( $post_id, self::HOST_POSITION_FIELD_NAME, true );
+		$variation_id        = $variation->ID;
+		$host_position_value = \get_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? 'jp' : $host_position_value;
 
 		\woocommerce_wp_radio(
@@ -68,7 +66,7 @@ final class DataTabs {
 			)
 		);
 
-		$linked_site_value = (string) \get_post_meta( $post_id, self::LINKED_SITE_FIELD_NAME, true );
+		$linked_site_value = (string) \get_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, true );
 
 		\woocommerce_wp_text_input(
 			array(
@@ -93,13 +91,13 @@ final class DataTabs {
 	 */
 	public function save_product_tab_content( $variation_id, $loop ): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		if ( ! isset( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) ) {
-			$host_position = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ] ) );
+		if ( isset( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) ) {
+			$host_position = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) );
 			\update_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, $host_position );
 		}
 
 		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) ) {
-			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) );
+			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) );
 			\update_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
 		}
 	}
