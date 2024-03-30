@@ -35,16 +35,22 @@ final class DataTabs {
 	 */
 	public function __construct() {
 		// \add_action( 'woocommerce_subscriptions_product_options_pricing', array( $this, 'custom_field' ), 20 );
-		\add_action( 'woocommerce_product_after_variable_attributes', array( $this, 'custom_field' ), 20 );
-		\add_action( 'woocommerce_process_product_meta', array( $this, 'save_product_tab_content' ) );
+		\add_action( 'woocommerce_product_after_variable_attributes', array( $this, 'custom_field' ), 20, 3 );
+		\add_action( 'woocommerce_save_product_variation', array( $this, 'save_product_tab_content' ), 20 );
 	}
 
 	/**
 	 * Custom field
+	 * Add custom field to product tab
+	 *
+	 * @param int      $loop loop
+	 * @param array    $variation_data variation data
+	 * @param \WP_Post $variation variation post object
 	 *
 	 * @return void
 	 */
-	public function custom_field(): void {
+	public function custom_field( $loop, $variation_data, $variation ): void { // phpcs:ignore
+
 		global $post;
 		$post_id             = $post->ID;
 		$host_position_value = \get_post_meta( $post_id, self::HOST_POSITION_FIELD_NAME, true );
@@ -52,11 +58,13 @@ final class DataTabs {
 
 		\woocommerce_wp_radio(
 			array(
-				'id'      => self::HOST_POSITION_FIELD_NAME,
-				'name'    => self::HOST_POSITION_FIELD_NAME,
-				'label'   => '主機種類',
-				'options' => $this->host_positions,
-				'value'   => $host_position_value,
+				'id'            => self::HOST_POSITION_FIELD_NAME . '[' . $loop . ']',
+				'label'         => '主機種類',
+				'wrapper_class' => 'form-row',
+				'desc_tip'      => true,
+				'description'   => '不同地區的主機，預設為日本',
+				'options'       => $this->host_positions,
+				'value'         => $host_position_value,
 			)
 		);
 
@@ -64,12 +72,13 @@ final class DataTabs {
 
 		\woocommerce_wp_text_input(
 			array(
-				'id'          => self::LINKED_SITE_FIELD_NAME,
-				'name'        => self::LINKED_SITE_FIELD_NAME,
-				'value'       => $linked_site_value,
-				'label'       => '連結的網站 id',
-				'desc_tip'    => true,
-				'description' => '如果不知道要輸入什麼，請聯繫站長路可',
+				'id'            => self::LINKED_SITE_FIELD_NAME . '[' . $loop . ']',
+				'label'         => '連結的網站 id',
+				'wrapper_class' => 'form-row',
+				'desc_tip'      => true,
+				'description'   => '如果不知道要輸入什麼，請聯繫站長路可',
+				'value'         => $linked_site_value,
+
 			)
 		);
 	}
@@ -78,19 +87,20 @@ final class DataTabs {
 	/**
 	 * Save product tab content
 	 *
-	 * @param int $post_id post id
+	 * @param int $variation_id variation id
+	 * @param int $loop loop
 	 * @return void
 	 */
-	public function save_product_tab_content( $post_id ): void {
+	public function save_product_tab_content( $variation_id, $loop ): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		if ( ! isset( $_POST[ self::HOST_POSITION_FIELD_NAME ] ) ) {
+		if ( ! isset( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) ) {
 			$host_position = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ] ) );
-			\update_post_meta( $post_id, self::HOST_POSITION_FIELD_NAME, $host_position );
+			\update_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, $host_position );
 		}
 
-		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) ) {
+		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) ) {
 			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) );
-			\update_post_meta( $post_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
+			\update_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
 		}
 	}
 }
