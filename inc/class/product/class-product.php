@@ -68,20 +68,22 @@ final class Product {
 			 *
 			 * @var \WC_Order_Item_Product $item
 			 */
-			$product_id     = $item->get_product_id();
-			$product        = \wc_get_product( $product_id );
-			$linked_site_id = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
-			if ( empty( $linked_site_id ) ) {
-				continue;
-			}
+			$product_id = $item->get_product_id();
+			$product    = \wc_get_product( $product_id );
 
 			// 如果不是可變訂閱商品，就不處理
 			if ( 'variable-subscription' === $product->get_type() ) {
-				$variation_id  = $item->get_variation_id();
-				$host_position = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$variation_id   = $item->get_variation_id();
+				$host_position  = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id = \get_post_meta( $variation_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
 			} elseif ( 'subscription' === $product->get_type() ) {
-				$host_position = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$host_position  = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
 			} else {
+				continue;
+			}
+
+			if ( empty( $linked_site_id ) ) {
 				continue;
 			}
 
