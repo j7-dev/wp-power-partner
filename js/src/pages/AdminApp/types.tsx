@@ -12,6 +12,9 @@ export type TIdentityData = {
     title: string
     discount: string
   }
+  allowed_template_options: {
+    [key: string]: string
+  }
 } | null
 
 export type TIdentity = {

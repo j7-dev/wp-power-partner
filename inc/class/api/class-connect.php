@@ -16,16 +16,14 @@ use J7\PowerPartner\Utils;
  */
 final class Connect {
 
-	const USERMETA_IDENTITY = 'connect_app_identity';
-	const OPTION_NAME       = Utils::SNAKE . '_partner_id';
+	const USERMETA_IDENTITY      = 'connect_app_identity';
+	const PARTNER_ID_OPTION_NAME = Utils::SNAKE . '_partner_id';
 
 	/**
 	 * Connect constructor.
 	 */
 	public function __construct() {
-		\add_action( 'rest_api_init', array( $this, 'register_user_meta_rest_support' ) );
-		\add_action( 'rest_api_init', array( $this, 'register_api_partner_id' ) );
-		\add_action( 'rest_api_init', array( $this, 'register_api_account_info' ) );
+		\add_action( 'rest_api_init', array( $this, 'register_apis' ) );
 	}
 
 	/**
@@ -33,7 +31,11 @@ final class Connect {
 	 *
 	 * @return void
 	 */
-	public function register_user_meta_rest_support(): void {
+	public function register_apis(): void {
+
+		/**
+		 * 讓 user_meta `connect_app_identity` 支援 rest api
+		 */
 		\register_meta(
 			'user',
 			self::USERMETA_IDENTITY,
@@ -47,14 +49,10 @@ final class Connect {
 				},
 			)
 		);
-	}
 
-	/**
-	 * Register partner id API
-	 *
-	 * @return void
+		/**
+	 * Register GET partner id API
 	 */
-	public function register_api_partner_id(): void {
 		\register_rest_route(
 			Utils::KEBAB,
 			'partner-id',
@@ -65,6 +63,9 @@ final class Connect {
 			)
 		);
 
+		/**
+	 * Register SET partner id API
+	 */
 		\register_rest_route(
 			Utils::KEBAB,
 			'partner-id',
@@ -76,7 +77,24 @@ final class Connect {
 				},
 			)
 		);
+
+		/**
+	 * Register account info API
+	 */
+		\register_rest_route(
+			Utils::KEBAB,
+			'account-info',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_account_info_callback' ),
+				'permission_callback' => '__return_true',
+			// 'permission_callback' => function () {
+			// return \current_user_can( 'manage_options' );
+			// },
+			)
+		);
 	}
+
 
 	/**
 	 * Callback of get_partner_id API
@@ -116,12 +134,15 @@ final class Connect {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function set_partner_id_callback( $request ) {
-		$body_params            = $request->get_json_params() ?? array();
-		$partner_id             = $body_params['partner_id'] ?? '';
-		$encrypted_account_info = $body_params['encrypted_account_info'] ?? '';
+		$body_params              = $request->get_json_params() ?? array();
+		$partner_id               = $body_params['partner_id'] ?? '';
+		$encrypted_account_info   = $body_params['encrypted_account_info'] ?? '';
+		$allowed_template_options = $body_params['allowed_template_options'] ?? array();
+
 		if ( ! empty( $partner_id ) ) {
-			\update_option( self::OPTION_NAME, $partner_id );
+			\update_option( self::PARTNER_ID_OPTION_NAME, $partner_id );
 			\update_option( Utils::SNAKE . '_account_info', $encrypted_account_info );
+			\set_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY, (array) $allowed_template_options, Fetch::ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME );
 			return \rest_ensure_response(
 				array(
 					'status'  => 200,
@@ -140,25 +161,6 @@ final class Connect {
 		}
 	}
 
-	/**
-	 * Register account info API
-	 *
-	 * @return void
-	 */
-	public function register_api_account_info(): void {
-		\register_rest_route(
-			Utils::KEBAB,
-			'account-info',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_account_info_callback' ),
-				'permission_callback' => '__return_true',
-				// 'permission_callback' => function () {
-				// return \current_user_can( 'manage_options' );
-				// },
-			)
-		);
-	}
 
 	/**
 	 * Callback of get_account_info API

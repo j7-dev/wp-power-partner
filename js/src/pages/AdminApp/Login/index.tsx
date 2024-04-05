@@ -33,6 +33,9 @@ const index = () => {
     mutationFn: (values: {
       partner_id: string
       encrypted_account_info: string
+      allowed_template_options: {
+        [key: string]: string
+      }
     }) => axios.post('/power-partner/partner-id', values),
     onError: (err) => {
       console.log('err', err)
@@ -53,6 +56,8 @@ const index = () => {
             updatePartnerId({
               partner_id: theIdentity?.data?.user_id,
               encrypted_account_info,
+              allowed_template_options:
+                theIdentity?.data?.allowed_template_options,
             })
           }
         } else {

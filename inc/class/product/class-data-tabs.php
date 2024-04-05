@@ -11,6 +11,7 @@ namespace J7\PowerPartner\Product;
 
 use J7\PowerPartner\Utils;
 use J7\PowerPartner\Api\Connect;
+use J7\PowerPartner\Api\Fetch;
 
 /**
  * Class DataTabs
@@ -20,6 +21,8 @@ final class DataTabs {
 	const LINKED_SITE_FIELD_NAME   = Utils::SNAKE . '_linked_site';
 	const PRODUCT_TYPE_SLUG        = Utils::SNAKE;
 	const DEFAULT_HOST_POSITION    = 'jp';
+
+	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME = 'clear_' . Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
 
 
 	/**
@@ -33,6 +36,13 @@ final class DataTabs {
 	);
 
 	/**
+	 * Allowed template options
+	 *
+	 * @var array
+	 */
+	public static $allowed_template_options = array();
+
+	/**
 	 * Constructor
 	 */
 	public function __construct() {
@@ -42,6 +52,10 @@ final class DataTabs {
 
 		\add_action( 'woocommerce_product_after_variable_attributes', array( $this, 'custom_field_variable_subscription' ), 20, 3 );
 		\add_action( 'woocommerce_save_product_variation', array( $this, 'save_variable_subscription' ), 20, 2 );
+
+		\add_action( 'admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, array( $this, 'clear_allowed_template_options_transient_callback' ) );
+
+		self::$allowed_template_options = Fetch::get_allowed_template_options();
 	}
 
 	/**
@@ -58,7 +72,7 @@ final class DataTabs {
 
 		echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
 
-		$partner_id = \get_option( Connect::OPTION_NAME );
+		$partner_id = \get_option( Connect::PARTNER_ID_OPTION_NAME );
 
 		if ( ! empty( $partner_id ) ) {
 			\woocommerce_wp_radio(
@@ -73,41 +87,7 @@ final class DataTabs {
 				)
 			);
 
-			$linked_site_value = (string) \get_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, true );
-
-			// $args = array(
-			// 'headers' => array(
-			// 'Content-Type'  => 'application/json',
-			// 'Authorization' => 'Basic ' . \base64_encode( Utils::USER_NAME . ':' . Utils::PASSWORD ), // phpcs:ignore
-			// ),
-			// 'timeout' => 30,
-			// );
-
-			// $response = \wp_remote_get( Utils::API_URL . '/wp-json/power-partner-server/get-template-sites?user_id=' . $partner_id, $args );
-
-			\woocommerce_wp_select(
-				array(
-					'id'            => self::LINKED_SITE_FIELD_NAME,
-					'label'         => '連結的網站 id',
-					'wrapper_class' => 'form-field',
-					'desc_tip'      => true,
-					'description'   => '如果想要更多模板站，請聯繫站長路可',
-					'value'         => $linked_site_value,
-					'options'       => array(
-						''   => '請選擇',
-						'1'  => '模板站 1',
-						'2'  => '模板站 2',
-						'3'  => '模板站 3',
-						'4'  => '模板站 4',
-						'5'  => '模板站 5',
-						'6'  => '模板站 6',
-						'7'  => '模板站 7',
-						'8'  => '模板站 8',
-						'9'  => '模板站 9',
-						'10' => '模板站 10',
-					),
-				)
-			);
+			self::render_linked_site_subscription( $product_id );
 		} else {
 			\woocommerce_wp_note(
 				array(
@@ -119,6 +99,39 @@ final class DataTabs {
 		}
 
 		echo '</div>';
+	}
+
+	/**
+	 * Render linked site for subscription product
+	 * 顯示連結的網站
+	 *
+	 * @param  int $product_id product id
+	 *
+	 * @return void
+	 */
+	public static function render_linked_site_subscription( $product_id ) {
+
+		$linked_site_value = (string) \get_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, true );
+
+		$action_url = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+
+		\woocommerce_wp_select(
+			array(
+				'id'            => self::LINKED_SITE_FIELD_NAME,
+				'label'         => '連結的網站 id',
+				'wrapper_class' => 'form-field',
+				'desc_tip'      => false,
+				'description'   => '<a href="' . $action_url . '"><button type="button" class="button">清除快取</button></a>',
+				'value'         => $linked_site_value,
+				'options'       => array_merge( array( '' => '請選擇' ), self::$allowed_template_options ),
+			)
+		);
+
+		echo '<p class="description" style="
+		padding-left: 155px;
+		top: -10px;
+		position: relative;
+		">如果想要更多模板站，請聯繫站長路可，只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。</p>';
 	}
 
 	/**
@@ -167,18 +180,41 @@ final class DataTabs {
 			)
 		);
 
+		self::render_linked_site_variable_subscription( $variation_id, $loop );
+	}
+
+	/**
+	 * Render linked site for variable subscription product
+	 * 顯示連結的網站
+	 *
+	 * @param  int $variation_id variation id
+	 * @param  int $loop loop
+	 *
+	 * @return void
+	 */
+	public static function render_linked_site_variable_subscription( $variation_id, $loop ) {
+
 		$linked_site_value = (string) \get_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, true );
 
-		\woocommerce_wp_text_input(
+		$action_url = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+
+		\woocommerce_wp_select(
 			array(
 				'id'            => self::LINKED_SITE_FIELD_NAME . '[' . $loop . ']',
 				'label'         => '連結的網站 id',
 				'wrapper_class' => 'form-row show_if_variable-subscription hidden',
-				'desc_tip'      => true,
-				'description'   => '如果不知道要輸入什麼，請聯繫站長路可',
+				'desc_tip'      => false,
+				'description'   => '<a href="' . $action_url . '"><button type="button" class="button">清除快取</button></a>',
 				'value'         => $linked_site_value,
+				'options'       => array_merge( array( '' => '請選擇' ), self::$allowed_template_options ),
 			)
 		);
+
+		echo '<p class="description" style="
+			padding-left: 155px;
+			top: -10px;
+			position: relative;
+			">如果想要更多模板站，請聯繫站長路可，只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。</p>';
 	}
 
 
@@ -200,6 +236,20 @@ final class DataTabs {
 			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) );
 			\update_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
 		}
+	}
+
+
+
+	/**
+	 * Clear allowed template options transient callback
+	 *
+	 * @return void
+	 */
+	public function clear_allowed_template_options_transient_callback() {
+		\delete_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
+		\J7\WpToolkit\Utils::debug_log( '已清除' );
+		\wp_safe_redirect( \admin_url( 'edit.php?post_type=product' ) );
+		exit;
 	}
 }
 
