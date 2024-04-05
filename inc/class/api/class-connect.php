@@ -17,6 +17,7 @@ use J7\PowerPartner\Utils;
 final class Connect {
 
 	const USERMETA_IDENTITY = 'connect_app_identity';
+	const OPTION_NAME       = Utils::SNAKE . '_partner_id';
 
 	/**
 	 * Connect constructor.
@@ -119,7 +120,7 @@ final class Connect {
 		$partner_id             = $body_params['partner_id'] ?? '';
 		$encrypted_account_info = $body_params['encrypted_account_info'] ?? '';
 		if ( ! empty( $partner_id ) ) {
-			\update_option( Utils::SNAKE . '_partner_id', $partner_id );
+			\update_option( self::OPTION_NAME, $partner_id );
 			\update_option( Utils::SNAKE . '_account_info', $encrypted_account_info );
 			return \rest_ensure_response(
 				array(

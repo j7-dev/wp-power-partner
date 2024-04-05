@@ -27,7 +27,7 @@ final class Utils {
 
 	const DEFAULT_IMAGE = 'http://1.gravatar.com/avatar/1c39955b5fe5ae1bf51a77642f052848?s=96&d=mm&r=g';
 
-	const API_URL   = WP_DEBUG ? 'http://cloudlukecafe.local' : 'https://cloud.luke.cafe';
+	const API_URL   = WP_DEBUG ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
 	const USER_NAME = 'j7.dev.gg';
 	const PASSWORD  = 'YQLj xV2R js9p IWYB VWxp oL2E';
 

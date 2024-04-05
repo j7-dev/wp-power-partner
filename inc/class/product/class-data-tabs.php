@@ -10,6 +10,7 @@ declare (strict_types = 1);
 namespace J7\PowerPartner\Product;
 
 use J7\PowerPartner\Utils;
+use J7\PowerPartner\Api\Connect;
 
 /**
  * Class DataTabs
@@ -56,30 +57,66 @@ final class DataTabs {
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
 
 		echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
-		\woocommerce_wp_radio(
-			array(
-				'id'            => self::HOST_POSITION_FIELD_NAME,
-				'label'         => '主機種類',
-				'wrapper_class' => 'form-field',
-				'desc_tip'      => true,
-				'description'   => '不同地區的主機，預設為日本',
-				'options'       => $this->host_positions,
-				'value'         => $host_position_value,
-			)
-		);
 
-		$linked_site_value = (string) \get_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, true );
+		$partner_id = \get_option( Connect::OPTION_NAME );
 
-		\woocommerce_wp_text_input(
-			array(
-				'id'            => self::LINKED_SITE_FIELD_NAME,
-				'label'         => '連結的網站 id',
-				'wrapper_class' => 'form-field',
-				'desc_tip'      => true,
-				'description'   => '如果不知道要輸入什麼，請聯繫站長路可',
-				'value'         => $linked_site_value,
-			)
-		);
+		if ( ! empty( $partner_id ) ) {
+			\woocommerce_wp_radio(
+				array(
+					'id'            => self::HOST_POSITION_FIELD_NAME,
+					'label'         => '主機種類',
+					'wrapper_class' => 'form-field',
+					'desc_tip'      => true,
+					'description'   => '不同地區的主機，預設為日本',
+					'options'       => $this->host_positions,
+					'value'         => $host_position_value,
+				)
+			);
+
+			$linked_site_value = (string) \get_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, true );
+
+			// $args = array(
+			// 'headers' => array(
+			// 'Content-Type'  => 'application/json',
+			// 'Authorization' => 'Basic ' . \base64_encode( Utils::USER_NAME . ':' . Utils::PASSWORD ), // phpcs:ignore
+			// ),
+			// 'timeout' => 30,
+			// );
+
+			// $response = \wp_remote_get( Utils::API_URL . '/wp-json/power-partner-server/get-template-sites?user_id=' . $partner_id, $args );
+
+			\woocommerce_wp_select(
+				array(
+					'id'            => self::LINKED_SITE_FIELD_NAME,
+					'label'         => '連結的網站 id',
+					'wrapper_class' => 'form-field',
+					'desc_tip'      => true,
+					'description'   => '如果想要更多模板站，請聯繫站長路可',
+					'value'         => $linked_site_value,
+					'options'       => array(
+						''   => '請選擇',
+						'1'  => '模板站 1',
+						'2'  => '模板站 2',
+						'3'  => '模板站 3',
+						'4'  => '模板站 4',
+						'5'  => '模板站 5',
+						'6'  => '模板站 6',
+						'7'  => '模板站 7',
+						'8'  => '模板站 8',
+						'9'  => '模板站 9',
+						'10' => '模板站 10',
+					),
+				)
+			);
+		} else {
+			\woocommerce_wp_note(
+				array(
+					'label'         => '連結的網站 id',
+					'wrapper_class' => 'form-field',
+					'message'       => '<span style="font-size:1rem;">🚩 請先連結你在 https://cloud.luke.cafe/ 的帳號，可以前往 <a target="_blank" href="' . \admin_url( 'admin.php?page=power_plugins_settings&tab=3' ) . '">Power Partner 分頁</a> 進行連結，才可以設定開站</span>',
+				)
+			);
+		}
 
 		echo '</div>';
 	}
