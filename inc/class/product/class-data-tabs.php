@@ -202,19 +202,22 @@ final class DataTabs {
 			array(
 				'id'            => self::LINKED_SITE_FIELD_NAME . '[' . $loop . ']',
 				'label'         => '連結的網站 id',
-				'wrapper_class' => 'form-row show_if_variable-subscription hidden',
+				'wrapper_class' => 'form-field form-row form-row-first show_if_variable-subscription hidden',
 				'desc_tip'      => false,
-				'description'   => '<a href="' . $action_url . '"><button type="button" class="button">清除快取</button></a>',
+				'description'   => '如果想要更多模板站，請聯繫站長路可',
 				'value'         => $linked_site_value,
 				'options'       => array_merge( array( '' => '請選擇' ), self::$allowed_template_options ),
 			)
 		);
 
-		echo '<p class="description" style="
-			padding-left: 155px;
-			top: -10px;
-			position: relative;
-			">如果想要更多模板站，請聯繫站長路可，只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。</p>';
+		\woocommerce_wp_note(
+			array(
+				'label'         => '只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。',
+				'wrapper_class' => 'form-field form-row form-row-last show_if_variable-subscription hidden',
+				'message'       => '<br /><a href="' . $action_url . '"><button type="button" class="button" style="height: 38px;
+				margin-top: 2px;">清除快取</button></a>',
+			)
+		);
 	}
 
 
@@ -247,7 +250,6 @@ final class DataTabs {
 	 */
 	public function clear_allowed_template_options_transient_callback() {
 		\delete_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
-		\J7\WpToolkit\Utils::debug_log( '已清除' );
 		\wp_safe_redirect( \admin_url( 'edit.php?post_type=product' ) );
 		exit;
 	}
