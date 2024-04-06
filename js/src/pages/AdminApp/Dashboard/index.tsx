@@ -19,24 +19,28 @@ const index: React.FC = () => {
       icon: <ClusterOutlined />,
       label: '所有站台',
       children: <SiteList />,
+      forceRender: true,
     },
     {
       key: 'logList',
       icon: <MoneyCollectOutlined />,
       label: '點數 Log',
       children: <LogList />,
+      forceRender: true,
     },
     {
       key: 'email',
       icon: <MailOutlined />,
       label: 'Email 設定',
       children: <EmailSetting />,
+      forceRender: true,
     },
     {
       key: 'description',
       icon: <InfoCircleOutlined />,
       label: '其他資訊',
       children: <Description />,
+      forceRender: true,
     },
   ]
 
