@@ -90,7 +90,7 @@ final class Fetch {
 			// \J7\WpToolkit\Utils::debug_log( '沒發API ' );
 		}
 
-		return $allowed_template_options;
+		return (array) $allowed_template_options;
 	}
 
 	/**

@@ -123,7 +123,7 @@ final class DataTabs {
 				'desc_tip'      => false,
 				'description'   => '<a href="' . $action_url . '"><button type="button" class="button">清除快取</button></a>',
 				'value'         => $linked_site_value,
-				'options'       => array_merge( array( '' => '請選擇' ), self::$allowed_template_options ),
+				'options'       => array( '' => '請選擇' ) + self::$allowed_template_options,
 			)
 		);
 
@@ -206,7 +206,7 @@ final class DataTabs {
 				'desc_tip'      => false,
 				'description'   => '如果想要更多模板站，請聯繫站長路可',
 				'value'         => $linked_site_value,
-				'options'       => array_merge( array( '' => '請選擇' ), self::$allowed_template_options ),
+				'options'       => array( '' => '請選擇' ) + self::$allowed_template_options,
 			)
 		);
 
