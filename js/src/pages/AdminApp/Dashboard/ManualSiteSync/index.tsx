@@ -109,7 +109,7 @@ const index = () => {
       </Item>
 
       <Item wrapperCol={{ offset: 8, span: 16 }}>
-        <Button type="primary" htmlType="submit" disabled={isLoading}>
+        <Button type="primary" htmlType="submit" loading={isLoading}>
           開站
         </Button>
       </Item>
