@@ -26,3 +26,7 @@ export const cloudPassword = 'YQLj xV2R js9p IWYB VWxp oL2E'
 export const LOCALSTORAGE_ACCOUNT_KEY = 'power-partner-account'
 
 export const nonce = window?.[APP_DOMAIN]?.env?.nonce || ''
+export const allowed_template_options = (window?.[APP_DOMAIN]?.env
+  ?.allowed_template_options || []) as {
+  [key: string]: string
+}

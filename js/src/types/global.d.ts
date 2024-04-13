@@ -19,6 +19,9 @@ declare global {
       RENDER_ID_2: string
       API_TIMEOUT: string
       nonce: string
+      allowed_template_options: {
+        [key: string]: string
+      }
     }
   }
   var wp: {

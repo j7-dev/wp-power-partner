@@ -10,6 +10,7 @@ declare (strict_types = 1);
 namespace J7\PowerPartner;
 
 use Kucrut\Vite;
+use J7\PowerPartner\Api\Fetch;
 
 /**
  * Bootstrap
@@ -25,6 +26,7 @@ final class Bootstrap {
 		require_once __DIR__ . '/order/index.php';
 		require_once __DIR__ . '/product/index.php';
 		require_once __DIR__ . '/shortcode/index.php';
+		require_once __DIR__ . '/shop_subscription/index.php';
 
 		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 100 );
 		\add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_script' ), 100 );
@@ -46,27 +48,29 @@ final class Bootstrap {
 			)
 		);
 
-		$post_id   = \get_the_ID();
-		$permalink = \get_permalink( $post_id );
+		$post_id                  = \get_the_ID();
+		$permalink                = \get_permalink( $post_id );
+		$allowed_template_options = Fetch::get_allowed_template_options();
 
 		\wp_localize_script(
 			Utils::KEBAB,
 			Utils::SNAKE . '_data',
 			array(
 				'env' => array(
-					'siteUrl'     => \site_url(),
-					'ajaxUrl'     => \admin_url( 'admin-ajax.php' ),
-					'userId'      => \get_current_user_id(),
-					'postId'      => $post_id,
-					'permalink'   => $permalink,
-					'APP_NAME'    => Utils::APP_NAME,
-					'KEBAB'       => Utils::KEBAB,
-					'SNAKE'       => Utils::SNAKE,
-					'BASE_URL'    => Utils::BASE_URL,
-					'RENDER_ID_1' => Utils::RENDER_ID_1,
-					'RENDER_ID_2' => Utils::RENDER_ID_2,
-					'API_TIMEOUT' => Utils::API_TIMEOUT,
-					'nonce'       => \wp_create_nonce( Utils::KEBAB ),
+					'siteUrl'                  => \site_url(),
+					'ajaxUrl'                  => \admin_url( 'admin-ajax.php' ),
+					'userId'                   => \get_current_user_id(),
+					'postId'                   => $post_id,
+					'permalink'                => $permalink,
+					'APP_NAME'                 => Utils::APP_NAME,
+					'KEBAB'                    => Utils::KEBAB,
+					'SNAKE'                    => Utils::SNAKE,
+					'BASE_URL'                 => Utils::BASE_URL,
+					'RENDER_ID_1'              => Utils::RENDER_ID_1,
+					'RENDER_ID_2'              => Utils::RENDER_ID_2,
+					'API_TIMEOUT'              => Utils::API_TIMEOUT,
+					'nonce'                    => \wp_create_nonce( Utils::KEBAB ),
+					'allowed_template_options' => $allowed_template_options,
 				),
 			)
 		);

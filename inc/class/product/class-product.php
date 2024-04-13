@@ -17,12 +17,17 @@ final class Product {
 
 	const PRODUCT_TYPE_NAME = Utils::APP_NAME . ' 產品';
 
+	const CREATE_SITE_RESPONSES_META_KEY = 'pp_create_site_responses';
+
+	// the site id linked in cloud site
+	const LINKED_SITE_IDS_META_KEY = 'pp_linked_site_ids';
+
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
 		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-		\add_action( 'woocommerce_order_status_completed', array( $this, 'do_site_sync' ) );
+		\add_action( 'woocommerce_order_status_completed', array( $this, 'site_sync_by_order_id' ) );
 	}
 
 	/**
@@ -55,13 +60,16 @@ final class Product {
 	 * @param int $order_id order id
 	 * @return void
 	 */
-	public function do_site_sync( $order_id ): void {
+	public function site_sync_by_order_id( $order_id ): void {
 		$order = \wc_get_order( $order_id );
 		if ( ! $order ) {
 			return;
 		}
 		$items     = $order->get_items();
 		$responses = array();
+
+		// 考慮訂單中每個商品都可能會綁定到不同的網站，所以做成 array
+		$linked_site_ids = array();
 		foreach ( $items as $item ) {
 			/**
 			 * Type
@@ -73,12 +81,14 @@ final class Product {
 
 			// 如果不是可變訂閱商品，就不處理
 			if ( 'variable-subscription' === $product->get_type() ) {
-				$variation_id   = $item->get_variation_id();
-				$host_position  = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id = \get_post_meta( $variation_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$variation_id      = $item->get_variation_id();
+				$host_position     = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id    = \get_post_meta( $variation_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$linked_site_ids[] = $linked_site_id;
 			} elseif ( 'subscription' === $product->get_type() ) {
-				$host_position  = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$host_position     = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id    = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$linked_site_ids[] = $linked_site_id;
 			} else {
 				continue;
 			}
@@ -137,7 +147,8 @@ final class Product {
 			$order->add_order_note( $responses_string );
 		}
 
-		$order->update_meta_data( Utils::ORDER_META_KEY, \wp_json_encode( $responses ) );
+		$order->update_meta_data( self::CREATE_SITE_RESPONSES_META_KEY, \wp_json_encode( $responses ) );
+		$order->update_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_ids );
 
 		$order->save();
 	}

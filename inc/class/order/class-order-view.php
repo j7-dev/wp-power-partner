@@ -34,7 +34,7 @@ final class OrderView {
 	 * @return array
 	 */
 	public function add_order_column( array $columns ): array {
-		$columns[ Utils::ORDER_META_KEY ] = '開站狀態';
+		$columns[ Product::CREATE_SITE_RESPONSES_META_KEY ] = '開站狀態';
 		return $columns;
 	}
 
@@ -47,10 +47,10 @@ final class OrderView {
 	public function render_order_column( $column ): void {
 		global $post;
 
-		if ( Utils::ORDER_META_KEY === $column ) {
+		if ( Product::CREATE_SITE_RESPONSES_META_KEY === $column ) {
 			$order_id         = $post->ID;
 			$order            = \wc_get_order( $order_id );
-			$responses_string = $order->get_meta( Utils::ORDER_META_KEY );
+			$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 
 			try {
 				$responses = json_decode( $responses_string, true ) ?? array();
@@ -80,12 +80,12 @@ final class OrderView {
 		if ( ! $order ) {
 			return;
 		}
-		$responses_string = $order->get_meta( Utils::ORDER_META_KEY );
+		$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 		if ( ! $responses_string ) {
 			return;
 		}
 
-		\add_meta_box( Utils::ORDER_META_KEY . '_metabox', '此訂單的開站狀態', array( $this, Utils::ORDER_META_KEY . '_callback' ), 'shop_order', 'side', 'high' );
+		\add_meta_box( Product::CREATE_SITE_RESPONSES_META_KEY . '_metabox', '此訂單的開站狀態', array( $this, Product::CREATE_SITE_RESPONSES_META_KEY . '_callback' ), 'shop_order', 'side', 'high' );
 	}
 
 	/**
@@ -97,7 +97,7 @@ final class OrderView {
 		global $post;
 		$order_id         = $post->ID;
 		$order            = \wc_get_order( $order_id );
-		$responses_string = $order->get_meta( Utils::ORDER_META_KEY );
+		$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 		try {
 			$responses = json_decode( $responses_string, true ) ?? array();
 			$data      = $responses[0]['data'] ?? array();

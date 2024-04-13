@@ -4,6 +4,7 @@ import {
   ClusterOutlined,
   InfoCircleOutlined,
   MailOutlined,
+  CodeOutlined,
 } from '@ant-design/icons'
 import { Tabs, TabsProps } from 'antd'
 import AccountIcon from './AccountIcon'
@@ -11,6 +12,7 @@ import SiteList from './SiteList'
 import LogList from './LogList'
 import Description from './Description'
 import EmailSetting from './EmailSetting'
+import ManualSiteSync from './ManualSiteSync'
 
 const index: React.FC = () => {
   const items: TabsProps['items'] = [
@@ -33,6 +35,13 @@ const index: React.FC = () => {
       icon: <MailOutlined />,
       label: 'Email 設定',
       children: <EmailSetting />,
+      forceRender: true,
+    },
+    {
+      key: 'manualSiteSync',
+      icon: <CodeOutlined />,
+      label: '手動開站',
+      children: <ManualSiteSync />,
       forceRender: true,
     },
     {

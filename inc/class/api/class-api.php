@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace J7\PowerPartner;
 
 use J7\PowerPartner\Utils;
+use J7\PowerPartner\Api\Fetch;
 
 /**
  * Class Api
@@ -20,7 +21,7 @@ final class Api {
 	 * Constructor.
 	 */
 	public function __construct() {
-		\add_action( 'rest_api_init', array( $this, 'register_api_customer_notification' ) );
+		\add_action( 'rest_api_init', array( $this, 'register_apis' ) );
 	}
 
 	/**
@@ -28,15 +29,14 @@ final class Api {
 	 *
 	 * @return void
 	 */
-	public function register_api_customer_notification(): void {
+	public function register_apis(): void {
 		\register_rest_route(
 			Utils::KEBAB,
 			'customer-notification',
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'post_customer_notification_callback' ),
-				// TODO 'permission_callback' => array( $this, 'check_basic_auth' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_ip_permission' ),
 			)
 		);
 
@@ -46,8 +46,19 @@ final class Api {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_customer_notification_callback' ),
-				// TODO 'permission_callback' => array( $this, 'check_basic_auth' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_ip_permission' ),
+			)
+		);
+
+		\register_rest_route(
+			Utils::KEBAB,
+			'manual-site-sync',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'manual_site_sync_callback' ),
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
 			)
 		);
 	}
@@ -144,6 +155,61 @@ final class Api {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Manual site sync callback
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function manual_site_sync_callback( $request ) {
+		$body_params   = $request->get_json_params() ?? array();
+		$site_id       = $body_params['site_id'];
+		$host_position = $body_params['host_position'];
+		$partner_id    = \get_option( Utils::SNAKE . '_partner_id', '0' );
+		$customer_id   = \get_current_user_id();
+		$customer      = \get_user_by( 'id', $customer_id );
+
+		$response_obj = Fetch::site_sync(
+			array(
+				'site_url'      => \site_url(),
+				'site_id'       => $site_id,
+				'host_position' => $host_position,
+				'partner_id'    => $partner_id,
+				'customer'      => array(
+					'id'         => $customer_id,
+					'first_name' => $customer->first_name ?? 'admin',
+					'last_name'  => $customer->last_name ?? '',
+					'username'   => $customer->user_login ?? 'admin',
+					'email'      => $customer->user_email ?? '',
+					'phone'      => $customer->billing_phone ?? '',
+				),
+			)
+		);
+
+		return new \WP_REST_Response(
+			array(
+				'status'  => $response_obj->status,
+				'message' => $response_obj->message,
+				'data'    => $response_obj->data,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Check IP Permission
+	 *
+	 * @return bool
+	 */
+	private function check_ip_permission() {
+		// 允許的 ip 列表
+		$allowed_ips = array( '61.220.44.7' ); // cloud 站 或 load balancer
+		$request_ip  = $_SERVER['REMOTE_ADDR']; // phpcs:ignore 获取发起请求的IP地址
+
+		// 检查发起请求的IP是否在允许的列表中
+		return in_array( $request_ip, $allowed_ips, true );
 	}
 }
 

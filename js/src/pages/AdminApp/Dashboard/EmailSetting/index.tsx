@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Input, Spin, Tag, Tooltip, message } from 'antd'
+import { Input, Spin, Tag, Tooltip, message, Select, Alert } from 'antd'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { TBase } from 'types'
@@ -71,6 +71,7 @@ const EMAIL_BODY_FIELD_NAME = `${snake}_email_body`
 const index = () => {
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [emailType, setEmailType] = useState('after_site_sync')
   const [messageApi, contextHolder] = message.useMessage()
   const { data: email, isLoading } = useQuery<AxiosResponse<TEmail>>({
     queryKey: ['customer_notification'],
@@ -114,6 +115,26 @@ const index = () => {
   return (
     <Spin spinning={isLoading}>
       {contextHolder}
+      <Alert
+        className="max-w-[600px] w-full"
+        message="請儲存後再切換"
+        description={
+          <Select
+            className="w-[200px] mb-8"
+            options={[
+              { label: '開站後發信', value: 'after_site_sync' },
+              {
+                label: '客戶續訂失敗後發信',
+                value: 'after_subscription_failed',
+              },
+            ]}
+            value={emailType}
+            onChange={(value) => setEmailType(value)}
+          />
+        }
+        type="warning"
+        showIcon
+      />
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="max-w-[600px] w-full">
           <p className="mt-0 mb-2 text-[14px]">信件主旨</p>
