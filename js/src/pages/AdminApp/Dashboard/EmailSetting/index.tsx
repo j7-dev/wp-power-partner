@@ -1,182 +1,132 @@
-import { useState, useEffect } from 'react'
-import { Input, Spin, Tag, Tooltip, message, Select, Alert } from 'antd'
-import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'
-import { TBase } from 'types'
-import { snake, siteUrl } from '@/utils'
-import { useQuery } from '@tanstack/react-query'
-import { axios } from '@/api'
-import { AxiosResponse } from 'axios'
+import {
+  Tag,
+  Tooltip,
+  message,
+  Table,
+  TableColumnsType,
+  Input,
+  Form,
+  Button,
+  Affix,
+} from 'antd'
+import SendingCondition from '@/pages/AdminApp/Dashboard/EmailSetting/SendingCondition'
+import { DataType } from '@/pages/AdminApp/Dashboard/EmailSetting/types'
+import {
+  REDUX,
+  tokens,
+  handleCopy,
+  getEmailTemplate,
+} from '@/pages/AdminApp/Dashboard/EmailSetting/utils'
+import EmailBody from '@/pages/AdminApp/Dashboard/EmailSetting/EmailBody'
+import DeleteButton from '@/pages/AdminApp/Dashboard/EmailSetting/DeleteButton'
+import EmailSwitch from '@/pages/AdminApp/Dashboard/EmailSetting/EmailSwitch'
+import { emailsAtom } from '@/pages/AdminApp/Dashboard/EmailSetting/atom'
+import { useAtom } from 'jotai'
+import useSave from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
+import useGetEmails from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useGetEmails'
 
-type TEmail = {
-  status: number
-  message: string
-  data: {
-    subject: string
-    body: string
-  }
-}
+const { Item } = Form
 
-const tokens: TBase[] = [
+const columns: TableColumnsType<DataType> = [
   {
-    label: '姓',
-    value: '##FIRST_NAME##',
+    title: '啟用',
+    width: 77,
+    dataIndex: 'enabled',
+    render: (_value: boolean, record, index) => (
+      <EmailSwitch record={record} index={index} />
+    ),
   },
   {
-    label: '名',
-    value: '##LAST_NAME##',
+    title: '主旨',
+
+    // width: '100%',
+
+    dataIndex: 'subject',
+    render: (value: string, _record, index) => (
+      <Item
+        name={[index, REDUX.SUBJECT_FIELD_NAME]}
+        initialValue={value}
+        className="mb-0"
+        shouldUpdate
+      >
+        <Input />
+      </Item>
+    ),
   },
   {
-    label: '暱稱',
-    value: '##NICE_NAME##',
+    title: '時機',
+    width: 422,
+    dataIndex: 'condition',
+    render: (_value: string, record, index) => (
+      <SendingCondition record={record} index={index} />
+    ),
   },
   {
-    label: 'Email',
-    value: '##EMAIL##',
-  },
-  {
-    label: 'WordPress帳戶頁',
-    value: '##WORDPRESSAPPWCSITESACCOUNTPAGE##',
-  },
-  {
-    label: 'IPV4',
-    value: '##IPV4##',
-  },
-  {
-    label: '網域',
-    value: '##DOMAIN##',
-  },
-  {
-    label: '前台網址',
-    value: '##FRONTURL##',
-  },
-  {
-    label: '後台網址',
-    value: '##ADMINURL##',
-  },
-  {
-    label: '網站帳號',
-    value: '##SITEUSERNAME##',
-  },
-  {
-    label: '網站密碼',
-    value: '##SITEPASSWORD##',
+    title: '',
+    width: 46,
+    dataIndex: 'action',
+    render: (_value: string, record) => <DeleteButton record={record} />,
   },
 ]
 
-const REDUX_OPT_NAME = 'power_plugins_settings'
-const EMAIL_SUBJECT_FIELD_NAME = `${snake}_email_subject`
-const EMAIL_BODY_FIELD_NAME = `${snake}_email_body`
-
-const index = () => {
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
-  const [emailType, setEmailType] = useState('after_site_sync')
+const EmailSetting = () => {
+  const [form] = Form.useForm()
   const [messageApi, contextHolder] = message.useMessage()
-  const { data: email, isLoading } = useQuery<AxiosResponse<TEmail>>({
-    queryKey: ['customer_notification'],
-    queryFn: () =>
-      axios.get(`${siteUrl}/wp-json/power-partner/customer-notification`),
-  })
+  const [dataSource, setDataSource] = useAtom(emailsAtom)
+  console.log('⭐  dataSource:', dataSource)
 
-  const handleCopy = (token: TBase) => () => {
-    if (!navigator.clipboard) {
-      messageApi.open({
-        type: 'error',
-        content: `剪貼簿不可用，請手動複製 ${token.label}`,
-      })
-      return
-    }
-
-    navigator?.clipboard
-      ?.writeText(token.value)
-      .then(() => {
-        messageApi.open({
-          type: 'success',
-          content: `已複製 ${token.label} 至剪貼簿`,
-        })
-      })
-      .catch((err) => {
-        messageApi.open({
-          type: 'error',
-          content: `複製 ${token.label} 時出錯了，請再試一次`,
-        })
-        console.error('Error in copying text: ', err)
-      })
+  const handleAdd = () => {
+    setDataSource([
+      ...dataSource,
+      getEmailTemplate(),
+    ])
   }
 
-  useEffect(() => {
-    if (!isLoading) {
-      setSubject(email?.data?.data?.subject || '')
-      setBody(email?.data?.data?.body || '')
-    }
-  }, [isLoading])
+  const { isLoading } = useGetEmails()
+  const { contextHolder: notificationContextHolder } = useSave(form)
 
   return (
-    <Spin spinning={isLoading}>
+    <Form form={form}>
       {contextHolder}
-      <Alert
-        className="max-w-[600px] w-full"
-        message="請儲存後再切換"
-        description={
-          <Select
-            className="w-[200px] mb-8"
-            options={[
-              { label: '開站後發信', value: 'after_site_sync' },
-              {
-                label: '客戶續訂失敗後發信',
-                value: 'after_subscription_failed',
-              },
-            ]}
-            value={emailType}
-            onChange={(value) => setEmailType(value)}
+      {notificationContextHolder}
+      <div className="flex flex-col lg:flex-row gap-8 relative">
+        <div className="w-full">
+          <Table
+            rowKey="key"
+            tableLayout="auto"
+            columns={columns}
+            expandable={{
+              expandedRowRender: (record, index) => (
+                <EmailBody record={record} index={index} />
+              ),
+            }}
+            dataSource={dataSource}
+            pagination={false}
+            loading={isLoading}
           />
-        }
-        type="warning"
-        showIcon
-      />
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="max-w-[600px] w-full">
-          <p className="mt-0 mb-2 text-[14px]">信件主旨</p>
-          <Input
-            value={subject}
-            onChange={(e) => setSubject(e?.target?.value)}
-            name={`${REDUX_OPT_NAME}[${EMAIL_SUBJECT_FIELD_NAME}]`}
-          />
-
-          <p className="mt-8 mb-2 text-[14px]">信件內文</p>
-          <div className="mb-16">
-            <ReactQuill
-              className="h-[500px]"
-              theme="snow"
-              value={body}
-              onChange={setBody}
-            />
-            <Input
-              hidden
-              className="hidden"
-              value={body}
-              name={`${REDUX_OPT_NAME}[${EMAIL_BODY_FIELD_NAME}]`}
-            />
-          </div>
+          <Button type="dashed" className="mt-4 w-full" onClick={handleAdd}>
+            新增 Email
+          </Button>
         </div>
-        <div className="flex-1 max-w-[400px]">
-          <p className="mb-2 text-[14px]">可用變數</p>
-          {tokens.map((token) => (
-            <Tooltip key={token?.value} title={token?.label}>
-              <Tag
-                color="#eee"
-                className="rounded-xl text-gray-600 px-3 cursor-pointer mb-2"
-                onClick={handleCopy(token)}
-              >
-                {token?.value}
-              </Tag>
-            </Tooltip>
-          ))}
+        <div className="flex-1 max-w-[400px] sticky top-0">
+          <Affix offsetTop={48}>
+            <p className="mb-2 text-[14px]">可用變數</p>
+            {tokens.map((token) => (
+              <Tooltip key={token?.value} title={token?.label}>
+                <Tag
+                  color="#eee"
+                  className="rounded-xl text-gray-600 px-3 cursor-pointer mb-2"
+                  onClick={handleCopy(token, messageApi)}
+                >
+                  {token?.value}
+                </Tag>
+              </Tooltip>
+            ))}
+          </Affix>
         </div>
       </div>
-    </Spin>
+    </Form>
   )
 }
 
-export default index
+export default EmailSetting

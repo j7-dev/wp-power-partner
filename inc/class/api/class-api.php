@@ -14,8 +14,8 @@ use J7\PowerPartner\Api\Fetch;
  * Class Api
  */
 final class Api {
-	const DEFAULT_SUBJECT = '網站已開通';
-	const DEFAULT_BODY    = '<p>嗨 ##FIRST_NAME##</p><p>你的網站開好囉，<a href="https://cloud.luke.cafe/docs" rel="noopener noreferrer" target="_blank">點此可以打開網站的使用說明書</a></p><p><br></p><p>另外如果要將網站換成正式的網域，請參考<a href="https://cloud.luke.cafe/docs/domain-change/" rel="noopener noreferrer" target="_blank">這篇教學</a></p><p><br></p><p>有網站的問題都可以直接回覆這封信，或是私訊 <a href="https://wpsite.pro/" rel="noopener noreferrer" target="_blank">架站小幫手網站</a> 的右下角對話框</p><p>&nbsp;</p><p>--- 以下是你的網站資訊 ---</p><p><br></p><p>網站暫時網址：</p><p>##FRONTURL##</p><p>之後可換成你自己的網址</p><p><br></p><p>網站後台：</p><p>##ADMINURL##</p><p><br></p><p>帳號：</p><p>##SITEUSERNAME##</p><p><br></p><p>密碼：</p><p>##SITEPASSWORD##</p><p><br></p><p><strong>進去後請記得改成自己的密碼喔</strong></p><p><br></p><p>網站列表 + 進階設置：</p><p>##WORDPRESSAPPWCSITESACCOUNTPAGE##</p><p>網站主機ip：</p><p>##IPV4##</p><p>&nbsp;</p><p>這封信很重要，不要刪掉，這樣之後才找得到喔～</p><p>&nbsp;</p><p><br></p>';
+	const DEFAULT_SUBJECT = '這裡填你的信件主旨 ##FIRST_NAME##';
+	const DEFAULT_BODY    = '<p>嗨 ##FIRST_NAME##</p><p>你的網站開好囉，<a href="https://cloud.luke.cafe/docs" rel="noopener noreferrer" target="_blank">點此可以打開網站的使用說明書</a></p><p><br></p><p>另外如果要將網站換成正式的網域，請參考<a href="https://cloud.luke.cafe/docs/domain-change/" rel="noopener noreferrer" target="_blank">這篇教學</a></p><p><br></p><p>有網站的問題都可以直接回覆這封信，或是私訊 <a href="https://wpsite.pro/" rel="noopener noreferrer" target="_blank">架站小幫手網站</a> 的右下角對話框</p><p>&nbsp;</p><p>--- 以下是你的網站資訊 ---</p><p><br></p><p>網站暫時網址：</p><p>##FRONTURL##</p><p>之後可換成你自己的網址</p><p><br></p><p>網站後台：</p><p>##ADMINURL##</p><p><br></p><p>帳號：</p><p>##SITEUSERNAME##</p><p><br></p><p>密碼：</p><p>##SITEPASSWORD##</p><p><br></p><p><strong>進去後請記得改成自己的密碼喔</strong></p><p><br></p><br><p>網站主機ip：</p><p>##IPV4##</p><p>&nbsp;</p><p>這封信很重要，不要刪掉，這樣之後才找得到喔～</p><p>&nbsp;</p><p><br></p>';
 
 	/**
 	 * Constructor.
@@ -56,6 +56,30 @@ final class Api {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'manual_site_sync_callback' ),
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		\register_rest_route(
+			Utils::KEBAB,
+			'emails',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'post_emails_callback' ),
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		\register_rest_route(
+			Utils::KEBAB,
+			'emails',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_emails_callback' ),
 				'permission_callback' => function () {
 					return \current_user_can( 'manage_options' );
 				},
@@ -155,6 +179,51 @@ final class Api {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Get emails callback
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_emails_callback(): \WP_REST_Response {
+		$emails = \get_option( Email::EMAILS_OPTION_NAME, array() );
+
+		return new \WP_REST_Response(
+			$emails,
+			200
+		);
+	}
+
+	/**
+	 * Post emails callback
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function post_emails_callback( $request ): \WP_REST_Response {
+		$body_params = $request->get_json_params() ?? array();
+		$emails      = $body_params['emails'];
+
+		if ( is_array( $emails ) ) {
+			\update_option( Email::EMAILS_OPTION_NAME, $emails );
+			return new \WP_REST_Response(
+				array(
+					'status'  => 200,
+					'message' => 'save emails success',
+				),
+				200
+			);
+		} else {
+			return new \WP_REST_Response(
+				array(
+					'status'  => 500,
+					'message' => 'save emails fail, emails is not array',
+					'data'    => $emails,
+				),
+				500
+			);
+		}
 	}
 
 	/**

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { renderId1, renderId2 } from '@/utils'
 import { StyleProvider } from '@ant-design/cssinjs'
+import { ConfigProvider } from 'antd'
 
 const App1 = React.lazy(() => import('./App1'))
 const App2 = React.lazy(() => import('./App2'))
@@ -38,7 +39,17 @@ mapping.forEach(({ els, App }) => {
         <React.StrictMode>
           <QueryClientProvider client={queryClient}>
             <StyleProvider hashPriority="high">
-              <App />
+              <ConfigProvider
+                theme={{
+                  components: {
+                    Table: {
+                      rowExpandedBg: '#ffffff',
+                    },
+                  },
+                }}
+              >
+                <App />
+              </ConfigProvider>
             </StyleProvider>
             <ReactQueryDevtools initialIsOpen={true} />
           </QueryClientProvider>

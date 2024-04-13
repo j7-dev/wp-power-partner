@@ -27,6 +27,7 @@ final class Bootstrap {
 		require_once __DIR__ . '/product/index.php';
 		require_once __DIR__ . '/shortcode/index.php';
 		require_once __DIR__ . '/shop_subscription/index.php';
+		require_once __DIR__ . '/email/class-email.php';
 
 		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 100 );
 		\add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_script' ), 100 );

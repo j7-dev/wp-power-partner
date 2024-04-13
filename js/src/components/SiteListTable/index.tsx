@@ -11,21 +11,19 @@ import {
   Typography,
   notification,
   Alert,
-  Popconfirm,
-  Spin,
 } from 'antd'
 import {
   CloseCircleOutlined,
   SyncOutlined,
   EditOutlined,
-  UnlockOutlined,
-  LockOutlined,
   LoadingOutlined,
 } from '@ant-design/icons'
 import { SystemInfo } from '@/components'
-import { DataType } from './types'
+import { DataType } from '@/components/SiteListTable/types'
 import { cloudAxios } from '@/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import ToggleSslButton from '@/components/SiteListTable/ToggleSslButton'
+import ToggleSiteButton from '@/components/SiteListTable/ToggleSiteButton'
 
 const { Paragraph } = Typography
 
@@ -35,17 +33,9 @@ type TChangeDomainParams = {
   record: DataType | null
 }
 
-type TToggleSSLParams = {
-  id: string
-  record: DataType | null
-}
-
 type TFormValues = {
   new_domain: string
 }
-
-const getSSLActionText = (record: DataType | null) =>
-  record?.wpapp_ssl_status === 'on' ? '關閉' : '啟用'
 
 export * from './types'
 
@@ -110,57 +100,6 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
     },
   })
 
-  const { mutate: toggleSSL } = useMutation({
-    mutationFn: (values: TToggleSSLParams) => {
-      const { record: _, ...rest } = values
-      return cloudAxios.post('/toggle-ssl', rest)
-    },
-    onMutate: (values: TToggleSSLParams) => {
-      const { record, id } = values
-      const text = getSSLActionText(record)
-      setIsModalOpen(false)
-      api.open({
-        key: `loading-toggle-SSL-${id}`,
-        message: `SSL ${text} 中...`,
-        description: `${text} ${record?.wpapp_domain} SSL 有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。`,
-        duration: 0,
-        icon: <LoadingOutlined className="text-primary" />,
-      })
-
-      return record
-    },
-    onSuccess: (data, values) => {
-      const status = data?.data?.status
-      const { record, id } = values
-      const text = getSSLActionText(record)
-
-      if (200 === status) {
-        api.success({
-          key: `loading-toggle-SSL-${id}`,
-          message: `SSL 已${text}`,
-          description: `${text} ${record?.wpapp_domain} SSL 成功`,
-        })
-        queryClient.invalidateQueries(['apps'])
-      } else {
-        api.error({
-          key: `loading-toggle-SSL-${id}`,
-          message: `SSL ${text} 失敗`,
-          description: `${text} ${record?.wpapp_domain} SSL 失敗，${data?.data?.message}`,
-        })
-      }
-    },
-    onError: (err, values) => {
-      const { record, id } = values
-      const text = getSSLActionText(record)
-      console.log('err', err)
-      api.error({
-        key: `loading-toggle-SSL-${id}`,
-        message: `SSL ${text} 失敗`,
-        description: `${text} ${record?.wpapp_domain} SSL 失敗`,
-      })
-    },
-  })
-
   const showModal = (record: DataType) => () => {
     setIsModalOpen(true)
     setChosenRecord(record)
@@ -178,13 +117,6 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
 
   const handleCancel = () => {
     setIsModalOpen(false)
-  }
-
-  const handleToggleSSL = (record: DataType) => () => {
-    toggleSSL({
-      id: record?.ID.toString() || '',
-      record,
-    })
   }
 
   useEffect(() => {
@@ -220,7 +152,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
               {value}
             </a>
           </p>
-          {record?.wpapp_site_status === 'off' ? (
+          {/* {record?.wpapp_site_status === 'off' ? (
             <Tag
               icon={<CloseCircleOutlined />}
               color="#f50"
@@ -236,7 +168,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
             >
               服務已啟用
             </Tag>
-          )}
+          )} */}
         </>
       ),
     },
@@ -279,51 +211,16 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
       title: '操作',
       dataIndex: 'actions',
       render: (_: string, record) => {
-        const isRecordSslOn = record?.wpapp_ssl_status === 'on'
-
         return (
-          <div className="flex">
-            <Tooltip
-              placement="bottom"
-              title="變更域名 ( domain name )"
-              className="mr-2"
-            >
-              <Button
-                type="primary"
-                size="small"
-                shape="circle"
-                icon={<EditOutlined />}
+          <div className="flex gap-3">
+            <Tooltip placement="bottom" title="變更域名 ( domain name )">
+              <EditOutlined
                 onClick={showModal(record)}
+                className="text-primary"
               />
             </Tooltip>
-            <Popconfirm
-              title={
-                isRecordSslOn
-                  ? '目前 SSL 狀態為啟用，點擊後將關閉 SSL'
-                  : '目前 SSL 狀態為關閉，點擊後將啟用 SSL'
-              }
-              description="你確認要執行這個操作嗎?"
-              onConfirm={handleToggleSSL(record)}
-              okText="確認"
-              cancelText="取消"
-            >
-              <Tooltip
-                placement="bottom"
-                title={
-                  isRecordSslOn
-                    ? '目前 SSL 狀態為啟用，點擊關閉 SSL'
-                    : '目前 SSL 狀態為關閉，點擊啟用 SSL'
-                }
-              >
-                <Button
-                  type="primary"
-                  className={isRecordSslOn ? 'bg-lime-500' : 'bg-rose-500'}
-                  size="small"
-                  shape="circle"
-                  icon={isRecordSslOn ? <LockOutlined /> : <UnlockOutlined />}
-                />
-              </Tooltip>
-            </Popconfirm>
+            <ToggleSslButton record={record} notificationApi={api} />
+            <ToggleSiteButton record={record} notificationApi={api} />
           </div>
         )
       },
