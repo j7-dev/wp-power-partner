@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner\Api;
 
-use J7\PowerPartner\Utils;
+use J7\PowerPartner\Utils\Base;
 
 /**
  * Class Connect
@@ -17,7 +17,7 @@ use J7\PowerPartner\Utils;
 final class Connect {
 
 	const USERMETA_IDENTITY      = 'connect_app_identity';
-	const PARTNER_ID_OPTION_NAME = Utils::SNAKE . '_partner_id';
+	const PARTNER_ID_OPTION_NAME = Base::SNAKE . '_partner_id';
 
 	/**
 	 * Connect constructor.
@@ -54,7 +54,7 @@ final class Connect {
 	 * Register GET partner id API
 	 */
 		\register_rest_route(
-			Utils::KEBAB,
+			Base::KEBAB,
 			'partner-id',
 			array(
 				'methods'             => 'GET',
@@ -67,7 +67,7 @@ final class Connect {
 	 * Register SET partner id API
 	 */
 		\register_rest_route(
-			Utils::KEBAB,
+			Base::KEBAB,
 			'partner-id',
 			array(
 				'methods'             => 'POST',
@@ -82,7 +82,7 @@ final class Connect {
 	 * Register account info API
 	 */
 		\register_rest_route(
-			Utils::KEBAB,
+			Base::KEBAB,
 			'account-info',
 			array(
 				'methods'             => 'GET',
@@ -103,7 +103,7 @@ final class Connect {
 	 */
 	public function get_partner_id_callback() {
 
-		$partner_id = \get_option( Utils::SNAKE . '_partner_id', '0' );
+		$partner_id = \get_option( Base::SNAKE . '_partner_id', '0' );
 		if ( empty( $partner_id ) ) {
 			return \rest_ensure_response(
 				array(
@@ -141,7 +141,7 @@ final class Connect {
 
 		if ( ! empty( $partner_id ) ) {
 			\update_option( self::PARTNER_ID_OPTION_NAME, $partner_id );
-			\update_option( Utils::SNAKE . '_account_info', $encrypted_account_info );
+			\update_option( Base::SNAKE . '_account_info', $encrypted_account_info );
 			\set_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY, (array) $allowed_template_options, Fetch::ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME );
 			return \rest_ensure_response(
 				array(
@@ -168,7 +168,7 @@ final class Connect {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_account_info_callback() {
-		$encrypted_account_info = \get_option( Utils::SNAKE . '_account_info' );
+		$encrypted_account_info = \get_option( Base::SNAKE . '_account_info' );
 
 		return \rest_ensure_response(
 			array(

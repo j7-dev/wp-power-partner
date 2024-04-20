@@ -7,13 +7,15 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
+use J7\PowerPartner\Utils\Base;
+
 /**
  * Class Shortcode
  */
 final class Shortcode {
 
 
-	const CURRENT_USER_SITE_LIST_SHORTCODE = Utils::SNAKE . '_current_user_site_list';
+	const CURRENT_USER_SITE_LIST_SHORTCODE = Base::SNAKE . '_current_user_site_list';
 
 	/**
 	 * Constructor.

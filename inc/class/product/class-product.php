@@ -9,13 +9,14 @@ namespace J7\PowerPartner;
 
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Product\DataTabs;
+use J7\PowerPartner\Utils\Base;
 
 /**
  * Class Product
  */
 final class Product {
 
-	const PRODUCT_TYPE_NAME = Utils::APP_NAME . ' 產品';
+	const PRODUCT_TYPE_NAME = Base::APP_NAME . ' 產品';
 
 	const CREATE_SITE_RESPONSES_META_KEY = 'pp_create_site_responses';
 
@@ -40,12 +41,12 @@ final class Product {
 		if ( $screen->id !== 'product' ) {
 			return;
 		}
-		\wp_enqueue_style( Utils::KEBAB . '-product-tab-css', Utils::get_plugin_url() . '/js/dist_product_tab/assets/css/index.css', array(), Utils::get_plugin_ver() );
+		\wp_enqueue_style( Base::KEBAB . '-product-tab-css', Base::get_plugin_url() . '/js/dist_product_tab/assets/css/index.css', array(), Base::get_plugin_ver() );
 		\wp_enqueue_script(
-			Utils::KEBAB . '-product-tab-js',
-			Utils::get_plugin_url() . '/js/dist_product_tab/index.js',
+			Base::KEBAB . '-product-tab-js',
+			Base::get_plugin_url() . '/js/dist_product_tab/index.js',
 			array(),
-			Utils::get_plugin_ver(),
+			Base::get_plugin_ver(),
 			array(
 				'strategy'  => 'async',
 				'in_footer' => true,
@@ -104,7 +105,7 @@ final class Product {
 					'site_url'      => \site_url(),
 					'site_id'       => $linked_site_id,
 					'host_position' => $host_position,
-					'partner_id'    => \get_option( Utils::SNAKE . '_partner_id', '0' ),
+					'partner_id'    => \get_option( Base::SNAKE . '_partner_id', '0' ),
 					'customer'      => array(
 						'id'         => $order->get_customer_id(),
 						'first_name' => $order->get_billing_first_name(),

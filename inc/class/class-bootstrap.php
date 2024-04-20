@@ -11,6 +11,7 @@ namespace J7\PowerPartner;
 
 use Kucrut\Vite;
 use J7\PowerPartner\Api\Fetch;
+use J7\PowerPartner\Utils\Base;
 
 /**
  * Bootstrap
@@ -27,7 +28,7 @@ final class Bootstrap {
 		require_once __DIR__ . '/product/index.php';
 		require_once __DIR__ . '/shortcode/index.php';
 		require_once __DIR__ . '/shop_subscription/index.php';
-		require_once __DIR__ . '/email/class-email.php';
+		require_once __DIR__ . '/email/index.php';
 
 		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 100 );
 		\add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_script' ), 100 );
@@ -41,10 +42,10 @@ final class Bootstrap {
 	 */
 	public function enqueue_script(): void {
 		Vite\enqueue_asset(
-			Utils::get_plugin_dir() . '/js/dist',
+			Base::get_plugin_dir() . '/js/dist',
 			'js/src/main.tsx',
 			array(
-				'handle'    => Utils::KEBAB,
+				'handle'    => Base::KEBAB,
 				'in-footer' => true,
 			)
 		);
@@ -54,8 +55,8 @@ final class Bootstrap {
 		$allowed_template_options = Fetch::get_allowed_template_options();
 
 		\wp_localize_script(
-			Utils::KEBAB,
-			Utils::SNAKE . '_data',
+			Base::KEBAB,
+			Base::SNAKE . '_data',
 			array(
 				'env' => array(
 					'siteUrl'                  => \site_url(),
@@ -63,21 +64,21 @@ final class Bootstrap {
 					'userId'                   => \get_current_user_id(),
 					'postId'                   => $post_id,
 					'permalink'                => $permalink,
-					'APP_NAME'                 => Utils::APP_NAME,
-					'KEBAB'                    => Utils::KEBAB,
-					'SNAKE'                    => Utils::SNAKE,
-					'BASE_URL'                 => Utils::BASE_URL,
-					'RENDER_ID_1'              => Utils::RENDER_ID_1,
-					'RENDER_ID_2'              => Utils::RENDER_ID_2,
-					'API_TIMEOUT'              => Utils::API_TIMEOUT,
-					'nonce'                    => \wp_create_nonce( Utils::KEBAB ),
+					'APP_NAME'                 => Base::APP_NAME,
+					'KEBAB'                    => Base::KEBAB,
+					'SNAKE'                    => Base::SNAKE,
+					'BASE_URL'                 => Base::BASE_URL,
+					'RENDER_ID_1'              => Base::RENDER_ID_1,
+					'RENDER_ID_2'              => Base::RENDER_ID_2,
+					'API_TIMEOUT'              => Base::API_TIMEOUT,
+					'nonce'                    => \wp_create_nonce( Base::KEBAB ),
 					'allowed_template_options' => $allowed_template_options,
 				),
 			)
 		);
 
 		\wp_localize_script(
-			Utils::KEBAB,
+			Base::KEBAB,
 			'wpApiSettings',
 			array(
 				'root'  => \untrailingslashit( \esc_url_raw( rest_url() ) ),

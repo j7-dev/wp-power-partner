@@ -19,7 +19,7 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
-use J7\PowerPartner\Utils;
+use J7\PowerPartner\Utils\Base;
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -113,9 +113,9 @@ final class Plugin {
 	 */
 	public function plugin_update_checker(): void {
 		$update_checker = PucFactory::buildUpdateChecker(
-			Utils::GITHUB_REPO,
+			Base::GITHUB_REPO,
 			__FILE__,
-			Utils::KEBAB
+			Base::KEBAB
 		);
 		/**
 		 * Type
@@ -123,7 +123,7 @@ final class Plugin {
 		 * @var \Puc_v4p4_VcsApi_GitHub $update_checker
 		 */
 		$update_checker->setBranch( 'master' );
-		$update_checker->setAuthentication( Utils::get_github_pat() );
+		$update_checker->setAuthentication( Base::get_github_pat() );
 		$update_checker->getVcsApi()->enableReleaseAssets();
 	}
 
@@ -135,14 +135,14 @@ final class Plugin {
 	public function register_required_plugins(): void {
 		// phpcs:disable
 		$config = array(
-			'id'           => Utils::KEBAB, // Unique ID for hashing notices for multiple instances of TGMPA.
+			'id'           => Base::KEBAB, // Unique ID for hashing notices for multiple instances of TGMPA.
 			'default_path' => '', // Default absolute path to bundled plugins.
 			'menu'         => 'tgmpa-install-plugins', // Menu slug.
 			'parent_slug'  => 'plugins.php', // Parent menu slug.
 			'capability'   => 'manage_options', // Capability needed to view plugin install page, should be a capability associated with the parent menu used.
 			'has_notices'  => true, // Show admin notices or not.
 			'dismissable'  => false, // If false, a user cannot dismiss the nag message.
-			'dismiss_msg'  => __( '這個訊息將在依賴套件被安裝並啟用後消失。' . Utils::APP_NAME . ' 沒有這些依賴套件的情況下將無法運作！', 'power_partner' ), // If 'dismissable' is false, this message will be output at top of nag.
+			'dismiss_msg'  => __( '這個訊息將在依賴套件被安裝並啟用後消失。' . Base::APP_NAME . ' 沒有這些依賴套件的情況下將無法運作！', 'power_partner' ), // If 'dismissable' is false, this message will be output at top of nag.
 			'is_automatic' => true, // Automatically activate plugins after installation or not.
 			'message'      => '', // Message to output right before the plugins table.
 			'strings'      => array(
@@ -153,20 +153,20 @@ final class Plugin {
 				'oops'                            => __( 'OOPS! plugin API 出錯了', 'power_partner' ),
 				'notice_can_install_required'     => _n_noop(
 					// translators: 1: plugin name(s).
-					Utils::APP_NAME . ' 依賴套件: %1$s.',
-					Utils::APP_NAME . ' 依賴套件: %1$s.',
+					Base::APP_NAME . ' 依賴套件: %1$s.',
+					Base::APP_NAME . ' 依賴套件: %1$s.',
 					'power_partner'
 				),
 				'notice_can_install_recommended'  => _n_noop(
 					// translators: 1: plugin name(s).
-					Utils::APP_NAME . ' 推薦套件: %1$s.',
-					Utils::APP_NAME . ' 推薦套件: %1$s.',
+					Base::APP_NAME . ' 推薦套件: %1$s.',
+					Base::APP_NAME . ' 推薦套件: %1$s.',
 					'power_partner'
 				),
 				'notice_ask_to_update'            => _n_noop(
 					// translators: 1: plugin name(s).
-					'以下套件需要更新版本來兼容 ' . Utils::APP_NAME . ': %1$s.',
-					'以下套件需要更新版本來兼容 ' . Utils::APP_NAME . ': %1$s.',
+					'以下套件需要更新版本來兼容 ' . Base::APP_NAME . ': %1$s.',
+					'以下套件需要更新版本來兼容 ' . Base::APP_NAME . ': %1$s.',
 					'power_partner'
 				),
 				'notice_ask_to_update_maybe'      => _n_noop(
@@ -208,7 +208,7 @@ final class Plugin {
 				// translators: 1: plugin name.
 				'plugin_already_active'           => __( '沒有執行任何動作 %1$s 已啟用', 'power_partner' ),
 				// translators: 1: plugin name.
-				'plugin_needs_higher_version'     => __( Utils::APP_NAME . ' 未啟用。' . Utils::APP_NAME . ' 需要新版本的 %s 。請更新套件。', 'power_partner' ),
+				'plugin_needs_higher_version'     => __( Base::APP_NAME . ' 未啟用。' . Base::APP_NAME . ' 需要新版本的 %s 。請更新套件。', 'power_partner' ),
 				// translators: 1: dashboard link.
 				'complete'                        => __( '所有套件已成功安裝跟啟用 %1$s', 'power_partner' ),
 				'dismiss'                         => __( '關閉通知', 'power_partner' ),

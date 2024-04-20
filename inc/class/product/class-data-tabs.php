@@ -9,7 +9,7 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner\Product;
 
-use J7\PowerPartner\Utils;
+use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Api\Connect;
 use J7\PowerPartner\Api\Fetch;
 
@@ -17,9 +17,9 @@ use J7\PowerPartner\Api\Fetch;
  * Class DataTabs
  */
 final class DataTabs {
-	const HOST_POSITION_FIELD_NAME = Utils::SNAKE . '_host_position';
-	const LINKED_SITE_FIELD_NAME   = Utils::SNAKE . '_linked_site';
-	const PRODUCT_TYPE_SLUG        = Utils::SNAKE;
+	const HOST_POSITION_FIELD_NAME = Base::SNAKE . '_host_position';
+	const LINKED_SITE_FIELD_NAME   = Base::SNAKE . '_linked_site';
+	const PRODUCT_TYPE_SLUG        = Base::SNAKE;
 	const DEFAULT_HOST_POSITION    = 'jp';
 
 	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME = 'clear_' . Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;

@@ -1,18 +1,18 @@
 <?php
 /**
- * Utils
+ * Base
  */
 
 declare (strict_types = 1);
 
-namespace J7\PowerPartner;
+namespace J7\PowerPartner\Utils;
 
 use J7\PowerPartner\Shortcode;
 
 /**
- * Class Utils
+ * Class Base
  */
-final class Utils {
+final class Base {
 
 	const APP_NAME    = 'Power Partner';
 	const KEBAB       = 'power-partner';
@@ -108,5 +108,42 @@ final class Utils {
 		}
 
 		return $updated_script;
+	}
+
+	/**
+	 * Mail_to function
+	 *
+	 * @param string  $subject - email subject
+	 * @param string  $message - email message
+	 * @param integer $mix - user id | email string | email string[]
+	 * @param bool    $send_to_admin - send to admin
+	 * @return void
+	 */
+	public static function mail_to( string $subject, string $message, $mix = 0, $send_to_admin = true ): void {
+		$email = array();
+
+		if ( \is_email( $mix ) ) {
+			$added_email = $mix;
+			$email       = array( ...$email, $added_email );
+		}
+
+		if ( \is_array( $mix ) ) {
+			$email = array( ...$email, ...$mix );
+		}
+
+		if ( is_numeric( $mix ) && $mix > 0 ) {
+			$added_email = \get_user_by( 'id', $mix )?->user_email;
+			$email       = array( ...$email, $added_email );
+		}
+
+		if ( $send_to_admin ) {
+			$added_email = 'info@morepower.club';
+			$added_email = 'j7.dev.gg@gmail.com';
+
+			$email = array( ...$email, $added_email );
+		}
+
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		\wp_mail( $email, $subject, $message, $headers );
 	}
 }

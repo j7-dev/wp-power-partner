@@ -7,14 +7,14 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner\Api;
 
-use J7\PowerPartner\Utils;
+use J7\PowerPartner\Utils\Base;
 
 /**
  * Class Fetch
  */
 final class Fetch {
 
-	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = Utils::SNAKE . '_allowed_template_options';
+	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = Base::SNAKE . '_allowed_template_options';
 	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME    = 30 * 24 * HOUR_IN_SECONDS;
 	/**
 	 * 發 API 開站
@@ -41,11 +41,50 @@ final class Fetch {
 			'body'    => \wp_json_encode( $props ),
 			'headers' => array(
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode( Utils::USER_NAME . ':' . Utils::PASSWORD ), // phpcs:ignore
+				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
 			),
 			'timeout' => 600,
 		);
-		$response = \wp_remote_post( Utils::API_URL . '/wp-json/power-partner-server/site-sync', $args );
+		$response = \wp_remote_post( Base::API_URL . '/wp-json/power-partner-server/site-sync', $args );
+
+		try {
+			$response_obj = json_decode( $response['body'] );
+			return $response_obj;
+		} catch ( \Throwable $th ) {
+			ob_start();
+			print_r( $response );
+			return \rest_ensure_response(
+				array(
+					'status'  => 500,
+					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
+					'data'    => null,
+				)
+			);
+		}
+	}
+
+
+	/**
+	 * 發 API 關站
+	 * 關站後，網站會被停用，無法再次啟用
+	 *
+	 * @param string $site_id 網站 ID
+	 * @return array|\WP_Error — The response or WP_Error on failure.
+	 */
+	public static function disable_site( string $site_id ) {
+		$args     = array(
+			'body'    => \wp_json_encode(
+				array(
+					'site_id' => $site_id,
+				)
+			),
+			'headers' => array(
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
+			),
+			'timeout' => 600,
+		);
+		$response = \wp_remote_post( Base::API_URL . '/wp-json/power-partner-server/disable-site', $args );
 
 		try {
 			$response_obj = json_decode( $response['body'] );
@@ -104,13 +143,13 @@ final class Fetch {
 		$args = array(
 			'headers' => array(
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode( Utils::USER_NAME . ':' . Utils::PASSWORD ), // phpcs:ignore
+				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
 				'X-Api-Key'     => 'apikey12345',
 			),
 			'timeout' => 120,
 		);
 
-		$response = \wp_remote_get( Utils::API_URL . '/wp-json/power-partner-server/template-sites?user_id=' . $partner_id, $args );
+		$response = \wp_remote_get( Base::API_URL . '/wp-json/power-partner-server/template-sites?user_id=' . $partner_id, $args );
 
 		try {
 			$response_obj = json_decode( $response['body'] );
