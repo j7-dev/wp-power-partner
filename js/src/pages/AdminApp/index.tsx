@@ -17,7 +17,7 @@ function AdminApp() {
       <Spin
         size="large"
         wrapperClassName="w-full"
-        spinning={globalLoading?.isLoading || mutation?.isLoading}
+        spinning={globalLoading?.isLoading || mutation?.isPending}
         tip={globalLoading?.isLoading ? globalLoading?.label : 'Loading...'}
       >
         {status === 200 && identityData ? <Dashboard /> : <Login />}

@@ -73,7 +73,6 @@ const EmailSetting = () => {
   const [form] = Form.useForm()
   const [messageApi, contextHolder] = message.useMessage()
   const [dataSource, setDataSource] = useAtom(emailsAtom)
-  console.log('⭐  dataSource:', dataSource)
 
   const handleAdd = () => {
     setDataSource([
@@ -82,7 +81,7 @@ const EmailSetting = () => {
     ])
   }
 
-  const { isLoading } = useGetEmails()
+  const { isPending } = useGetEmails()
   const { contextHolder: notificationContextHolder } = useSave(form)
 
   return (
@@ -102,7 +101,8 @@ const EmailSetting = () => {
             }}
             dataSource={dataSource}
             pagination={false}
-            loading={isLoading}
+            loading={isPending}
+            scroll={{ x: 768 }}
           />
           <Button type="dashed" className="mt-4 w-full" onClick={handleAdd}>
             新增 Email
@@ -115,7 +115,7 @@ const EmailSetting = () => {
               <Tooltip key={token?.value} title={token?.label}>
                 <Tag
                   color="#eee"
-                  className="rounded-xl text-gray-600 px-3 cursor-pointer mb-2"
+                  className="rounded-xl !text-gray-600 px-3 cursor-pointer mb-2"
                   onClick={handleCopy(token, messageApi)}
                 >
                   {token?.value}

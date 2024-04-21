@@ -21,22 +21,26 @@ export const useGetUserIdentity = () => {
 
       return axios.get('/power-partner/partner-id')
     },
-    onError: (err) => {
-      console.log('err', err)
-    },
-    onSuccess: (res) => {
-      const theIdentity = res?.data as TIdentity
-      setIdentity(theIdentity)
-      if (theIdentity?.status !== 200) {
-        notification.error({
-          message: theIdentity?.message,
-          description: renderHTML(JSON.stringify(theIdentity?.data || '')),
-        })
-      }
-    },
     staleTime: 1000 * 60 * 60 * 24,
-    cacheTime: 1000 * 60 * 60 * 24,
+    gcTime: 1000 * 60 * 60 * 24,
   })
+
+  const { error, data } = result
+
+  if (error) {
+    console.log('error ', error)
+  }
+
+  if (data) {
+    const theIdentity = data?.data as TIdentity
+    setIdentity(theIdentity)
+    if (theIdentity?.status !== 200) {
+      notification.error({
+        message: theIdentity?.message,
+        description: renderHTML(JSON.stringify(theIdentity?.data || '')),
+      })
+    }
+  }
 
   return result
 }

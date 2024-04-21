@@ -31,30 +31,32 @@ export const useGetUserIdentity = () => {
   const setGlobalLoading = useSetAtom(globalLoadingAtom)
   const accountInLocalStorage = localStorage.getItem(LOCALSTORAGE_ACCOUNT_KEY)
 
-  const { data, isLoading } = useQuery<AxiosResponse<TGetAccountInfo>>({
+  const { data, isPending } = useQuery<AxiosResponse<TGetAccountInfo>>({
     queryKey: ['account-info'],
-    queryFn: () => {
+    queryFn: () => axios.get('/power-partner/account-info'),
+    enabled: !accountInLocalStorage,
+  })
+
+  useEffect(() => {
+    if (isPending) {
       setGlobalLoading({
         isLoading: true,
         label: '正在獲取用戶資料...',
       })
-      return axios.get('/power-partner/account-info')
-    },
-    enabled: !accountInLocalStorage,
-  })
+    }
+  }, [isPending])
 
   const encryptedAccountInfo =
     accountInLocalStorage || data?.data?.data?.encrypted_account_info
 
   const mutation = useMutation<unknown, unknown, TAccountInfo, unknown>({
     mutationKey: ['identity'],
-    mutationFn: (values: TAccountInfo) => {
+    mutationFn: (values: TAccountInfo) => cloudAxios.post('/identity', values),
+    onMutate: (values: TAccountInfo) => {
       setGlobalLoading({
         isLoading: true,
         label: '正在獲取用戶資料...',
       })
-
-      return cloudAxios.post('/identity', values)
     },
     onError: (err: any) => {
       console.log('err', err)
@@ -76,7 +78,7 @@ export const useGetUserIdentity = () => {
       })
     },
     staleTime: 1000 * 60 * 60 * 24,
-    cacheTime: 1000 * 60 * 60 * 24,
+    gcTime: 1000 * 60 * 60 * 24,
   } as any)
 
   useEffect(() => {
@@ -87,13 +89,13 @@ export const useGetUserIdentity = () => {
   }, [encryptedAccountInfo])
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isPending) {
       setGlobalLoading({
         isLoading: false,
         label: '',
       })
     }
-  }, [isLoading])
+  }, [isPending])
 
   return mutation
 }

@@ -21,13 +21,13 @@ const useGetEmails = () => {
     },
   } as any)
 
-  const { isLoading, data: rawDataSource } = result
+  const { isPending, data: rawDataSource } = result
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isPending) {
       setDataSource(rawDataSource?.data || [])
     }
-  }, [isLoading])
+  }, [isPending])
 
   return result
 }

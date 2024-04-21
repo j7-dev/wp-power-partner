@@ -4,7 +4,7 @@ import {
   globalLoadingAtom,
   defaultIdentity,
 } from '@/pages/AdminApp/atom'
-import { useAtomValue, useAtom } from 'jotai'
+import { useAtom } from 'jotai'
 import {
   UserOutlined,
   PoweroffOutlined,
@@ -14,6 +14,7 @@ import {
 } from '@ant-design/icons'
 import { LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
 import { LoadingText } from '@/components'
+import { axios } from '@/api'
 
 const index = () => {
   const [identity, setIdentity] = useAtom(identityAtom)
@@ -22,11 +23,24 @@ const index = () => {
   const user_id = identity.data?.user_id || ''
   const partnerLvTitle = identity.data?.partner_lv?.title || ''
   const partnerLvKey = identity.data?.partner_lv?.key || '0'
-  const globalLoading = useAtomValue(globalLoadingAtom)
+  const [globalLoading, setGlobalLoading] = useAtom(globalLoadingAtom)
 
-  const handleDisconnect = () => {
+  const handleDisconnect = async () => {
+    setGlobalLoading({
+      isLoading: true,
+      label: '正在解除帳號綁定...',
+    })
+    try {
+      await axios.delete('/power-partner/partner-id')
+    } catch (error) {
+      console.log('error', error)
+    }
     localStorage.removeItem(LOCALSTORAGE_ACCOUNT_KEY)
     setIdentity(defaultIdentity)
+    setGlobalLoading({
+      isLoading: false,
+      label: '',
+    })
   }
 
   const items: MenuProps['items'] = [

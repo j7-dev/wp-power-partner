@@ -79,6 +79,21 @@ final class Connect {
 		);
 
 		/**
+* Register DELETE partner id API
+*/
+		\register_rest_route(
+			Plugin::KEBAB,
+			'partner-id',
+			array(
+				'methods'             => 'DELETE',
+				'callback'            => array( $this, 'delete_partner_id_callback' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		/**
 	 * Register account info API
 	 */
 		\register_rest_route(
@@ -159,6 +174,25 @@ final class Connect {
 				)
 			);
 		}
+	}
+
+
+	/**
+	 * Callback of delete_partner_id API
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_partner_id_callback() {
+		\delete_option( self::PARTNER_ID_OPTION_NAME );
+		\delete_option( Plugin::SNAKE . '_account_info' );
+		\delete_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
+		return \rest_ensure_response(
+			array(
+				'status'  => 200,
+				'message' => 'delete account in wp_option success',
+				'data'    => null,
+			)
+		);
 	}
 
 

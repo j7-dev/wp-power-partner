@@ -21,7 +21,7 @@ const index = () => {
 
   const queryClient = useQueryClient()
 
-  const { mutate, isLoading } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: (params: TManualSiteSyncParams) => {
       return axios.post('/power-partner/manual-site-sync', params)
     },
@@ -52,7 +52,7 @@ const index = () => {
           message: '開站成功',
           description: message,
         })
-        queryClient.invalidateQueries(['apps'])
+        queryClient.invalidateQueries(['apps'] as any)
       } else {
         api.error({
           key: 'manual-site-sync',
@@ -109,7 +109,7 @@ const index = () => {
       </Item>
 
       <Item wrapperCol={{ offset: 8, span: 16 }}>
-        <Button type="primary" htmlType="submit" loading={isLoading}>
+        <Button type="primary" htmlType="submit" loading={isPending}>
           開站
         </Button>
       </Item>

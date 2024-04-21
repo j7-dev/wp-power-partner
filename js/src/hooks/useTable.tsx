@@ -16,7 +16,7 @@ export const useTable = <T, K>({
 }: {
   resource: string
   defaultParams: T
-  queryOptions?: UseQueryOptions
+  queryOptions?: Omit<UseQueryOptions, 'queryKey'>
 }) => {
   type TData = {
     data: {

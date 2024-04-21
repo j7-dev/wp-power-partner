@@ -9,14 +9,13 @@ import { useMutation } from '@tanstack/react-query'
 const index = () => {
   const setIdentity = useSetAtom(identityAtom)
   const setGlobalLoading = useSetAtom(globalLoadingAtom)
-  const { mutate: getIdentity, isLoading } = useMutation({
-    mutationFn: (values: TAccountInfo) => {
+  const { mutate: getIdentity, isPending } = useMutation({
+    mutationFn: (values: TAccountInfo) => cloudAxios.post('/identity', values),
+    onMutate: (values: TAccountInfo) => {
       setGlobalLoading({
         isLoading: true,
         label: '正在獲取用戶資料...',
       })
-
-      return cloudAxios.post('/identity', values)
     },
     onError: (err) => {
       console.log('err', err)
@@ -87,7 +86,7 @@ const index = () => {
             { type: 'email', message: '請輸入有效的 Email' },
           ]}
         >
-          <Input size="large" disabled={isLoading} />
+          <Input size="large" disabled={isPending} />
         </Form.Item>
 
         <Form.Item<TAccountInfo>
@@ -95,7 +94,7 @@ const index = () => {
           name="password"
           rules={[{ required: true, message: '請輸入密碼' }]}
         >
-          <Input.Password size="large" disabled={isLoading} />
+          <Input.Password size="large" disabled={isPending} />
         </Form.Item>
 
         <Form.Item>
@@ -104,7 +103,7 @@ const index = () => {
             htmlType="submit"
             className="w-full"
             size="large"
-            loading={isLoading}
+            loading={isPending}
           >
             連結帳號
           </Button>

@@ -14,7 +14,7 @@ export const useOne = (options: {
   config?: AxiosRequestConfig<{ [key: string]: any }> | undefined
   queryOptions?: {
     staleTime?: number
-    cacheTime?: number
+    gcTime?: number
     refetchOnWindowFocus?: boolean
     refetchOnMount?: boolean
     refetchOnReconnect?: boolean
