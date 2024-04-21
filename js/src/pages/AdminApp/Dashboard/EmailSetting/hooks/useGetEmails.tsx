@@ -25,7 +25,11 @@ const useGetEmails = () => {
 
   useEffect(() => {
     if (!isPending) {
-      setDataSource(rawDataSource?.data || [])
+      if (Array.isArray(rawDataSource?.data)) {
+        setDataSource(rawDataSource?.data || [])
+      } else {
+        setDataSource([])
+      }
     }
   }, [isPending])
 
