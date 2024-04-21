@@ -3,6 +3,8 @@ import { EmailComponentProps } from '@/pages/AdminApp/Dashboard/EmailSetting/typ
 import { Select, Form, InputNumber, Space, Tooltip } from 'antd'
 import { REDUX } from '@/pages/AdminApp/Dashboard/EmailSetting/utils'
 import { InfoCircleFilled } from '@ant-design/icons'
+import { focusEmailIndexAtom } from '@/pages/AdminApp/Dashboard/EmailSetting/atom'
+import { useSetAtom } from 'jotai'
 
 const { Item } = Form
 
@@ -53,6 +55,7 @@ const actionNameOptions = actions.map(({ label, value }) => ({
 
 const SendingCondition = ({ record, index }: EmailComponentProps) => {
   const form = Form.useFormInstance()
+  const setFocusEmailIndex = useSetAtom(focusEmailIndexAtom)
   const actionNameName = [index, REDUX.ACTION_NAME_FIELD_NAME]
   const daysName = [index, REDUX.DAYS_FIELD_NAME]
   const operatorName = [index, REDUX.OPERATOR_FIELD_NAME]
@@ -79,6 +82,10 @@ const SendingCondition = ({ record, index }: EmailComponentProps) => {
       form.setFieldValue(daysName, 0)
       form.setFieldValue(operatorName, 'after')
     }
+    setFocusEmailIndex({
+      index,
+      actionName: watchActionName,
+    })
   }, [watchActionName])
 
   return (

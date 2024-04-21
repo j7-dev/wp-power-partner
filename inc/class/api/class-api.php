@@ -284,6 +284,16 @@ final class Api {
 		$request_ip  = $_SERVER['REMOTE_ADDR']; // phpcs:disable 获取发起请求的IP地址
 		// phpcs:enable
 
+		ob_start();
+		print_r(
+			array(
+				'allowed_ips'         => $allowed_ips,
+				'request_ip'          => $request_ip,
+				'check_ip_permission' => in_array( $request_ip, $allowed_ips, true ) ? 'true' : 'false',
+			)
+		);
+		\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
+
 		// 检查发起请求的IP是否在允许的列表中
 		return in_array( $request_ip, $allowed_ips, true );
 	}

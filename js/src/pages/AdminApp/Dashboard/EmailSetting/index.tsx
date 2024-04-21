@@ -13,15 +13,19 @@ import SendingCondition from '@/pages/AdminApp/Dashboard/EmailSetting/SendingCon
 import { DataType } from '@/pages/AdminApp/Dashboard/EmailSetting/types'
 import {
   REDUX,
-  tokens,
+  siteSyncTokens,
+  orderTokens,
   handleCopy,
   getEmailTemplate,
 } from '@/pages/AdminApp/Dashboard/EmailSetting/utils'
 import EmailBody from '@/pages/AdminApp/Dashboard/EmailSetting/EmailBody'
 import DeleteButton from '@/pages/AdminApp/Dashboard/EmailSetting/DeleteButton'
 import EmailSwitch from '@/pages/AdminApp/Dashboard/EmailSetting/EmailSwitch'
-import { emailsAtom } from '@/pages/AdminApp/Dashboard/EmailSetting/atom'
-import { useAtom } from 'jotai'
+import {
+  emailsAtom,
+  focusEmailIndexAtom,
+} from '@/pages/AdminApp/Dashboard/EmailSetting/atom'
+import { useAtom, useAtomValue } from 'jotai'
 import useSave from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
 import useGetEmails from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useGetEmails'
 
@@ -71,6 +75,11 @@ const columns: TableColumnsType<DataType> = [
 
 const EmailSetting = () => {
   const [form] = Form.useForm()
+  const focusEmailIndex = useAtomValue(focusEmailIndexAtom)
+
+  console.log('⭐  watchActionName:', {
+    focusEmailIndex,
+  })
   const [messageApi, contextHolder] = message.useMessage()
   const [dataSource, setDataSource] = useAtom(emailsAtom)
 
@@ -89,7 +98,7 @@ const EmailSetting = () => {
       {contextHolder}
       {notificationContextHolder}
       <div className="flex flex-col lg:flex-row gap-8 relative">
-        <div className="w-full">
+        <div className="flex-1">
           <Table
             rowKey="key"
             tableLayout="auto"
@@ -108,10 +117,13 @@ const EmailSetting = () => {
             新增 Email
           </Button>
         </div>
-        <div className="flex-1 max-w-[400px] sticky top-0">
+        <div className="w-[320px] sticky top-0">
           <Affix offsetTop={48}>
             <p className="mb-2 text-[14px]">可用變數</p>
-            {tokens.map((token) => (
+            {(focusEmailIndex?.actionName === 'site_sync'
+              ? siteSyncTokens
+              : orderTokens
+            ).map((token) => (
               <Tooltip key={token?.value} title={token?.label}>
                 <Tag
                   color="#eee"

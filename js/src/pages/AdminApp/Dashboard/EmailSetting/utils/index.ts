@@ -14,7 +14,7 @@ export const getEmailTemplate = () =>
     action_name: 'subscription_failed',
     days: 0,
     operator: 'after',
-  } as DataType)
+  }) as DataType
 
 export enum REDUX {
   OPT_NAME = 'power_plugins_settings',
@@ -28,7 +28,7 @@ export enum REDUX {
   OPERATOR_FIELD_NAME = 'operator',
 }
 
-export const tokens: TBase[] = [
+export const baseTokens: TBase[] = [
   {
     label: '姓',
     value: '##FIRST_NAME##',
@@ -45,6 +45,10 @@ export const tokens: TBase[] = [
     label: 'Email',
     value: '##EMAIL##',
   },
+]
+
+export const siteSyncTokens: TBase[] = [
+  ...baseTokens,
   {
     label: 'WordPress帳戶頁',
     value: '##WORDPRESSAPPWCSITESACCOUNTPAGE##',
@@ -72,6 +76,38 @@ export const tokens: TBase[] = [
   {
     label: '網站密碼',
     value: '##SITEPASSWORD##',
+  },
+]
+
+export const orderTokens: TBase[] = [
+  ...baseTokens,
+  {
+    label: '訂單編號',
+    value: '##ORDER_ID##',
+  },
+  {
+    label: '訂單商品',
+    value: '##ORDER_ITEMS##',
+  },
+  {
+    label: '付款網址',
+    value: '##CHECKOUT_PAYMENT_URL##',
+  },
+  {
+    label: '訂單網址',
+    value: '##VIEW_ORDER_URL##',
+  },
+  {
+    label: '訂單狀態',
+    value: '##ORDER_STATUS##',
+  },
+  {
+    label: '訂單日期',
+    value: '##ORDER_DATE##',
+  },
+  {
+    label: '網站 URL',
+    value: '##URL##',
   },
 ]
 

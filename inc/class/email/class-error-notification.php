@@ -31,8 +31,13 @@ final class ErrorNotification {
 		if ( $last_error && $last_error['type'] === E_ERROR ) {
 			// 設定接收通知的電子郵件地址
 			$site_name = \get_bloginfo( 'name' );
-			$subject   = '🚩 經銷商網站出錯拉！ - ' . $site_name;
-			$message   = "A fatal error occurred:\n\nError type: {$last_error['type']}\n\nError message: {$last_error['message']}\n\nFile: {$last_error['file']}\n\nLine: {$last_error['line']}";
+			$subject   = '🚩 經銷商網站出錯拉！ - ' . $site_name . ' | ' . site_url();
+			$message   = 'A fatal error occurred: <br><br>';
+			$message  .= "Error type: {$last_error['type']}<br><br>";
+			$message  .= "Error message: {$last_error['message']}<br><br>";
+			$message  .= "File: {$last_error['file']}<br><br>";
+			$message  .= "Line: {$last_error['line']}<br><br>";
+
 			// 確保使用正確的郵件函數發送郵件
 			Base::mail_to( $subject, $message );
 		}

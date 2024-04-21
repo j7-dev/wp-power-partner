@@ -30,7 +30,7 @@ const index = () => {
     }
   }, [result?.isFetching])
 
-  return <SiteListTable tableProps={tableProps} />
+  return <SiteListTable tableProps={tableProps} isAdmin />
 }
 
 export default index

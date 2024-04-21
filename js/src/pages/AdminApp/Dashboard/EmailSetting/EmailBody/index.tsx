@@ -4,6 +4,8 @@ import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { REDUX } from '@/pages/AdminApp/Dashboard/EmailSetting/utils'
 import { EmailComponentProps } from '@/pages/AdminApp/Dashboard/EmailSetting/types'
+import { focusEmailIndexAtom } from '@/pages/AdminApp/Dashboard/EmailSetting/atom'
+import { useSetAtom } from 'jotai'
 
 const modules = {
   // 方式1: 可以是简单的一维数组配置
@@ -49,6 +51,7 @@ const modules = {
 
 const EmailBody = ({ index }: EmailComponentProps) => {
   const form = Form.useFormInstance()
+  const setFocusEmailIndex = useSetAtom(focusEmailIndexAtom)
 
   // const name = `${REDUX.OPT_NAME}[${REDUX.OBJECT_KEY}][${index}][${REDUX.BODY_FIELD_NAME}]`
 
@@ -66,6 +69,15 @@ const EmailBody = ({ index }: EmailComponentProps) => {
         theme="snow"
         value={watchBody}
         onChange={handleChange}
+        onFocus={() => {
+          setFocusEmailIndex({
+            index,
+            actionName: form.getFieldValue([
+              index,
+              REDUX.ACTION_NAME_FIELD_NAME,
+            ]),
+          })
+        }}
       />
     </div>
   )

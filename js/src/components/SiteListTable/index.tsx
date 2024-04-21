@@ -35,9 +35,10 @@ type TFormValues = {
 
 export * from './types'
 
-export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
-  tableProps,
-}) => {
+export const SiteListTable: FC<{
+  tableProps: TableProps<DataType>
+  isAdmin?: boolean
+}> = ({ tableProps, isAdmin = false }) => {
   const [form] = Form.useForm()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [chosenRecord, setChosenRecord] = useState<DataType | null>(null)
@@ -138,13 +139,12 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
       render: (value: string, record) => (
         <>
           <p className="mb-1 mt-0 flex items-center gap-x-2">
-            <div className="relative top-[0.1rem]">
-              <BreathLight
-                color={
-                  record?.wpapp_site_status !== 'off' ? '#84cc16' : '#f43f5e'
-                }
-              />
-            </div>
+            <BreathLight
+              color={
+                record?.wpapp_site_status !== 'off' ? '#84cc16' : '#f43f5e'
+              }
+            />
+
             <a
               target="_blank"
               href={`${
@@ -223,7 +223,9 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
               />
             </Tooltip>
             <ToggleSslButton record={record} notificationApi={api} />
-            <ToggleSiteButton record={record} notificationApi={api} />
+            {isAdmin && (
+              <ToggleSiteButton record={record} notificationApi={api} />
+            )}
           </div>
         )
       },

@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace J7\PowerPartner\Cron;
 
 use J7\PowerPartner\Plugin;
+use J7\PowerPartner\Product\Product;
+use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Email\Email;
 use Micropackage\Singleton\Singleton;
 use J7\PowerPartner\ShopSubscription\ShopSubscription;
@@ -111,6 +113,8 @@ final class Cron extends Singleton {
 					$after_next_payment_time = $next_payment_time + 86400; // 一天後
 					$current_time            = time();
 					if ( $current_time > $next_payment_time && $current_time < $after_next_payment_time ) {
+						$subject = Base::replace_script_tokens( $subject, $tokens );
+						$body    = Base::replace_script_tokens( $body, $tokens );
 						\wp_mail(
 							$order_date_arr['customer_email'],
 							$subject,
@@ -174,28 +178,86 @@ final class Cron extends Singleton {
 			$last_order_date_created = $subscription?->get_time( 'last_order_date_created' );
 			$end                     = $subscription?->get_time( 'end' );
 			$end_of_prepaid_term     = $subscription?->get_time( 'end_of_prepaid_term' );
-			$order                   = $subscription?->get_last_order(); // order | order_id
-			if ( is_numeric( $order ) ) {
-				$order = \wc_get_order( $order );
+			$last_order              = $subscription?->get_last_order(); // order | order_id
+			if ( is_numeric( $last_order ) ) {
+				$last_order = \wc_get_order( $last_order );
 			}
 
-			if ( ! $order ) {
+			if ( ! $last_order ) {
 				continue;
 			}
-			$order_id = $order?->get_id();
-			$arr[]    = array(
-				'order_id'                => (int) $order_id,
-				'customer_email'          => $order?->get_billing_email(),
+			$last_order_id = $last_order?->get_id();
+
+			$tokens = array_merge( self::get_order_tokens( $last_order ), self::get_subscription_tokens( $subscription ) );
+
+			$arr[] = array(
+				'order_id'                => (int) $last_order_id,
+				'customer_email'          => $last_order?->get_billing_email(),
 				'date_created'            => $date_created,
 				'trial_end'               => $trial_end,
 				'last_order_date_created' => $last_order_date_created,
 				'next_payment'            => $next_payment,
 				'end'                     => $end,
 				'end_of_prepaid_term'     => $end_of_prepaid_term,
+				'tokens'                  => $tokens,
 			);
 		}
 
 		return $arr;
+	}
+
+	/**
+	 * Get order tokens
+	 *
+	 * @param \WC_Order $order Order
+	 * @return array
+	 */
+	public static function get_order_tokens( \WC_Order $order ): array {
+		$customer = $order?->get_user();
+
+		$products = array();
+		foreach ( $order?->get_items() as $item_id => $item ) {
+			$product_name = $item?->get_name();
+			$products[]   = $product_name;
+		}
+		$products_text = implode( ', ', $products );
+
+		$tokens                         = array();
+		$tokens['FIRST_NAME']           = $customer?->first_name;
+		$tokens['LAST_NAME']            = $customer?->last_name;
+		$tokens['NICE_NAME']            = $customer?->user_nicename;
+		$tokens['EMAIL']                = $customer?->user_email;
+		$tokens['ORDER_ID']             = $order?->get_id();
+		$tokens['ORDER_ITEMS']          = $products_text;
+		$tokens['CHECKOUT_PAYMENT_URL'] = $order?->get_checkout_payment_url();
+		$tokens['VIEW_ORDER_URL']       = $order?->get_view_order_url();
+		$tokens['ORDER_STATUS']         = $order?->get_status();
+		$tokens['ORDER_DATE']           = $order?->get_date_created()?->format( 'Y-m-d' );
+
+		return $tokens;
+	}
+
+	/**
+	 * Get subscription tokens
+	 *
+	 * @param \WC_Subscription $subscription Subscription
+	 * @return array
+	 */
+	public static function get_subscription_tokens( \WC_Subscription $subscription ): array {
+		$parent_id      = $subscription->get_parent_id();
+		$site_responses = \get_post_meta( $parent_id, Product::CREATE_SITE_RESPONSES_META_KEY, true );
+		$tokens         = array();
+		try {
+			$site_responses_arr = \json_decode( $site_responses, true );
+			$site_info          = $site_responses_arr['data'];
+			$tokens['URL']      = $site_info['url'];
+		} catch ( \Throwable $th ) {
+			ob_start();
+			print_r( $th );
+			\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
+		}
+
+		return $tokens;
 	}
 }
 

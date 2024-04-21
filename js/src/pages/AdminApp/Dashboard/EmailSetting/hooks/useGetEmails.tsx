@@ -16,10 +16,8 @@ const useGetEmails = () => {
   >({
     queryKey: ['emails'],
     queryFn: () => axios.get('/power-partner/emails'),
-    queryOptions: {
-      staleTime: 1000 * 60 * 60 * 24,
-    },
-  } as any)
+    staleTime: 1000 * 60 * 60 * 24,
+  })
 
   const { isPending, data: rawDataSource } = result
 
