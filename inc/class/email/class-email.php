@@ -83,7 +83,12 @@ final class Email {
 				'days'        => 0,
 				'operator'    => 'after',
 			);
-			\update_option( self::EMAILS_OPTION_NAME, $sync_email );
+			\update_option(
+				self::EMAILS_OPTION_NAME,
+				array(
+					$sync_email,
+				)
+			);
 
 			// 同步完成，移除舊的email
 			unset( $power_plugins_settings['power_partner_email_subject'] );
