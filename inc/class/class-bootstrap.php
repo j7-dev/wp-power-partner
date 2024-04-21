@@ -10,6 +10,7 @@ namespace J7\PowerPartner;
 use Micropackage\Singleton\Singleton;
 use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Api\Fetch;
+use J7\PowerPartner\Email\Email;
 use Kucrut\Vite;
 
 /**
@@ -30,9 +31,11 @@ final class Bootstrap extends Singleton {
 		require_once __DIR__ . '/shortcode/index.php';
 		require_once __DIR__ . '/shop_subscription/index.php';
 		require_once __DIR__ . '/email/index.php';
+		require_once __DIR__ . '/cron/index.php';
 
 		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 99 );
 		\add_action( 'wp_enqueue_scripts', array( $this, 'frontend_enqueue_script' ), 99 );
+		Email::sync_email_content();
 	}
 
 	/**

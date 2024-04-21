@@ -122,6 +122,7 @@ final class Api {
 			$tokens['SITEUSERNAME']                   = $body_params['SITEUSERNAME'];
 			$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
 
+			// 取得 site_sync 的 email 模板
 			$emails = Email::get_emails( 'site_sync' );
 
 			foreach ( $emails as $email ) {

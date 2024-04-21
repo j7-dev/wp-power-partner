@@ -1,27 +1,55 @@
 import React, { useEffect } from 'react'
 import { EmailComponentProps } from '@/pages/AdminApp/Dashboard/EmailSetting/types'
-import { Select, Form, InputNumber, Space } from 'antd'
+import { Select, Form, InputNumber, Space, Tooltip } from 'antd'
 import { REDUX } from '@/pages/AdminApp/Dashboard/EmailSetting/utils'
+import { InfoCircleFilled } from '@ant-design/icons'
 
 const { Item } = Form
 
-const actionNameOptions = [
-  { label: '開站後發信', value: 'site_sync' },
+// @param string $date_type 'date_created', 'trial_end', 'next_payment', 'last_order_date_created', 'end' or 'end_of_prepaid_term'
+
+const actions = [
   {
-    label: '客戶續訂失敗後發信',
+    label: '下單開站後',
+    value: 'site_sync',
+    helper: '下單開站後馬上發送',
+  },
+  {
+    label: '客戶續訂失敗後',
     value: 'subscription_failed',
+    helper: '續訂失敗後 N 天發送',
   },
   {
-    label: '客戶續訂成功後發信',
+    label: '客戶續訂成功後',
     value: 'subscription_success',
+    helper: '續訂成功後 N 天發送',
+  },
+  {
+    label: '下次付款(含成功&失敗)',
+    value: 'next_payment',
+    helper: '續訂不論成功或失敗 前/後 N 天發送',
+  },
+  {
+    label: '訂閱成立(即第一個訂單成立)',
+    value: 'date_created',
+    helper: '訂閱成立後 N 天發送',
+  },
+  {
+    label: '試用期結束',
+    value: 'trial_end',
+    helper: '試用期結束 前/後 N 天發送',
+  },
+  {
+    label: '最近一次續訂訂單日期',
+    value: 'last_order_date_created',
+    helper: '上次續訂訂單日期後 N 天發送',
   },
 ]
 
-const operatorOptions = [
-  { label: '天後發出', value: 'after' },
-
-  // { label: '天前發出', value: 'before' },
-]
+const actionNameOptions = actions.map(({ label, value }) => ({
+  label,
+  value,
+}))
 
 const SendingCondition = ({ record, index }: EmailComponentProps) => {
   const form = Form.useFormInstance()
@@ -30,6 +58,21 @@ const SendingCondition = ({ record, index }: EmailComponentProps) => {
   const operatorName = [index, REDUX.OPERATOR_FIELD_NAME]
 
   const watchActionName = Form.useWatch(actionNameName, form)
+
+  const operatorOptions = [
+    { label: '天後發出', value: 'after' },
+    {
+      label: '天前發出',
+      value: 'before',
+      disabled: [
+        'site_sync',
+        'subscription_failed',
+        'subscription_success',
+        'date_created',
+        'last_order_date_created',
+      ].includes(watchActionName),
+    },
+  ]
 
   useEffect(() => {
     if ('site_sync' === watchActionName) {
@@ -40,6 +83,13 @@ const SendingCondition = ({ record, index }: EmailComponentProps) => {
 
   return (
     <div className="flex">
+      <Tooltip
+        title={
+          actions.find((action) => action.value === watchActionName)?.helper
+        }
+      >
+        <InfoCircleFilled className="text-primary mr-2" />
+      </Tooltip>
       <Space.Compact block>
         <Item
           name={actionNameName}
@@ -67,10 +117,7 @@ const SendingCondition = ({ record, index }: EmailComponentProps) => {
           className="mb-0"
           shouldUpdate
         >
-          <Select
-            className="w-32 pointer-events-none"
-            options={operatorOptions}
-          />
+          <Select className="w-32" options={operatorOptions} />
         </Item>
       </Space.Compact>
     </div>

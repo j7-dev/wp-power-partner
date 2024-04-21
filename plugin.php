@@ -280,6 +280,13 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 		 * @return void
 		 */
 		public function deactivate(): void {
+
+			if( ! \class_exists( __NAMESPACE__ . '\Cron\Cron' ) ) {
+				return;
+			}
+			// 註銷 CRON 事件
+			\wp_clear_scheduled_hook( Cron\Cron::SEND_EMAIL_HOOK_NAME );
+			\wp_clear_scheduled_hook( Cron\Cron::SYNC_SUBSCRIPTION_META_HOOK_NAME );
 		}
 	}
 

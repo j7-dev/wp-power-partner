@@ -27,6 +27,37 @@ final class ShopSubscription {
 
 	const IS_POWER_PARTNER_SUBSCRIPTION  = 'is_' . Plugin::SNAKE;
 	const LAST_FAILED_TIMESTAMP_META_KEY = Plugin::SNAKE . '_last_failed_timestamp';
+	const POST_TYPE                      = 'shop_subscription';
+
+	/**
+	 * Success statuses
+	 *
+	 * @var array
+	 */
+	public static $success_statuses = array( 'wc-active' );
+
+	/**
+	 * Failed statuses
+	 *
+	 * @var array
+	 */
+	public static $failed_statuses = array( 'wc-cancelled', 'wc-on-hold', 'wc-pending-cancel' );
+
+
+	/**
+	 * Not failed statuses
+	 *
+	 * @var array
+	 */
+	public static $not_failed_statuses = array( 'wc-active', 'wc-expired' );
+
+	/**
+	 * All statuses
+	 *
+	 * @var array
+	 */
+	public static $all_statuses = array( 'wc-active', 'wc-cancelled', 'wc-expired', 'wc-on-hold', 'wc-pending-cancel' );
+
 
 	/**
 	 * Constructor
@@ -48,7 +79,7 @@ final class ShopSubscription {
 	public function subscription_failed( $new_status, $old_status, $post ): void {
 
 		// 如果不是訂閱商品 就不處理
-		if ( 'shop_subscription' !== $post?->post_type ) {
+		if ( self::POST_TYPE !== $post?->post_type ) {
 			return;
 		}
 
@@ -60,7 +91,7 @@ final class ShopSubscription {
 		}
 
 		// 從 [已啟用] 變成 [已取消] 或 [保留] 等等  就算失敗， [已過期] 不算
-		$is_subscription_failed = ( ! in_array( $new_status, array( 'wc-active', 'wc-expired' ), true ) ) && in_array( $old_status, array( 'wc-active' ), true );
+		$is_subscription_failed = ( ! in_array( $new_status, self::$not_failed_statuses, true ) ) && in_array( $old_status, self::$success_statuses, true );
 
 		// 如果訂閱沒失敗 就不處理，並且清除上次失敗的時間
 		if ( ! $is_subscription_failed ) {
@@ -93,6 +124,38 @@ final class ShopSubscription {
 		$subscription    = \wcs_get_subscription( $subscription );
 		$subscription_id = $subscription?->get_id();
 		\update_post_meta( $subscription_id, self::IS_POWER_PARTNER_SUBSCRIPTION, true );
+	}
+
+	/**
+	 * Sync post meta
+	 * 因為 v1 沒有對 subscription 加上 IS_POWER_PARTNER_SUBSCRIPTION 的 meta
+	 * 所以要做一次同步
+	 *
+	 * @deprecated version 2.0.0
+	 *
+	 * @return void
+	 */
+	public static function sync_post_meta() {
+		$major_ver = Plugin::$version[0];
+		if ( $major_ver <= 2 ) {
+			$subscription_ids = \get_posts(
+				array(
+					'post_type'   => self::POST_TYPE,
+					'post_status' => 'any',
+					'numberposts' => -1,
+					'fields'      => 'ids',
+				)
+			);
+			foreach ( $subscription_ids as $subscription_id ) {
+				$subscription_top_order    = \get_post_parent( $subscription_id );
+				$subscription_top_order_id = $subscription_top_order?->ID;
+				$create_site_response      = \get_post_meta( $subscription_top_order_id, Product::CREATE_SITE_RESPONSES_META_KEY, true );
+				$is_power_partner_order    = ! empty( $create_site_response );
+				if ( $is_power_partner_order ) {
+					\update_post_meta( $subscription_id, self::IS_POWER_PARTNER_SUBSCRIPTION, true );
+				}
+			}
+		}
 	}
 }
 
