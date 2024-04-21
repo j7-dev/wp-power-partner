@@ -4188,10 +4188,10 @@ ansi-styles@^6.1.0:
   resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-6.2.1.tgz#0e62320cf99c21afff3b3012192546aacbfb05c5"
   integrity sha512-bN798gFfQX+viw3R7yrGWRqnrN2oRkEkUjjl4JNn4E8GxxbjtG3FbrEIIY3l8/hrwUwIeCZvi4QuOTP4MErVug==
 
-antd-toolkit@^0.1.23:
-  version "0.1.23"
-  resolved "https://registry.yarnpkg.com/antd-toolkit/-/antd-toolkit-0.1.23.tgz#ff56c285f89e5325f8cebea2f73509fc50e9cfe4"
-  integrity sha512-WrLxhW8kp5z88zYX3Qo+NKGUpHM+LPQ90Jp3fM1vmlWmAAPLN/eizl3epA/IcqFggiMi93jJkrqIlp8qmxKKQQ==
+antd-toolkit@^0.1.26:
+  version "0.1.26"
+  resolved "https://registry.yarnpkg.com/antd-toolkit/-/antd-toolkit-0.1.26.tgz#4e91842ce9e27259256dced7e79e13cb5fdc6f5c"
+  integrity sha512-7sqdyQLywGDDO/8Y7em6ijfj8b8nRP8jUAzoNVNQdVBPB38ar7e9deu1Lf+E32AxzhNpHm2r58YUyCVpEDoZVg==
   dependencies:
     "@refinedev/antd" "^5.37.6"
     "@refinedev/core" "^4.49.0"

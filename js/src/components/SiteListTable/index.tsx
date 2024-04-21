@@ -12,18 +12,14 @@ import {
   notification,
   Alert,
 } from 'antd'
-import {
-  CloseCircleOutlined,
-  SyncOutlined,
-  EditOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons'
+import { EditOutlined, LoadingOutlined } from '@ant-design/icons'
 import { SystemInfo } from '@/components'
 import { DataType } from '@/components/SiteListTable/types'
 import { cloudAxios } from '@/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import ToggleSslButton from '@/components/SiteListTable/ToggleSslButton'
 import ToggleSiteButton from '@/components/SiteListTable/ToggleSiteButton'
+import { BreathLight } from 'antd-toolkit'
 
 const { Paragraph } = Typography
 
@@ -141,7 +137,14 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
       dataIndex: 'post_title',
       render: (value: string, record) => (
         <>
-          <p className="mb-1 mt-0">
+          <p className="mb-1 mt-0 flex items-center gap-x-2">
+            <div className="relative top-[0.1rem]">
+              <BreathLight
+                color={
+                  record?.wpapp_site_status !== 'off' ? '#84cc16' : '#f43f5e'
+                }
+              />
+            </div>
             <a
               target="_blank"
               href={`${
