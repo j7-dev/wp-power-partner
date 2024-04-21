@@ -279,7 +279,7 @@ final class Api {
 	 */
 	public function check_ip_permission() {
 		// 允許的 ip 列表
-		$allowed_ips = array( '61.220.44.7' ); // cloud 站 或 load balancer
+		$allowed_ips = array( '61.220.44.7', '61.220.44.10' ); // cloud 站 或 load balancer
 		// phpcs:disable
 		$request_ip  = $_SERVER['REMOTE_ADDR']; // phpcs:disable 获取发起请求的IP地址
 		// phpcs:enable

@@ -42,7 +42,7 @@ const actions = [
     helper: '試用期結束 前/後 N 天發送',
   },
   {
-    label: '最近一次續訂訂單日期',
+    label: '上次續訂訂單日期',
     value: 'last_order_date_created',
     helper: '上次續訂訂單日期後 N 天發送',
   },
