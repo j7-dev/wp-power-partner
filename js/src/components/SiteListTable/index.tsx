@@ -80,7 +80,7 @@ export const SiteListTable: FC<{ tableProps: TableProps<DataType> }> = ({
           message: '域名變更成功',
           description: `${record?.wpapp_domain} 已成功變更為 ${new_domain}`,
         })
-        queryClient.invalidateQueries(['apps'])
+        queryClient.invalidateQueries({ queryKey: ['apps'] })
       } else {
         api.error({
           key: `loading-change-domain-${id}`,

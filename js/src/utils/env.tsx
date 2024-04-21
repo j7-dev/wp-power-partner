@@ -30,3 +30,5 @@ export const allowed_template_options = (window?.[APP_DOMAIN]?.env
   ?.allowed_template_options || []) as {
   [key: string]: string
 }
+
+export const partner_id = window?.[APP_DOMAIN]?.env?.partner_id || ''

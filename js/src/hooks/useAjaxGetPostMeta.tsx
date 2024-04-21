@@ -65,8 +65,8 @@ export function useAjaxGetPostMeta<T>(props: TProps) {
     onError: (error: AxiosError) => {
       const status: number = error?.response?.status ?? 500
       if (status === 403) {
-        queryClient.invalidateQueries(['get_ajax_nonce'])
-        queryClient.invalidateQueries(['get_post_meta'])
+        queryClient.invalidateQueries({ queryKey: ['get_ajax_nonce'] })
+        queryClient.invalidateQueries({ queryKey: ['get_post_meta'] })
       }
       console.log(error)
     },

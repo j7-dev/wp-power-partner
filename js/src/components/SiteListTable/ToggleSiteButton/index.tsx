@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { Button, Tooltip, Popconfirm } from 'antd'
+import { Tooltip, Popconfirm } from 'antd'
 import {
   CloseCircleOutlined,
   LoadingOutlined,
@@ -10,9 +10,11 @@ import { DataType } from '@/components/SiteListTable/types'
 import { cloudAxios } from '@/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { NotificationInstance } from 'antd/es/notification/interface'
+import { partner_id } from '@/utils'
 
 type TToggleSiteParams = {
   site_id: string
+  partner_id: string
 }
 
 type TToggleSslButtonProps = {
@@ -31,7 +33,7 @@ const index = ({
 
   const { mutate: toggleSite } = useMutation({
     mutationFn: (values: TToggleSiteParams) => {
-      return cloudAxios.post('/toggle-site', values)
+      return cloudAxios.post('/v2/toggle-site', values)
     },
     onMutate: (values: TToggleSiteParams) => {
       const site_id = values?.site_id
@@ -54,7 +56,7 @@ const index = ({
           message: `網站 已${text}`,
           description: `${text} ${rowRecord?.wpapp_domain} 網站 成功`,
         })
-        queryClient.invalidateQueries(['apps'])
+        queryClient.invalidateQueries({ queryKey: ['apps'] })
       } else {
         api.error({
           key: `loading-toggle-site-${site_id}`,
@@ -77,6 +79,7 @@ const index = ({
   const handleToggleSite = (record: DataType) => () => {
     toggleSite({
       site_id: record?.ID?.toString(),
+      partner_id,
     })
   }
 

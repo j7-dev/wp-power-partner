@@ -10,6 +10,7 @@ namespace J7\PowerPartner;
 use Micropackage\Singleton\Singleton;
 use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Api\Fetch;
+use J7\PowerPartner\Api\Connect;
 use J7\PowerPartner\Email\Email;
 use Kucrut\Vite;
 
@@ -95,6 +96,7 @@ final class Bootstrap extends Singleton {
 					'API_TIMEOUT'              => Base::API_TIMEOUT,
 					'nonce'                    => \wp_create_nonce( Plugin::KEBAB ),
 					'allowed_template_options' => $allowed_template_options,
+					'partner_id'               => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
 				),
 			)
 		);

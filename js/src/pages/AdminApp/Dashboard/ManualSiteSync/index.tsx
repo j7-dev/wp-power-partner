@@ -52,7 +52,7 @@ const index = () => {
           message: '開站成功',
           description: message,
         })
-        queryClient.invalidateQueries(['apps'] as any)
+        queryClient.invalidateQueries({ queryKey: ['apps'] })
       } else {
         api.error({
           key: 'manual-site-sync',

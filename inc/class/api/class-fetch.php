@@ -85,7 +85,7 @@ final class Fetch {
 			),
 			'timeout' => 600,
 		);
-		$response = \wp_remote_post( Base::API_URL . '/wp-json/power-partner-server/disable-site', $args );
+		$response = \wp_remote_post( Base::API_URL . '/wp-json/power-partner-server/v2/disable-site', $args );
 
 		try {
 			$response_obj = json_decode( $response['body'] );

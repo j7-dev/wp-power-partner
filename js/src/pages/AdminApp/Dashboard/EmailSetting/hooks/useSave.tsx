@@ -40,7 +40,7 @@ const useSave = (form: FormInstance<DataType[]>) => {
           key: 'save-emails',
           message: '儲存 Email 成功',
         })
-        queryClient.invalidateQueries(['emails'])
+        queryClient.invalidateQueries({ queryKey: ['emails'] })
       } else {
         api.error({
           key: 'save-emails',

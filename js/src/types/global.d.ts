@@ -22,6 +22,7 @@ declare global {
       allowed_template_options: {
         [key: string]: string
       }
+      partner_id: string
     }
   }
   var wp: {

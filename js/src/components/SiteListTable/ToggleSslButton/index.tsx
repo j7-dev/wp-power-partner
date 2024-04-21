@@ -60,7 +60,7 @@ const index = ({
           message: `SSL 已${text}`,
           description: `${text} ${record?.wpapp_domain} SSL 成功`,
         })
-        queryClient.invalidateQueries(['apps'])
+        queryClient.invalidateQueries({ queryKey: ['apps'] })
       } else {
         api.error({
           key: `loading-toggle-SSL-${id}`,
