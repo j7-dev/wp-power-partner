@@ -278,24 +278,29 @@ final class Api {
 	 * @return bool
 	 */
 	public function check_ip_permission() {
-		// 允許的 ip 列表
-		$allowed_ips = array( '61.220.44.7', '61.220.44.10' ); // cloud 站 或 load balancer
-		// phpcs:disable
-		$request_ip  = $_SERVER['REMOTE_ADDR']; // phpcs:disable 获取发起请求的IP地址
-		// phpcs:enable
+		// 允許的 IP 範圍起始和結束 IP
+		$start_ip = '61.220.44.0';
+		$end_ip   = '61.220.44.10';
+
+		// 將起始和結束 IP 轉換為長整型
+		$start_ip_long = sprintf( '%u', ip2long( $start_ip ) );
+		$end_ip_long   = sprintf( '%u', ip2long( $end_ip ) );
+
+    // phpcs:disable
+    $request_ip_long = sprintf("%u", ip2long($_SERVER['REMOTE_ADDR']));
+    // phpcs:enable
 
 		ob_start();
 		print_r(
 			array(
-				'allowed_ips'         => $allowed_ips,
-				'request_ip'          => $request_ip,
-				'check_ip_permission' => in_array( $request_ip, $allowed_ips, true ) ? 'true' : 'false',
+				'request_ip'          => $request_ip_long,
+				'check_ip_permission' => ( $request_ip_long >= $start_ip_long && $request_ip_long <= $end_ip_long ) ? 'true' : 'false',
 			)
 		);
 		\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
 
-		// 检查发起请求的IP是否在允许的列表中
-		return in_array( $request_ip, $allowed_ips, true );
+		// 檢查發起請求的 IP 是否在允許的範圍內
+		return ( $request_ip_long >= $start_ip_long && $request_ip_long <= $end_ip_long );
 	}
 }
 

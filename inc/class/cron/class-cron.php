@@ -38,19 +38,7 @@ final class Cron extends Singleton {
 	 * @return void
 	 */
 	public function register_single_event(): void {
-		// $emails = Email::get_emails();
-		// foreach ( $emails as $email ) {
-		// $event_name = Plugin::SNAKE . '_send_email_when_' . $email['action_name'] . '_' . $email['operator'] . '_' . $email['days'] . 'days';
 
-		// if ( ! \wp_next_scheduled( $event_name ) ) {
-		// $result = \wp_schedule_single_event( self::get_event_time( $email ), $event_name, $email, true );
-		// if ( \is_wp_error( $result ) ) {
-		// ob_start();
-		// print_r( $result );
-		// \J7\WpToolkit\Utils::debug_log( $event_name . 'wp_schedule_single_event Error: ' . ob_get_clean() );
-		// }
-		// }
-		// }
 		// 這邊是一個每日檢查事件
 		if ( ! \wp_next_scheduled( self::SEND_EMAIL_HOOK_NAME ) ) {
 			$result = \wp_schedule_event( strtotime( '+10 minute' ), 'daily', self::SEND_EMAIL_HOOK_NAME, array(), true );
@@ -79,7 +67,8 @@ final class Cron extends Singleton {
 	 */
 	public function send_email() {
 
-		$emails       = Email::get_emails();
+		$emails = Email::get_emails();
+
 		$action_names = array( Email::SUBSCRIPTION_SUCCESS_ACTION_NAME, Email::SUBSCRIPTION_FAILED_ACTION_NAME );
 
 		$next_payment_action_names = array( Email::SUBSCRIPTION_SUCCESS_ACTION_NAME, Email::SUBSCRIPTION_FAILED_ACTION_NAME );
@@ -113,8 +102,8 @@ final class Cron extends Singleton {
 					$after_next_payment_time = $next_payment_time + 86400; // 一天後
 					$current_time            = time();
 					if ( $current_time > $next_payment_time && $current_time < $after_next_payment_time ) {
-						$subject = Base::replace_script_tokens( $subject, $tokens );
-						$body    = Base::replace_script_tokens( $body, $tokens );
+						$subject = Base::replace_script_tokens( $subject, $order_date['tokens'] );
+						$body    = Base::replace_script_tokens( $body, $order_date['tokens'] );
 						\wp_mail(
 							$order_date_arr['customer_email'],
 							$subject,
