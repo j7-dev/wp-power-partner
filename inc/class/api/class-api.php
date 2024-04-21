@@ -290,15 +290,6 @@ final class Api {
     $request_ip_long = sprintf("%u", ip2long($_SERVER['REMOTE_ADDR']));
     // phpcs:enable
 
-		ob_start();
-		print_r(
-			array(
-				'request_ip'          => $request_ip_long,
-				'check_ip_permission' => ( $request_ip_long >= $start_ip_long && $request_ip_long <= $end_ip_long ) ? 'true' : 'false',
-			)
-		);
-		\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
-
 		// 檢查發起請求的 IP 是否在允許的範圍內
 		return ( $request_ip_long >= $start_ip_long && $request_ip_long <= $end_ip_long );
 	}

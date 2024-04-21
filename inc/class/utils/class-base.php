@@ -62,7 +62,7 @@ abstract class Base {
 				continue;
 			}
 
-			$updated_script = str_replace( '##' . strtoupper( $name ) . '##', $value, $updated_script );
+			$updated_script = str_replace( '##' . strtoupper( $name ) . '##', (string) $value, $updated_script );
 		}
 
 		return $updated_script;

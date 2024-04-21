@@ -69,7 +69,7 @@ final class Cron extends Singleton {
 
 		$emails = Email::get_emails();
 
-		$action_names = array( Email::SUBSCRIPTION_SUCCESS_ACTION_NAME, Email::SUBSCRIPTION_FAILED_ACTION_NAME );
+		$action_names = array( Email::SUBSCRIPTION_SUCCESS_ACTION_NAME, Email::SUBSCRIPTION_FAILED_ACTION_NAME, Email::LAST_ORDER_DATE_CREATED_ACTION_NAME, Email::DATE_CREATED_ACTION_NAME, Email::TRIAL_END_ACTION_NAME, Email::NEXT_PAYMENT_ACTION_NAME, Email::END_ACTION_NAME, Email::END_OF_PREPAID_TERM_ACTION_NAME );
 
 		$next_payment_action_names = array( Email::SUBSCRIPTION_SUCCESS_ACTION_NAME, Email::SUBSCRIPTION_FAILED_ACTION_NAME );
 
@@ -87,6 +87,7 @@ final class Cron extends Singleton {
 				$order_date_arr = self::get_order_date_arr_by_action( $action_name );
 
 				foreach ( $order_date_arr as $order_date ) {
+
 					// 發信時機轉換成 timestamp
 					$days_in_time = ( (int) $email['days'] ) * 86400;
 					// 判斷是 after 還是 before
@@ -98,14 +99,16 @@ final class Cron extends Singleton {
 					$action_name = $email['action_name'];
 					$action_name = in_array( $action_name, $next_payment_action_names, true ) ? 'next_payment' : $action_name;
 
-					$next_payment_time       = $order_date[ $action_name ] + $days_in_time;
-					$after_next_payment_time = $next_payment_time + 86400; // 一天後
-					$current_time            = time();
-					if ( $current_time > $next_payment_time && $current_time < $after_next_payment_time ) {
+					$action_time       = $order_date[ $action_name ] + $days_in_time;
+					$after_action_time = $action_time + ( 86400 * 1 ); // 一天後
+					$current_time      = time();
+
+					if ( $current_time > $action_time && $current_time < $after_action_time ) {
 						$subject = Base::replace_script_tokens( $subject, $order_date['tokens'] );
 						$body    = Base::replace_script_tokens( $body, $order_date['tokens'] );
+
 						\wp_mail(
-							$order_date_arr['customer_email'],
+							$order_date['customer_email'],
 							$subject,
 							$body,
 							array( 'Content-Type: text/html; charset=UTF-8' ),
@@ -124,8 +127,6 @@ final class Cron extends Singleton {
 	 *
 	 * @param string $action Action
 	 * @return array
-	 * ['order_id'] => int
-	 * ['order_created_date'] => string 'Y-m-d'
 	 */
 	public static function get_order_date_arr_by_action( string $action ): array {
 
@@ -180,7 +181,7 @@ final class Cron extends Singleton {
 			$tokens = array_merge( self::get_order_tokens( $last_order ), self::get_subscription_tokens( $subscription ) );
 
 			$arr[] = array(
-				'order_id'                => (int) $last_order_id,
+				'order_id'                => (string) $last_order_id,
 				'customer_email'          => $last_order?->get_billing_email(),
 				'date_created'            => $date_created,
 				'trial_end'               => $trial_end,
