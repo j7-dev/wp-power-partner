@@ -13,6 +13,10 @@
 
 const releasedPluginName = 'power-partner'
 
+const args = process.argv.slice(2) // 去掉前兩個內建的參數
+
+const release = !args.includes('--build-only')
+
 module.exports = {
   releasedPluginName,
   git: {
@@ -41,7 +45,7 @@ module.exports = {
     publish: false,
   },
   github: {
-    release: true,
+    release,
     releaseName: 'v${version}',
     assets: [`./release/${releasedPluginName}.zip`], // relative path
     web: false,
