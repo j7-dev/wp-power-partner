@@ -277,7 +277,7 @@ final class Api {
 	 *
 	 * @return bool
 	 */
-	private function check_ip_permission() {
+	public function check_ip_permission() {
 		// 允許的 ip 列表
 		$allowed_ips = array( '61.220.44.7' ); // cloud 站 或 load balancer
 		// phpcs:disable
