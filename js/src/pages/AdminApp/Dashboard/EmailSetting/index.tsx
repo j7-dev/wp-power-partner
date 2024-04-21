@@ -77,10 +77,9 @@ const EmailSetting = () => {
   const [form] = Form.useForm()
   const focusEmailIndex = useAtomValue(focusEmailIndexAtom)
 
-  console.log('⭐  watchActionName:', {
-    focusEmailIndex,
+  const [messageApi, contextHolder] = message.useMessage({
+    top: 50,
   })
-  const [messageApi, contextHolder] = message.useMessage()
   const [dataSource, setDataSource] = useAtom(emailsAtom)
 
   const handleAdd = () => {

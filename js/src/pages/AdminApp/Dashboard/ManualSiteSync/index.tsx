@@ -4,6 +4,8 @@ import { Select, Form, Button, notification } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { axios } from '@/api'
 import { LoadingOutlined } from '@ant-design/icons'
+import { identityAtom } from '@/pages/AdminApp/atom'
+import { useAtomValue } from 'jotai'
 
 const { Item } = Form
 
@@ -18,6 +20,7 @@ const index = () => {
     stack: { threshold: 1 },
     duration: 10,
   })
+  const identity = useAtomValue(identityAtom)
 
   const queryClient = useQueryClient()
 
@@ -45,12 +48,20 @@ const index = () => {
     onSuccess: (data) => {
       const status = data?.data?.status
       const message = data?.data?.message
+      const email = identity?.data?.email || ''
 
       if (200 === status) {
         api.success({
           key: 'manual-site-sync',
-          message: '開站成功',
-          description: message,
+          message: '已經收到您的開站請求',
+          description: (
+            <>
+              站長路可伺服器正在處理您的請求，大約 5 ~ 10
+              分鐘左右，開站完成後會將相關資訊寄送到您信箱 {email} <br />
+              {message}`
+            </>
+          ),
+          duration: 0,
         })
         queryClient.invalidateQueries({ queryKey: ['apps'] })
       } else {
@@ -92,6 +103,7 @@ const index = () => {
             value: key,
           }))}
           allowClear
+          disabled={isPending}
         />
       </Item>
       <Item
@@ -105,7 +117,7 @@ const index = () => {
           },
         ]}
       >
-        <Select options={host_positions} allowClear />
+        <Select options={host_positions} allowClear disabled={isPending} />
       </Item>
 
       <Item wrapperCol={{ offset: 8, span: 16 }}>
