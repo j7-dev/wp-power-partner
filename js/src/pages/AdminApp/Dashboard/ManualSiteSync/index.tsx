@@ -31,9 +31,9 @@ const index = () => {
     onMutate: () => {
       api.open({
         key: 'manual-site-sync',
-        message: '開站中...',
+        message: '正在發送開站請求至站長路可伺服器...',
         description:
-          '正在開站中...有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。',
+          '正在發送請求中...有可能需要等待 🕙 30 秒 ~ 1 分鐘左右的時間，請先不要關閉視窗🙏',
         duration: 0,
         icon: <LoadingOutlined className="text-primary" />,
       })
@@ -56,9 +56,8 @@ const index = () => {
           message: '已經收到您的開站請求',
           description: (
             <>
-              站長路可伺服器正在處理您的請求，大約 5 ~ 10
-              分鐘左右，開站完成後會將相關資訊寄送到您信箱 {email} <br />
-              {message}`
+              站長路可伺服器正在處理您的請求，大約等待 🕙 5 ~ 10
+              分鐘左右，開站完成後會將相關資訊寄送到您信箱 {email}`
             </>
           ),
           duration: 0,

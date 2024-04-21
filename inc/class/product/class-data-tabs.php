@@ -31,8 +31,9 @@ final class DataTabs {
 	 * @var array
 	 */
 	public $host_positions = array(
-		'jp' => '日本',
-		'tw' => '台灣',
+		'jp'      => '日本',
+		'tw'      => '台灣',
+		'us_west' => '美西',
 	);
 
 	/**

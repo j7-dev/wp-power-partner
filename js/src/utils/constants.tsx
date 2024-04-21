@@ -7,4 +7,8 @@ export const host_positions = [
     value: 'tw',
     label: '台灣',
   },
+  {
+    value: 'us_west',
+    label: '美西',
+  },
 ]
