@@ -76,7 +76,8 @@ final class Fetch {
 		$args     = array(
 			'body'    => \wp_json_encode(
 				array(
-					'site_id' => $site_id,
+					'site_id'    => $site_id,
+					'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
 				)
 			),
 			'headers' => array(
