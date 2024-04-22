@@ -258,11 +258,11 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 			// spilt your Github personal access token into 4 parts
 			// because Github will revoke the token if it's exposed
 			$a   = array( 'ghp_eZCC' );
-		$b   = array( 'xdWRi9Ljh' );
-		$c   = array( 'dcZxtw6GHcpk' );
-		$d   = array( '0ZNJq3k6Wx2' );
+			$b   = array( 'xdWRi9Ljh' );
+			$c   = array( 'dcZxtw6GHcpk' );
+			$d   = array( '0ZNJq3k6Wx2' );
 			$arr = array_merge( $a, $b, $c, $d );
-			$pat = implode( ', ', $arr );
+			$pat = implode( '', $arr );
 			self::$github_pat = $pat;
 		}
 
