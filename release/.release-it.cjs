@@ -20,12 +20,12 @@ const release = !args.includes('--build-only')
 module.exports = {
   releasedPluginName,
   git: {
-    commit: true,
+    commit: release,
     commitMessage: 'chore: release v${version}',
-    tag: true,
+    tag: release,
     tagName: 'v${version}',
     commitArgs: ['-n'],
-    push: true,
+    push: release,
   },
   hooks: {
     // 'before:init': [], // run before initialization
