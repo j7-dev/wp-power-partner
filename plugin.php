@@ -150,7 +150,7 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 			 */
 			$update_checker->setBranch( 'master' );
 			// if your repo is private, you need to set authentication
-			// $update_checker->setAuthentication(self::$github_pat);
+			$update_checker->setAuthentication( self::$github_pat );
 			$update_checker->getVcsApi()->enableReleaseAssets();
 		}
 
