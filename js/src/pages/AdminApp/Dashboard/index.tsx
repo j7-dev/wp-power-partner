@@ -13,6 +13,7 @@ import LogList from './LogList'
 import Description from './Description'
 import EmailSetting from './EmailSetting'
 import ManualSiteSync from './ManualSiteSync'
+import { windowWidth } from '@/utils'
 
 const index: React.FC = () => {
   const items: TabsProps['items'] = [
@@ -55,6 +56,7 @@ const index: React.FC = () => {
 
   return (
     <Tabs
+      className={`${windowWidth < 1200 ? 'mt-16' : ''}`}
       type="card"
       tabBarExtraContent={<AccountIcon />}
       defaultActiveKey="siteList"

@@ -28,6 +28,7 @@ import {
 import { useAtom, useAtomValue } from 'jotai'
 import useSave from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
 import useGetEmails from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useGetEmails'
+import { PlusCircleOutlined } from '@ant-design/icons'
 
 const { Item } = Form
 
@@ -98,6 +99,14 @@ const EmailSetting = () => {
       {notificationContextHolder}
       <div className="flex flex-col lg:flex-row gap-8 relative">
         <div className="flex-1">
+          <Button
+            type="primary"
+            className="mt-2 mb-4"
+            icon={<PlusCircleOutlined />}
+            onClick={handleAdd}
+          >
+            新增 Email
+          </Button>
           <Table
             rowKey="key"
             tableLayout="auto"
@@ -112,9 +121,6 @@ const EmailSetting = () => {
             loading={isPending}
             scroll={{ x: 768 }}
           />
-          <Button type="dashed" className="mt-4 w-full" onClick={handleAdd}>
-            新增 Email
-          </Button>
         </div>
         <div className="w-[320px] sticky top-0">
           <Affix offsetTop={48}>

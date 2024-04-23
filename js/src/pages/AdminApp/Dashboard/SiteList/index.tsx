@@ -15,9 +15,13 @@ const index = () => {
     resource: 'apps',
     defaultParams: {
       user_id,
+      offset: 0,
+      numberposts: 10,
     },
     queryOptions: {
       enabled: !!user_id,
+      staleTime: 1000 * 60 * 60 * 24,
+      gcTime: 1000 * 60 * 60 * 24,
     },
   })
 

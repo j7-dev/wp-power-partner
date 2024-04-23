@@ -3,6 +3,8 @@ import { kebab, LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
 import AES from 'crypto-js/aes'
 import CryptoJS from 'crypto-js'
 
+export const windowWidth = window?.innerWidth
+
 export const windowOuterWidth = window?.outerWidth || 1200
 
 export const isIphone = /iPhone/.test(navigator.userAgent)

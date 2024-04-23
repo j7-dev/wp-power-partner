@@ -9,12 +9,15 @@ import {
   UserOutlined,
   PoweroffOutlined,
   MailOutlined,
-  PayCircleFilled,
+  SyncOutlined,
   CrownFilled,
 } from '@ant-design/icons'
-import { LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
+import { LOCALSTORAGE_ACCOUNT_KEY, windowWidth } from '@/utils'
 import { LoadingText } from '@/components'
 import { axios } from '@/api'
+import { useQueryClient } from '@tanstack/react-query'
+
+const DEPOSIT_LINK = 'https://cloud.luke.cafe/product/power-partner/'
 
 const index = () => {
   const [identity, setIdentity] = useAtom(identityAtom)
@@ -24,6 +27,7 @@ const index = () => {
   const partnerLvTitle = identity.data?.partner_lv?.title || ''
   const partnerLvKey = identity.data?.partner_lv?.key || '0'
   const [globalLoading, setGlobalLoading] = useAtom(globalLoadingAtom)
+  const queryClient = useQueryClient()
 
   const handleDisconnect = async () => {
     setGlobalLoading({
@@ -50,22 +54,39 @@ const index = () => {
       icon: <UserOutlined />,
     },
     {
-      key: 'email',
-      label: <span className="text-xs">{email || ''}</span>,
-      icon: <MailOutlined />,
+      key: 'partner_lv',
+      label: (
+        <a target="_blank" rel="noopener noreferrer" href={DEPOSIT_LINK}>
+          <LoadingText
+            isLoading={globalLoading?.isLoading}
+            content={<span className="text-gray-800">{partnerLvTitle}</span>}
+          />
+        </a>
+      ),
+      icon: (
+        <CrownFilled
+          className={`${
+            partnerLvKey === '2' ? 'text-yellow-500' : 'text-gray-300'
+          }`}
+        />
+      ),
     },
     {
       key: 'deposit',
       label: (
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://cloud.luke.cafe"
-        >
-          前往儲值
+        <a target="_blank" rel="noopener noreferrer" href={DEPOSIT_LINK}>
+          <LoadingText
+            isLoading={globalLoading?.isLoading}
+            content={<span className="text-gray-800">{powerMoney}</span>}
+          />
         </a>
       ),
-      icon: <PayCircleFilled className="text-yellow-500" />,
+      icon: <span className="text-yellow-500 font-bold">￥</span>,
+    },
+    {
+      key: 'email',
+      label: <span className="text-xs">{email || ''}</span>,
+      icon: <MailOutlined />,
     },
     {
       type: 'divider',
@@ -73,26 +94,41 @@ const index = () => {
     {
       key: 'disconnect',
       label: <span onClick={handleDisconnect}>解除帳號綁定</span>,
-      icon: <PoweroffOutlined />,
+      icon: <PoweroffOutlined className="text-red-500" />,
     },
   ]
 
+  const filterItems = items.filter((item) => {
+    if (windowWidth < 1200) {
+      return true
+    }
+    return !['partner_lv', 'deposit'].includes((item?.key || '') as string)
+  })
+
+  const handleRefetch = () => {
+    queryClient.invalidateQueries({
+      queryKey: ['apps'],
+    })
+    queryClient.invalidateQueries({
+      queryKey: ['logs'],
+    })
+  }
+
   return (
-    <div className="mr-4 flex items-center">
-      {partnerLvTitle && (
+    <div className={'ml-4 xl:mr-4 flex items-center gap-4 xl:gap-8'}>
+      <Tooltip title="刷新資料">
+        <SyncOutlined spin={globalLoading?.isLoading} onClick={handleRefetch} />
+      </Tooltip>
+
+      {partnerLvTitle && windowWidth >= 1280 && (
         <Tooltip
           title={
             partnerLvKey === '2'
               ? '您已是最高階經銷商'
               : '升級為高階經銷商，享受更高主機折扣'
           }
-          className="mr-8"
         >
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://cloud.luke.cafe/product/power-partner/"
-          >
+          <a target="_blank" rel="noopener noreferrer" href={DEPOSIT_LINK}>
             <CrownFilled
               className={`mr-2 text-lg ${
                 partnerLvKey === '2' ? 'text-yellow-500' : 'text-gray-300'
@@ -106,21 +142,23 @@ const index = () => {
         </Tooltip>
       )}
 
-      <Tooltip title="前往儲值" className="mr-8">
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://cloud.luke.cafe/product/power-partner/"
-        >
-          <span className="text-yellow-500 font-bold">￥</span>{' '}
-          <LoadingText
-            isLoading={globalLoading?.isLoading}
-            content={<span className="text-gray-800">{powerMoney}</span>}
-          />
-        </a>
-      </Tooltip>
+      {windowWidth >= 1280 && (
+        <Tooltip title="前往儲值">
+          <a target="_blank" rel="noopener noreferrer" href={DEPOSIT_LINK}>
+            <span className="text-yellow-500 font-bold">￥</span>{' '}
+            <LoadingText
+              isLoading={globalLoading?.isLoading}
+              content={<span className="text-gray-800">{powerMoney}</span>}
+            />
+          </a>
+        </Tooltip>
+      )}
 
-      <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
+      <Dropdown
+        menu={{ items: filterItems }}
+        placement="bottomRight"
+        trigger={['click']}
+      >
         <Avatar
           className="cursor-pointer"
           style={{ backgroundColor: '#fde3cf', color: '#f56a00' }}
