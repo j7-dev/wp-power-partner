@@ -43,13 +43,6 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 		public static $is_local = false;
 
 		/**
-		 * Github Personal Access Token
-		 *
-		 * @var string
-		 */
-		public static $github_pat;
-
-		/**
 		 * Plugin Directory
 		 *
 		 * @var string
@@ -109,7 +102,6 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 			\add_action( 'tgmpa_register', array( $this, 'register_required_plugins' ) );
 			\add_action( 'plugins_loaded', array( $this, 'check_required_plugins' ) );
 
-			$this->set_github_pat();
 			$this->plugin_update_checker();
 		}
 
@@ -138,20 +130,24 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 		 * @return void
 		 */
 		public function plugin_update_checker(): void {
-			$update_checker = PucFactory::buildUpdateChecker(
-				self::GITHUB_REPO,
-				__FILE__,
-				self::KEBAB
-			);
-			/**
-			 * Type
-			 *
-			 * @var \Puc_v4p4_Vcs_PluginUpdateChecker $update_checker
-			 */
-			$update_checker->setBranch( 'master' );
-			// if your repo is private, you need to set authentication
-			$update_checker->setAuthentication( self::$github_pat );
-			$update_checker->getVcsApi()->enableReleaseAssets();
+			try {
+				$update_checker = PucFactory::buildUpdateChecker(
+					self::GITHUB_REPO,
+					__FILE__,
+					self::KEBAB
+				);
+				/**
+				 * Type
+				 *
+				 * @var \Puc_v4p4_Vcs_PluginUpdateChecker $update_checker
+				 */
+				$update_checker->setBranch( 'master' );
+				// if your repo is private, you need to set authentication
+				// $update_checker->setAuthentication( self::$env['GITHUB_TOKEN'] );
+				$update_checker->getVcsApi()->enableReleaseAssets();
+			} catch (\Throwable $th) { // phpcs:ignore
+				// throw $th;
+			}
 		}
 
 		/**
@@ -247,23 +243,6 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 			);
 
 			\tgmpa($this->required_plugins, $config );
-		}
-
-		/**
-		 * Set Github Personal Access Token
-		 *
-		 * @return void
-		 */
-		private function set_github_pat() {
-			// spilt your Github personal access token into 4 parts
-			// because Github will revoke the token if it's exposed
-			$a   = array( 'ghp_eZCC' );
-			$b   = array( 'xdWRi9Ljh' );
-			$c   = array( 'dcZxtw6GHcpk' );
-			$d   = array( '0ZNJq3k6Wx2' );
-			$arr = array_merge( $a, $b, $c, $d );
-			$pat = implode( '', $arr );
-			self::$github_pat = $pat;
 		}
 
 		/**
