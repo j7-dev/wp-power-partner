@@ -70,14 +70,16 @@ final class Fetch {
 	 * 關站後，網站會被停用，無法再次啟用
 	 *
 	 * @param string $site_id 網站 ID
+	 * @param string $reason  停用原因
 	 * @return array|\WP_Error — The response or WP_Error on failure.
 	 */
-	public static function disable_site( string $site_id ) {
+	public static function disable_site( string $site_id, string $reason = '停用網站' ) {
 		$args     = array(
 			'body'    => \wp_json_encode(
 				array(
 					'site_id'    => $site_id,
 					'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
+					'reason'     => $reason,
 				)
 			),
 			'headers' => array(

@@ -10,11 +10,12 @@ import { DataType } from '@/components/SiteListTable/types'
 import { cloudAxios } from '@/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { NotificationInstance } from 'antd/es/notification/interface'
-import { partner_id } from '@/utils'
+import { partner_id, currentUserId } from '@/utils'
 
 type TToggleSiteParams = {
   site_id: string
   partner_id: string
+  reason?: string
 }
 
 type TToggleSslButtonProps = {
@@ -80,6 +81,7 @@ const index = ({
     toggleSite({
       site_id: record?.ID?.toString(),
       partner_id,
+      reason: `用戶ID: #${currentUserId} ，手動開關站台，原本為 ${getSiteActionText(isEnabled)} 狀態，執行後為 ${getSiteActionText(!isEnabled)} 狀態`,
     })
   }
 

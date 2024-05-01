@@ -106,7 +106,7 @@ final class ShopSubscription {
 
 		// disable 訂單網站
 		foreach ( $linked_site_ids as $site_id ) {
-			Fetch::disable_site( $site_id );
+			Fetch::disable_site( $site_id, "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}" );
 		}
 
 		// 記錄失敗時間，因為要搭配 CRON 判斷過了多久然後發信

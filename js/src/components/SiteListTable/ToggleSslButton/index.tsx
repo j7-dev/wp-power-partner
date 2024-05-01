@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { Button, Tooltip, Popconfirm } from 'antd'
+import { Tooltip, Popconfirm } from 'antd'
 import {
   LockOutlined,
   LoadingOutlined,
@@ -10,10 +10,12 @@ import { DataType } from '@/components/SiteListTable/types'
 import { cloudAxios } from '@/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { NotificationInstance } from 'antd/es/notification/interface'
+import { currentUserId } from '@/utils'
 
 type TToggleSSLParams = {
   id: string
   record: DataType | null
+  reason?: string
 }
 
 type TToggleSslButtonProps = {
@@ -85,6 +87,7 @@ const index = ({
     toggleSSL({
       id: record?.ID.toString() || '',
       record,
+      reason: `用戶ID: #${currentUserId} ，手動開關SSL，原本為 ${getSSLActionText(isRecordSslOn)} 狀態，執行後為 ${getSSLActionText(!isRecordSslOn)} 狀態`,
     })
   }
 
