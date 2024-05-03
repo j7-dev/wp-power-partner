@@ -64,9 +64,8 @@ final class Product {
 	 * @return void
 	 */
 	public function site_sync_by_order_id($new_subscription, $order, $recurring_cart ): void { // phpcs:ignore
-		$order_status = $order?->get_status();
 
-		if ( ! $order || 'completed' !== $order_status ) {
+		if ( ! $order ) {
 			return;
 		}
 
