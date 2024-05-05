@@ -12,6 +12,12 @@ import {
   useChangeDomain,
 } from '@/components/SiteListTable/ChangeDomainButton'
 
+import {
+  ChangeCustomerModal,
+  ChangeCustomerButton,
+  useChangeCustomer,
+} from '@/components/SiteListTable/ChangeCustomerButton'
+
 export * from './types'
 
 export const SiteListTable: FC<{
@@ -23,7 +29,19 @@ export const SiteListTable: FC<{
     stack: { threshold: 1 },
     duration: 10,
   })
-  const { modalProps, show, form } = useChangeDomain({
+  const {
+    modalProps: modalPropsCD,
+    show: showCD,
+    form: formCD,
+  } = useChangeDomain({
+    api,
+  })
+
+  const {
+    modalProps: modalPropsCC,
+    show: showCC,
+    form: formCC,
+  } = useChangeCustomer({
     api,
   })
   const columns: TableProps<DataType>['columns'] = [
@@ -110,10 +128,8 @@ export const SiteListTable: FC<{
       render: (_: string, record) => {
         return (
           <div className="flex gap-3">
-            <ChangeDomainButton onClick={show(record)} />
-            <Tooltip placement="bottom" title="變更網站客戶">
-              <UserSwitchOutlined className="text-primary" />
-            </Tooltip>
+            <ChangeDomainButton onClick={showCD(record)} />
+            <ChangeCustomerButton onClick={showCC(record)} />
             <ToggleSslButton record={record} notificationApi={api} />
             {isAdmin && (
               <ToggleSiteButton record={record} notificationApi={api} />
@@ -127,7 +143,8 @@ export const SiteListTable: FC<{
     <>
       {contextHolder}
       <Table rowKey="ID" tableLayout="auto" columns={columns} {...tableProps} />
-      <ChangeDomainModal modalProps={modalProps} form={form} />
+      <ChangeDomainModal modalProps={modalPropsCD} form={formCD} />
+      <ChangeCustomerModal modalProps={modalPropsCC} form={formCC} />
     </>
   )
 }
