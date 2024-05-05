@@ -46,7 +46,7 @@ final class Fetch {
 			),
 			'timeout' => 600,
 		);
-		$response = \wp_remote_post( Base::API_URL . '/wp-json/power-partner-server/site-sync', $args );
+		$response = \wp_remote_post( Base::$api_url . '/wp-json/power-partner-server/site-sync', $args );
 
 		try {
 			$response_obj = json_decode( $response['body'] );
@@ -88,7 +88,7 @@ final class Fetch {
 			),
 			'timeout' => 600,
 		);
-		$response = \wp_remote_post( Base::API_URL . '/wp-json/power-partner-server/v2/disable-site', $args );
+		$response = \wp_remote_post( Base::$api_url . '/wp-json/power-partner-server/v2/disable-site', $args );
 
 		try {
 			$response_obj = json_decode( $response['body'] );
@@ -153,7 +153,7 @@ final class Fetch {
 			'timeout' => 120,
 		);
 
-		$response = \wp_remote_get( Base::API_URL . '/wp-json/power-partner-server/template-sites?user_id=' . $partner_id, $args );
+		$response = \wp_remote_get( Base::$api_url . '/wp-json/power-partner-server/template-sites?user_id=' . $partner_id, $args );
 
 		try {
 			$response_obj = json_decode( $response['body'] );

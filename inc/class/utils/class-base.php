@@ -20,14 +20,21 @@ abstract class Base {
 	const API_TIMEOUT   = '30000';
 	const DEFAULT_IMAGE = 'http://1.gravatar.com/avatar/1c39955b5fe5ae1bf51a77642f052848?s=96&d=mm&r=g';
 
-	const API_URL   = WP_DEBUG ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
 	const USER_NAME = 'j7.dev.gg';
 	const PASSWORD  = 'YQLj xV2R js9p IWYB VWxp oL2E';
 
 	const TEMPLATE_SERVER_IDS = array( 544413 );
-	const TRANSIENT_KEY       = 'pp_cloud_sites' . WP_DEBUG ? '_local' : '';
 	const CACHE_TIME          = 12 * HOUR_IN_SECONDS;
 
+	/**
+	 * Api url
+	 * 可以透過 Plugin::$is_local 調整呼叫本地 API 或 cloud API
+	 *
+	 * @var string $api_url
+	 *
+	 * @return string
+	 */
+	public static $api_url = 'https://cloud.luke.cafe';
 
 	/**
 	 * Is HPOS enabled

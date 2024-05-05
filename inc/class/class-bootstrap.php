@@ -37,6 +37,8 @@ final class Bootstrap extends Singleton {
 		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 99 );
 		\add_action( 'wp_enqueue_scripts', array( $this, 'frontend_enqueue_script' ), 99 );
 		Email::sync_email_content();
+
+		Base::$api_url = Plugin::$is_local ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
 	}
 
 	/**
