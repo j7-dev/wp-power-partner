@@ -7,22 +7,24 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { chosenRecordAtom } from '@/components/SiteListTable/atom'
 import { useAtom } from 'jotai'
 import { NotificationInstance } from 'antd/es/notification/interface'
+import { partner_id } from '@/utils'
 
-type TChangeDomainParams = {
-  id: string
-  new_domain: string
+type TChangeCustomerParams = {
+  site_id: string
+  customer_id: string
+  partner_id: string
   record: DataType | null
 }
 
 type TFormValues = {
-  new_domain: string
+  customer_id: string
 }
 
-type TUseChangeDomainParams = {
+type TUseChangeCustomerParams = {
   api: NotificationInstance
 }
 
-export const useChangeCustomer = ({ api }: TUseChangeDomainParams) => {
+export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
   const [form] = Form.useForm()
   const [chosenRecord, setChosenRecord] = useAtom(chosenRecordAtom)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -38,18 +40,18 @@ export const useChangeCustomer = ({ api }: TUseChangeDomainParams) => {
     setChosenRecord(record)
   }
 
-  const { mutate: changeDomain } = useMutation({
-    mutationFn: (values: TChangeDomainParams) => {
+  const { mutate: changeCustomer } = useMutation({
+    mutationFn: (values: TChangeCustomerParams) => {
       const { record: _, ...rest } = values
-      return cloudAxios.post('/change-domain', rest)
+      return cloudAxios.post('/change-customer', rest)
     },
     onMutate: (values) => {
-      const { record, id, new_domain } = values
+      const { record, site_id, customer_id } = values
       setIsModalOpen(false)
       api.open({
-        key: `loading-change-domain-${id}`,
-        message: '域名變更中...',
-        description: `正在將 ${record?.wpapp_domain} 變更為 ${new_domain} ...網域變更有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。`,
+        key: `loading-change-customer-${site_id}`,
+        message: '客戶變更中...',
+        description: `正在將 ${record?.wpapp_domain} 變更為 ${customer_id} ...客戶變更有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。`,
         duration: 0,
         icon: <LoadingOutlined className="text-primary" />,
       })
@@ -57,40 +59,41 @@ export const useChangeCustomer = ({ api }: TUseChangeDomainParams) => {
       return record
     },
     onSuccess: (data, values) => {
-      const { record, id, new_domain } = values
+      const { record, site_id, customer_id } = values
       const status = data?.data?.status
 
       if (200 === status) {
         api.success({
-          key: `loading-change-domain-${id}`,
-          message: '域名變更成功',
-          description: `${record?.wpapp_domain} 已成功變更為 ${new_domain}`,
+          key: `loading-change-customer-${site_id}`,
+          message: '客戶變更成功',
+          description: `${record?.wpapp_domain} 已成功變更為 ${customer_id}`,
         })
         queryClient.invalidateQueries({ queryKey: ['apps'] })
       } else {
         api.error({
-          key: `loading-change-domain-${id}`,
-          message: 'OOPS! 域名變更時發生問題',
-          description: `${record?.wpapp_domain} 已變更為 ${new_domain} 失敗， ${data?.data?.message}`,
+          key: `loading-change-customer-${site_id}`,
+          message: 'OOPS! 客戶變更時發生問題',
+          description: `${record?.wpapp_domain} 已變更為 ${customer_id} 失敗， ${data?.data?.message}`,
         })
       }
     },
     onError: (err, values) => {
-      const { record, id, new_domain } = values
+      const { record, site_id, customer_id } = values
       console.log('err', err)
       api.error({
-        key: `loading-change-domain-${id}`,
-        message: 'OOPS! 域名變更時發生問題',
-        description: `${record?.wpapp_domain} 已變更為 ${new_domain} 失敗`,
+        key: `loading-change-customer-${site_id}`,
+        message: 'OOPS! 客戶變更時發生問題',
+        description: `${record?.wpapp_domain} 已變更為 ${customer_id} 失敗`,
       })
     },
   })
 
-  const handleChangeDomain = () => {
+  const handleChangeCustomer = () => {
     form.validateFields().then((formValues: TFormValues) => {
-      changeDomain({
-        id: chosenRecord?.ID.toString() || '',
-        new_domain: formValues?.new_domain,
+      changeCustomer({
+        site_id: chosenRecord?.ID.toString() || '',
+        customer_id: formValues?.customer_id,
+        partner_id,
         record: chosenRecord,
       })
     })
@@ -101,30 +104,24 @@ export const useChangeCustomer = ({ api }: TUseChangeDomainParams) => {
 
     if (isModalOpen) {
       form.setFieldsValue({
-        new_domain: '',
+        customer_id: '',
       })
     }
   }, [isModalOpen])
 
-  useEffect(() => {
-    form.setFieldsValue({
-      current_domain: chosenRecord?.wpapp_domain,
-    })
-  }, [chosenRecord?.wpapp_domain])
-
   const modalProps = {
     centered: true,
-    title: '變更域名 ( domain name )',
+    title: '變更客戶',
     open: isModalOpen,
     onCancel: close,
     footer: (
       <Button
         type="primary"
         danger
-        onClick={handleChangeDomain}
+        onClick={handleChangeCustomer}
         className="mr-0"
       >
-        確認變更域名 ( domain name )
+        確認變更客戶
       </Button>
     ),
   }
