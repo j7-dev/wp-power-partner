@@ -1,6 +1,7 @@
 <?php
 /**
  * Error Notification
+ * 🚩 暫停啟用此功能
  */
 
 declare(strict_types=1);
