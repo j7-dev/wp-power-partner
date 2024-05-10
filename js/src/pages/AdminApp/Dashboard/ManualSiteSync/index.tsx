@@ -106,10 +106,14 @@ const index = () => {
         if (200 === status) {
           api.success({
             key: 'clear-template-sites-cache',
-            message: '已經清除模板站快取',
-            duration: 0,
+            message: '已經清除模板站快取，3 秒後將重新整理頁面',
           })
-          queryClient.invalidateQueries({ queryKey: ['apps'] })
+
+          // refresh page
+
+          setTimeout(() => {
+            window.location.reload()
+          }, 3000)
         } else {
           api.error({
             key: 'clear-template-sites-cache',

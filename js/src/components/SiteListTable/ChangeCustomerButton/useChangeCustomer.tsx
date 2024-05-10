@@ -43,7 +43,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
   const { mutate: changeCustomer } = useMutation({
     mutationFn: (values: TChangeCustomerParams) => {
       const { record: _, ...rest } = values
-      return cloudAxios.post('/change-customer', rest)
+      return cloudAxios.post('/v2/change-customer', rest)
     },
     onMutate: (values) => {
       const { record, site_id, customer_id } = values

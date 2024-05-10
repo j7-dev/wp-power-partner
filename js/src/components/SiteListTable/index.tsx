@@ -129,7 +129,7 @@ export const SiteListTable: FC<{
         return (
           <div className="flex gap-3">
             <ChangeDomainButton onClick={showCD(record)} />
-            <ChangeCustomerButton onClick={showCC(record)} />
+            {isAdmin && <ChangeCustomerButton onClick={showCC(record)} />}
             <ToggleSslButton record={record} notificationApi={api} />
             {isAdmin && (
               <ToggleSiteButton record={record} notificationApi={api} />
@@ -144,7 +144,9 @@ export const SiteListTable: FC<{
       {contextHolder}
       <Table rowKey="ID" tableLayout="auto" columns={columns} {...tableProps} />
       <ChangeDomainModal modalProps={modalPropsCD} form={formCD} />
-      <ChangeCustomerModal modalProps={modalPropsCC} form={formCC} />
+      {isAdmin && (
+        <ChangeCustomerModal modalProps={modalPropsCC} form={formCC} />
+      )}
     </>
   )
 }

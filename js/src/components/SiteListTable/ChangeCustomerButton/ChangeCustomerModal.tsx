@@ -1,19 +1,12 @@
 import { useState } from 'react'
-import {
-  Modal,
-  ModalProps,
-  Form,
-  Alert,
-  Input,
-  Select,
-  FormInstance,
-} from 'antd'
+import { Modal, ModalProps, Form, Alert, Select, FormInstance } from 'antd'
 import { chosenRecordAtom } from '@/components/SiteListTable/atom'
 import { useAtomValue } from 'jotai'
 import { useQuery } from '@tanstack/react-query'
 import { axios } from '@/api'
 import { kebab } from '@/utils'
 import { AxiosResponse } from 'axios'
+import { debounce } from 'lodash-es'
 
 type TChangeCustomerParams = {
   modalProps: ModalProps
@@ -56,29 +49,36 @@ export const ChangeCustomerModal = ({
 
   // 下拉選單搜索
 
-  const handleChange = (newValue: string) => {
-    console.log('⭐  newValue:', newValue)
-
-    // setValue(newValue)
-  }
-
-  const handleSearch = (newSearch: string) => {
+  const handleSearch = debounce((newSearch: string) => {
     setSearch(newSearch)
+  }, 1500)
+
+  const {
+    data: dataSearched,
+    isFetching: isLoadingSearched,
+    isSuccess: isSuccessSearched,
+  } = useQuery<TGetCustomersResponse>({
+    queryKey: ['get_customers_by_search', search],
+    queryFn: () =>
+      axios.get(`/${kebab}/customers`, {
+        params: {
+          search,
+        },
+      }),
+    enabled: search?.length > 1,
+  })
+
+  const searchedCustomers = dataSearched?.data?.data || []
+
+  const getHelp = () => {
+    if (isLoadingSearched) {
+      return '搜尋中...'
+    }
+    if (isSuccessSearched && searchedCustomers?.length === 0) {
+      return '找不到用戶，請換個關鍵字試試'
+    }
+    return '請輸入至少 2 個字元以搜尋客戶'
   }
-
-  const { data: searchedData, isPending: searchedIsLoading } =
-    useQuery<TGetCustomersResponse>({
-      queryKey: ['get_customers_by_search', search],
-      queryFn: () =>
-        axios.get(`/${kebab}/customers`, {
-          params: {
-            search,
-          },
-        }),
-      enabled: search?.length > 1,
-    })
-
-  const searchedCustomers = searchedData?.data?.data || []
 
   return (
     <Modal {...modalProps}>
@@ -100,22 +100,22 @@ export const ChangeCustomerModal = ({
           </p>
         </div>
         <Form.Item
-          label="新客戶 - 請輸入至少 2 個字元以搜尋客戶"
+          label="新客戶"
           name={['new_customer_id']}
           rules={[
             { required: true, message: '請輸入至少 2 個字元以搜尋客戶' },
           ]}
+          help={getHelp()}
         >
           <Select
             showSearch
             allowClear
-            loading={searchedIsLoading}
+            loading={isLoadingSearched}
             placeholder="請輸入至少 2 個字元以搜尋客戶"
             defaultActiveFirstOption={false}
             suffixIcon={null}
             filterOption={false}
             onSearch={handleSearch}
-            onChange={handleChange}
             notFoundContent={null}
             options={(searchedCustomers || []).map((c) => ({
               value: c.id,
