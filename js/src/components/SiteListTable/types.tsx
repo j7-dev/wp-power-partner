@@ -2,6 +2,7 @@ export type DataType = {
   ID: number
   ipv4: string
   ipv6: string
+  customer_id: string
   post_author: string
   post_date: string
   post_title: string

@@ -8,9 +8,6 @@ declare(strict_types=1);
 namespace J7\PowerPartner\Api;
 
 use J7\PowerPartner\Plugin;
-use J7\PowerPartner\Utils\Base;
-use J7\PowerPartner\Api\Fetch;
-use J7\PowerPartner\Email\Email;
 
 /**
  * Class Api
@@ -33,7 +30,7 @@ final class User {
 	public function register_apis(): void {
 		\register_rest_route(
 			Plugin::KEBAB,
-			'customer',
+			'customers',
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_customers' ),
@@ -52,13 +49,13 @@ final class User {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_customers( $request ) { // phpcs:ignore
-		$params  = $request?->get_query_params() ?? array();
-		$id      = $params['id'] ?? 0;
-		$keyword = $params['keyword'] ?? '';
+		$params = $request?->get_query_params() ?? array();
+		$id     = $params['id'] ?? '0';
+		$search = $params['search'] ?? '';
 
 		$args = array(
-			'fields'  => array( 'ID', 'display_name' ),
-			'include' => array( $id ),
+			'fields'  => array( 'id', 'display_name' ),
+			'include' => explode( ',', $id ),
 		);
 
 		if ( ! empty( $id ) ) {
@@ -67,7 +64,7 @@ final class User {
 				'include' => array( $id ),
 			);
 			$customers = \get_users( $args );
-			if ( ! empty( $customers ) ) {
+			if ( empty( $customers ) ) {
 				return \rest_ensure_response(
 					array(
 						'status'  => 404,
@@ -85,13 +82,13 @@ final class User {
 			}
 		}
 
-		if ( ! empty( $keyword ) ) {
+		if ( ! empty( $search ) ) {
 			$args      = array(
-				'fields' => array( 'ID', 'display_name' ),
-				'search' => $keyword,
+				'fields' => array( 'id', 'display_name' ),
+				'search' => "*{$search}*",
 			);
 			$customers = \get_users( $args );
-			if ( ! empty( $customers ) ) {
+			if ( empty( $customers ) ) {
 				return \rest_ensure_response(
 					array(
 						'status'  => 404,

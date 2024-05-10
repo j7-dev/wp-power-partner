@@ -17,7 +17,7 @@ type TChangeCustomerParams = {
 }
 
 type TFormValues = {
-  customer_id: string
+  new_customer_id: string
 }
 
 type TUseChangeCustomerParams = {
@@ -51,7 +51,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
       api.open({
         key: `loading-change-customer-${site_id}`,
         message: '客戶變更中...',
-        description: `正在將 ${record?.wpapp_domain} 變更為 ${customer_id} ...客戶變更有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。`,
+        description: `正在將 ${record?.wpapp_domain} 變更為 #${customer_id} 用戶 ...客戶變更有可能需要等待 2~3 分鐘左右的時間，請先不要關閉視窗。`,
         duration: 0,
         icon: <LoadingOutlined className="text-primary" />,
       })
@@ -66,14 +66,14 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
         api.success({
           key: `loading-change-customer-${site_id}`,
           message: '客戶變更成功',
-          description: `${record?.wpapp_domain} 已成功變更為 ${customer_id}`,
+          description: `${record?.wpapp_domain} 已成功變更為 #${customer_id} 用戶`,
         })
         queryClient.invalidateQueries({ queryKey: ['apps'] })
       } else {
         api.error({
           key: `loading-change-customer-${site_id}`,
           message: 'OOPS! 客戶變更時發生問題',
-          description: `${record?.wpapp_domain} 已變更為 ${customer_id} 失敗， ${data?.data?.message}`,
+          description: `${record?.wpapp_domain} 已變更為 #${customer_id} 用戶 失敗， ${data?.data?.message}`,
         })
       }
     },
@@ -83,7 +83,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
       api.error({
         key: `loading-change-customer-${site_id}`,
         message: 'OOPS! 客戶變更時發生問題',
-        description: `${record?.wpapp_domain} 已變更為 ${customer_id} 失敗`,
+        description: `${record?.wpapp_domain} 已變更為 #${customer_id} 用戶 失敗`,
       })
     },
   })
@@ -92,7 +92,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
     form.validateFields().then((formValues: TFormValues) => {
       changeCustomer({
         site_id: chosenRecord?.ID.toString() || '',
-        customer_id: formValues?.customer_id,
+        customer_id: formValues?.new_customer_id,
         partner_id,
         record: chosenRecord,
       })
@@ -104,7 +104,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
 
     if (isModalOpen) {
       form.setFieldsValue({
-        customer_id: '',
+        new_customer_id: '',
       })
     }
   }, [isModalOpen])
