@@ -1,5 +1,5 @@
 import React from 'react'
-import { allowed_template_options, host_positions } from '@/utils'
+import { allowed_template_options, host_positions, kebab } from '@/utils'
 import { Select, Form, Button, notification } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { axios } from '@/api'
@@ -24,9 +24,9 @@ const index = () => {
 
   const queryClient = useQueryClient()
 
-  const { mutate, isPending } = useMutation({
+  const { mutate: siteSync, isPending: isPendingSiteSync } = useMutation({
     mutationFn: (params: TManualSiteSyncParams) => {
-      return axios.post('/power-partner/manual-site-sync', params)
+      return axios.post(`/${kebab}/manual-site-sync`, params)
     },
     onMutate: () => {
       api.open({
@@ -74,8 +74,57 @@ const index = () => {
   })
 
   const handleFinish = (values: TManualSiteSyncParams) => {
-    mutate(values)
+    siteSync(values)
   }
+
+  // clear cache
+
+  const { mutate: mutateClearCache, isPending: isPendingClearCache } =
+    useMutation({
+      mutationFn: () => {
+        return axios.post(`/${kebab}/clear-template-sites-cache`)
+      },
+      onMutate: () => {
+        api.open({
+          key: 'clear-template-sites-cache',
+          message: '正在清除模板站快取...',
+          duration: 0,
+          icon: <LoadingOutlined className="text-primary" />,
+        })
+      },
+      onError: (err) => {
+        console.log('err', err)
+        api.error({
+          key: 'clear-template-sites-cache',
+          message: 'OOPS! 清除模板站快取時發生問題',
+        })
+      },
+      onSuccess: (data) => {
+        const status = data?.data?.status
+        const message = data?.data?.message
+
+        if (200 === status) {
+          api.success({
+            key: 'clear-template-sites-cache',
+            message: '已經清除模板站快取',
+            duration: 0,
+          })
+          queryClient.invalidateQueries({ queryKey: ['apps'] })
+        } else {
+          api.error({
+            key: 'clear-template-sites-cache',
+            message: 'OOPS! 清除模板站快取時發生問題',
+            description: message,
+          })
+        }
+      },
+    })
+
+  const handleClearCache = () => {
+    mutateClearCache()
+  }
+
+  const isPending = isPendingSiteSync || isPendingClearCache
 
   return (
     <Form
@@ -122,6 +171,15 @@ const index = () => {
       <Item wrapperCol={{ offset: 8, span: 16 }}>
         <Button type="primary" htmlType="submit" loading={isPending}>
           開站
+        </Button>
+
+        <Button
+          type="default"
+          htmlType="button"
+          className="ml-2"
+          onClick={handleClearCache}
+        >
+          清除快取
         </Button>
       </Item>
     </Form>

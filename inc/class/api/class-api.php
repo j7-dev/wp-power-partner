@@ -65,6 +65,18 @@ final class Api {
 
 		\register_rest_route(
 			Plugin::KEBAB,
+			'clear-template-sites-cache',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'clear_template_sites_cache_callback' ),
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		\register_rest_route(
+			Plugin::KEBAB,
 			'emails',
 			array(
 				'methods'             => 'POST',
@@ -267,6 +279,25 @@ final class Api {
 				'status'  => $response_obj->status,
 				'message' => $response_obj->message,
 				'data'    => $response_obj->data,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Clear template sites cache callback
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function clear_template_sites_cache_callback( $request ) {
+
+		\delete_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
+
+		return new \WP_REST_Response(
+			array(
+				'status'  => 200,
+				'message' => 'clear template sites cache success',
 			),
 			200
 		);
