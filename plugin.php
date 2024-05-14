@@ -115,8 +115,11 @@ if ( ! \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 			$is_tgmpa_complete = $instance->is_tgmpa_complete();
 
 			if ( $is_tgmpa_complete ) {
-				self::$dir     = \untrailingslashit( \wp_normalize_path( \plugin_dir_path( __FILE__ ) ) );
-				self::$url     = \untrailingslashit( \plugin_dir_url( __FILE__ ) );
+				self::$dir = \untrailingslashit( \wp_normalize_path( \plugin_dir_path( __FILE__ ) ) );
+				self::$url = \untrailingslashit( \plugin_dir_url( __FILE__ ) );
+				if ( ! \function_exists( 'get_plugin_data' ) ) {
+					require_once \ABSPATH . 'wp-admin/includes/plugin.php';
+				}
 				$plugin_data   = \get_plugin_data( __FILE__ );
 				self::$version = $plugin_data['Version'];
 
