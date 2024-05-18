@@ -28,7 +28,7 @@ final class Product {
 	 */
 	public function __construct() {
 		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-		\add_action( 'woocommerce_checkout_subscription_created', array( $this, 'site_sync_by_order_id' ), 20, 3 );
+		\add_action( 'woocommerce_subscription_payment_complete', array( $this, 'site_sync_by_subscription' ), 20, 1 );
 	}
 
 	/**
@@ -54,18 +54,22 @@ final class Product {
 		);
 	}
 
-
 	/**
 	 * Do site sync
 	 *
-	 * @param \WC_Subscription $new_subscription The subscription object.
-	 * @param \WC_Order        $order                   The order object.
-	 * @param mix              $recurring_cart  The recurring cart.
+	 * @param \WC_Subscription $subscription Subscription object.
 	 * @return void
 	 */
-	public function site_sync_by_order_id($new_subscription, $order, $recurring_cart ): void { // phpcs:ignore
+	public function site_sync_by_subscription(\WC_Subscription $subscription ): void { // phpcs:ignore
 
-		if ( ! $order ) {
+		$order_ids = $this->get_related_order_ids( $subscription );
+
+		$order = $subscription?->get_parent();
+
+		$parent_order_id = $order?->get_id();
+
+		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
+		if ( empty( $order ) || count( $order_ids ) !== 1 || $order_ids[0] !== $parent_order_id ) {
 			return;
 		}
 
@@ -155,6 +159,34 @@ final class Product {
 		$order?->update_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_ids );
 
 		$order?->save();
+	}
+
+	/**
+	 * Get the related order IDs for a subscription based on an order type.
+	 *
+	 * @param \WC_Subscription $subscription Subscription object.
+	 * @param string           $order_type Can include 'any', 'parent', 'renewal', 'resubscribe' and/or 'switch'. Defaults to 'any'.
+	 * @return array List of related order IDs.
+	 * @since 1.0.0 - Migrated from WooCommerce Subscriptions v2.3.0
+	 */
+	protected function get_related_order_ids( $subscription, $order_type = 'any' ) {
+
+		$related_order_ids = array();
+
+		if ( in_array( $order_type, array( 'any', 'parent' ) ) && $subscription->get_parent_id() ) {
+			$related_order_ids[ $subscription->get_parent_id() ] = $subscription->get_parent_id();
+		}
+
+		if ( 'parent' !== $order_type ) {
+
+			$relation_types = ( 'any' === $order_type ) ? array( 'renewal', 'resubscribe', 'switch' ) : array( $order_type );
+
+			foreach ( $relation_types as $relation_type ) {
+				$related_order_ids = array_merge( $related_order_ids, \WCS_Related_Order_Store::instance()->get_related_order_ids( $subscription, $relation_type ) );
+			}
+		}
+
+		return $related_order_ids;
 	}
 }
 
