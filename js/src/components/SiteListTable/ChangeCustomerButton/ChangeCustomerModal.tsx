@@ -7,6 +7,7 @@ import { axios } from '@/api'
 import { kebab } from '@/utils'
 import { AxiosResponse } from 'axios'
 import { debounce } from 'lodash-es'
+import { SubscriptionSelect, useSubscriptionSelect } from '@/components'
 
 type TChangeCustomerParams = {
   modalProps: ModalProps
@@ -80,6 +81,11 @@ export const ChangeCustomerModal = ({
     return '請輸入至少 2 個字元以搜尋客戶'
   }
 
+  const watchNewCustomerId = Form.useWatch(['new_customer_id'], form)
+  const { selectProps } = useSubscriptionSelect({
+    user_id: watchNewCustomerId,
+  })
+
   return (
     <Modal {...modalProps}>
       <Form form={form} layout="vertical" className="mt-8">
@@ -123,6 +129,16 @@ export const ChangeCustomerModal = ({
             }))}
           />
         </Form.Item>
+        <SubscriptionSelect
+          formItemProps={{
+            name: ['subscription_id'],
+            label: '綁訂到新客戶的訂閱上',
+          }}
+          selectProps={{
+            ...selectProps,
+            disabled: !watchNewCustomerId,
+          }}
+        />
       </Form>
     </Modal>
   )

@@ -98,6 +98,18 @@ final class Api {
 				},
 			)
 		);
+
+		\register_rest_route(
+			Plugin::KEBAB,
+			'subscriptions',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_subscriptions_callback' ),
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			)
+		);
 	}
 
 	/**
@@ -211,6 +223,57 @@ final class Api {
 			200
 		);
 	}
+
+	/**
+	 * Get subscriptions callback
+	 *
+	 *  @param \WP_REST_Request $request Request
+	 * @return \WP_REST_Response
+	 */
+	public function get_subscriptions_callback( $request ): \WP_REST_Response {
+		$params  = $request?->get_query_params() ?? array();
+		$user_id = $params['user_id'] ?? 0;
+
+		if ( empty( $user_id ) ) {
+			return new \WP_REST_Response(
+				array(
+					'status'  => 500,
+					'message' => 'missing user id',
+				),
+				500
+			);
+		}
+
+		$subscriptions = get_posts(
+			array(
+				'numberposts' => -1,
+				'post_type'   => 'shop_subscription',
+				'author'      => $user_id,
+				'post_status' => array( 'wc-on-hold', 'wc-active', 'wc-pending', 'wc-expired' ), // wc-on-hold wc-active
+			)
+		);
+
+		$formatted_subscriptions = array_map(
+			function ( $subscription ) {
+				return array(
+					'id'         => $subscription->ID,
+					'status'     => $subscription->post_status,
+					'post_title' => $subscription->post_title,
+					'post_date'  => $subscription->post_date,
+				);
+			},
+			$subscriptions
+		);
+
+		$response = new \WP_REST_Response( $formatted_subscriptions );
+
+		// set pagination in header
+		$response->header( 'X-WP-Total', count( $formatted_subscriptions ) );
+		$response->header( 'X-WP-TotalPages', 1 );
+
+		return $response;
+	}
+
 
 	/**
 	 * Post emails callback
