@@ -66,8 +66,7 @@ final class Fetch {
 
 
 	/**
-	 * 發 API 關站
-	 * 關站後，網站會被停用，無法再次啟用
+	 * 發 API 關站 disable
 	 *
 	 * @param string $site_id 網站 ID
 	 * @param string $reason  停用原因

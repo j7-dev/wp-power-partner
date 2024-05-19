@@ -16,6 +16,12 @@ input[class*="ant-select"] {
 	outline: none !important;
 }
 
+div[class*="ant-select"] {
+	&:focus-visible {
+		outline: unset;
+	}
+}
+
 table {
 	.ant-table-cell {
 		vertical-align: middle;

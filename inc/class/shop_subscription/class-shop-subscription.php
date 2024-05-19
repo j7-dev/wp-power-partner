@@ -9,7 +9,6 @@ namespace J7\PowerPartner\ShopSubscription;
 
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
-use J7\PowerPartner\Product\DataTabs;
 use J7\PowerPartner\Product\Product;
 
 
@@ -64,7 +63,11 @@ final class ShopSubscription {
 	 */
 	public function __construct() {
 		\add_action( 'transition_post_status', array( $this, 'subscription_failed' ), 10, 3 );
-		\add_action( 'wcs_create_subscription', array( $this, 'add_post_meta' ), 10, 1 );
+		\add_action( 'wcs_create_subscription', array( $this, 'add_meta' ), 10, 1 );
+		\add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
+		\add_action( 'save_post', array( $this, 'save' ) );
+		\add_filter( 'manage_edit-' . self::POST_TYPE . '_columns', array( $this, 'add_order_column' ), 99, 1 );
+		\add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( $this, 'render_order_column' ) );
 	}
 
 	/**
@@ -78,7 +81,7 @@ final class ShopSubscription {
 	 */
 	public function subscription_failed( $new_status, $old_status, $post ): void {
 
-		// 如果不是訂閱商品 就不處理
+		// 如果不是訂閱 就不處理
 		if ( self::POST_TYPE !== $post?->post_type ) {
 			return;
 		}
@@ -100,9 +103,9 @@ final class ShopSubscription {
 		}
 
 		// 找到連結的訂單， post_parent 是訂單編號
-		$order_id        = $post?->post_parent;
-		$linked_site_ids = \get_post_meta( $order_id, Product::LINKED_SITE_IDS_META_KEY, true );
-		$linked_site_ids = is_array( $linked_site_ids ) ? $linked_site_ids : array();
+		$linked_site_ids = self::get_linked_site_ids( $subscription_id );
+
+		$order_id = \wp_get_post_parent_id( $subscription_id );
 
 		// disable 訂單網站
 		foreach ( $linked_site_ids as $site_id ) {
@@ -120,7 +123,7 @@ final class ShopSubscription {
 	 * @param \WC_Subscription $subscription subscription
 	 * @return void
 	 */
-	public function add_post_meta( $subscription ) {
+	public function add_meta( $subscription ) {
 		$subscription    = \wcs_get_subscription( $subscription );
 		$subscription_id = $subscription?->get_id();
 		\update_post_meta( $subscription_id, self::IS_POWER_PARTNER_SUBSCRIPTION, true );
@@ -155,6 +158,187 @@ final class ShopSubscription {
 					\update_post_meta( $subscription_id, self::IS_POWER_PARTNER_SUBSCRIPTION, true );
 				}
 			}
+		}
+	}
+
+	/**
+	 * Get linked site ids
+	 * 取得訂單網站的 site id
+	 *
+	 * @param int $subscription_id subscription id
+	 * @return array
+	 */
+	public static function get_linked_site_ids( $subscription_id ) {
+		$order_id = \wp_get_post_parent_id( $subscription_id );
+
+		if ( ! $order_id ) {
+			return array();
+		}
+		$order = \wc_get_order( $order_id );
+		if ( ! $order ) {
+			return array();
+		}
+		$linked_site_ids = $order?->get_meta( Product::LINKED_SITE_IDS_META_KEY, true );
+		return is_array( $linked_site_ids ) ? $linked_site_ids : array();
+	}
+
+	/**
+	 * Update linked site ids
+	 * 更新訂單網站的 site id
+	 *
+	 * @param int   $subscription_id subscription id
+	 * @param array $linked_site_ids linked site ids
+	 * @return bool
+	 */
+	public static function update_linked_site_ids( $subscription_id, $linked_site_ids ) {
+		$order_id = \wp_get_post_parent_id( $subscription_id );
+		if ( ! $order_id ) {
+			return false;
+		}
+
+		$old_linked_site_ids = self::get_linked_site_ids( $subscription_id );
+
+		$order = \wc_get_order( $order_id );
+		$order?->update_meta_data( Product::LINKED_SITE_IDS_META_KEY, $linked_site_ids );
+		$order?->save();
+
+		$subscription = \wcs_get_subscription( $subscription_id );
+
+		$subscription?->add_order_note(
+			\sprintf(
+				/* translators: %s: linked site ids */
+				__( '更新了此訂閱的連結的網站 id: %1$s -> %2$s', 'power_partner' ),
+				\implode( ', ', $old_linked_site_ids ),
+				\implode( ', ', $linked_site_ids )
+			)
+		);
+
+		return true;
+	}
+
+	/**
+	 * Add meta box
+	 * 加入 meta box
+	 *
+	 * @param string $post_type post type
+	 * @return void
+	 */
+	public function add_meta_box( $post_type ) {
+		$post_types = array( self::POST_TYPE );
+
+		if ( in_array( $post_type, $post_types, true ) ) {
+			\add_meta_box(
+				Product::LINKED_SITE_IDS_META_KEY . '_meta_box',
+				__( '此訂閱連結的網站 id', 'power_partner' ),
+				array( $this, 'render_meta_box_content' ),
+				$post_type,
+				'advanced',
+				'high'
+			);
+		}
+	}
+
+	/**
+	 * Render meta box content
+	 * 顯示 meta box 內容
+	 *
+	 * @param \WP_Post $post post
+	 * @return void
+	 */
+	public function render_meta_box_content( $post ) {
+
+		echo '只能移除，不能新增';
+
+		$linked_site_ids = self::get_linked_site_ids( $post?->ID );
+
+		$options = array();
+
+		foreach ( $linked_site_ids as $site_id ) {
+			$options[ $site_id ] = '#' . $site_id;
+		}
+
+		\wp_nonce_field( Product::LINKED_SITE_IDS_META_KEY . '_action', Product::LINKED_SITE_IDS_META_KEY . '_nonce' );
+
+		\woocommerce_wp_select(  // 使用方法 & 設定項可以看 WooCommerce 代碼
+			array(
+				'id'                => Product::LINKED_SITE_IDS_META_KEY,
+				'name'              => Product::LINKED_SITE_IDS_META_KEY . '[]',  // 🚩這邊要加上 []，不然 POST 給後端，會抓到 single string 而不是 array
+				'style'             => 'width:25rem;',
+				'class'             => '',
+				'label'             => '',
+				'value'             => $linked_site_ids, // 這邊就放你從後端拿的資料
+				'options'           => $options, // key => value 的陣列
+				'custom_attributes' => array(
+					'multiple'         => 'multiple', // 🚩 這是要給 selectWoo 抓的
+					'data-allow-clear' => 'true', // select2 設定項，請自行查閱
+				),
+			)
+		);
+		?>
+<script>
+	(function($){
+	$('#<?php echo Product::LINKED_SITE_IDS_META_KEY;//phpcs:ignore ?>').selectWoo();
+})(jQuery)
+</script>
+		<?php
+	}
+
+	/**
+	 * Save
+	 * 儲存
+	 *
+	 * @param int $post_id post id
+	 * @return void
+	 */
+	public function save( $post_id ) {
+
+		$nonce = $_POST[ Product::LINKED_SITE_IDS_META_KEY . '_nonce' ] ?? ''; // phpcs:ignore
+		$linked_site_ids = $_POST[ Product::LINKED_SITE_IDS_META_KEY ] ?? []; // phpcs:ignore
+
+		// Verify that the nonce is valid.
+		if ( ! \wp_verify_nonce( $nonce, Product::LINKED_SITE_IDS_META_KEY . '_action' ) ) {
+			return;
+		}
+
+		if ( ! is_array( $linked_site_ids ) ) {
+			$linked_site_ids = array();
+		}
+
+		$old_linked_site_ids = self::get_linked_site_ids( $post_id );
+
+		if ( $old_linked_site_ids === $linked_site_ids ) {
+			return;
+		}
+
+		self::update_linked_site_ids( $post_id, $linked_site_ids );
+	}
+
+	/**
+	 * Add order column.
+	 *
+	 * @param array $columns Columns.
+	 * @return array
+	 */
+	public function add_order_column( array $columns ): array {
+		$columns[ Product::LINKED_SITE_IDS_META_KEY ] = '綁定的網站 ids';
+		return $columns;
+	}
+
+	/**
+	 * Render order column.
+	 *
+	 * @param string $column Column.
+	 * @return void
+	 */
+	public function render_order_column( $column ): void {
+		global $post;
+
+		if ( Product::LINKED_SITE_IDS_META_KEY === $column ) {
+			$subscription_id = $post->ID;
+			$linked_site_ids = self::get_linked_site_ids( $subscription_id );
+
+			echo \esc_html( implode( ', ', $linked_site_ids ) );
+
 		}
 	}
 }

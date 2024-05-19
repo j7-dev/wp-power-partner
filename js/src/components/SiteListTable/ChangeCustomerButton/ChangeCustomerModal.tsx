@@ -1,5 +1,14 @@
-import { useState } from 'react'
-import { Modal, ModalProps, Form, Alert, Select, FormInstance } from 'antd'
+import { useState, useEffect } from 'react'
+import {
+  Modal,
+  ModalProps,
+  Form,
+  Alert,
+  Select,
+  FormInstance,
+  Tag,
+  Tooltip,
+} from 'antd'
 import { chosenRecordAtom } from '@/components/SiteListTable/atom'
 import { useAtomValue } from 'jotai'
 import { useQuery } from '@tanstack/react-query'
@@ -35,7 +44,7 @@ export const ChangeCustomerModal = ({
   const { data, isPending } = useQuery<TGetCustomersResponse>({
     queryKey: ['get_customers_by_id', customerId],
     queryFn: () =>
-      axios.get(`/${kebab}/customers`, {
+      axios.get(`/${kebab}/customers-by-search`, {
         params: {
           id: customerId,
         },
@@ -61,7 +70,7 @@ export const ChangeCustomerModal = ({
   } = useQuery<TGetCustomersResponse>({
     queryKey: ['get_customers_by_search', search],
     queryFn: () =>
-      axios.get(`/${kebab}/customers`, {
+      axios.get(`/${kebab}/customers-by-search`, {
         params: {
           search,
         },
@@ -81,10 +90,66 @@ export const ChangeCustomerModal = ({
     return '請輸入至少 2 個字元以搜尋客戶'
   }
 
+  // 依照選擇的客戶不同，顯示不同的訂閱下拉選項
+
   const watchNewCustomerId = Form.useWatch(['new_customer_id'], form)
-  const { selectProps } = useSubscriptionSelect({
+  const { selectProps, result: getSubscriptionResult } = useSubscriptionSelect({
     user_id: watchNewCustomerId,
   })
+  const isEmptySubscriptions =
+    getSubscriptionResult?.isSuccess &&
+    getSubscriptionResult?.data?.data?.length === 0
+
+  const subscriptions = getSubscriptionResult?.data?.data || []
+  const isFetching = getSubscriptionResult?.isFetching
+
+  // 依照選擇的訂閱不同，顯示不同的綁定 site_id
+
+  const watchSubscriptionId = Form.useWatch(['subscription_id'], form)
+  const selectedSubscription = subscriptions?.find(
+    (subscription) => subscription.id === watchSubscriptionId,
+  )
+  const linkedSiteIds = selectedSubscription?.linked_site_ids || []
+
+  const handleClose = (siteId: string) => {
+    const linkedSiteIdsInForm: string[] | undefined = form.getFieldValue([
+      'linked_site_ids',
+    ])
+    form.setFieldsValue({
+      linked_site_ids: linkedSiteIdsInForm?.filter(
+        (id: string) => id !== siteId,
+      ),
+    })
+  }
+
+  const watchLinkedSiteIds: string[] = Form.useWatch(['linked_site_ids'], form)
+
+  // 改變訂閱時，將當前的 site_id 加入 linked_site_ids
+
+  useEffect(() => {
+    if (!chosenRecord) {
+      return
+    }
+    const includeCurrentRecord = linkedSiteIds.includes(
+      chosenRecord?.ID?.toString(),
+    )
+    const linkedSiteIdsInForm = includeCurrentRecord
+      ? linkedSiteIds
+      : [...linkedSiteIds, chosenRecord?.ID?.toString()]
+    form.setFieldsValue({
+      linked_site_ids: linkedSiteIdsInForm,
+    })
+  }, [watchSubscriptionId])
+
+  // 清空 用戶時 清空 linked_site_ids 的值
+
+  useEffect(() => {
+    if (!watchNewCustomerId) {
+      form.setFieldsValue({
+        linked_site_ids: undefined,
+      })
+    }
+  }, [watchNewCustomerId])
 
   return (
     <Modal {...modalProps}>
@@ -123,7 +188,7 @@ export const ChangeCustomerModal = ({
             filterOption={false}
             onSearch={handleSearch}
             notFoundContent={null}
-            options={(searchedCustomers || []).map((c) => ({
+            options={(searchedCustomers || [])?.map((c) => ({
               value: c.id,
               label: `${c.display_name} - #${c.id}`,
             }))}
@@ -132,14 +197,48 @@ export const ChangeCustomerModal = ({
         <SubscriptionSelect
           formItemProps={{
             name: ['subscription_id'],
-            label: '綁訂到新客戶的訂閱上',
+            label: `將此網站 #${chosenRecord?.ID} 綁訂到新客戶的訂閱上`,
           }}
           selectProps={{
             ...selectProps,
-            disabled: !watchNewCustomerId,
+            disabled: !watchNewCustomerId || isEmptySubscriptions || isFetching,
+            placeholder: isEmptySubscriptions
+              ? '此用戶沒有任何訂閱紀錄'
+              : '請選擇要綁定的訂閱',
           }}
         />
+
+        <Form.Item name={['linked_site_ids']} hidden>
+          <Select mode="multiple" />
+        </Form.Item>
       </Form>
+      {selectedSubscription && (
+        <>
+          <p>確認變更後，綁定在此訂閱上的 site ids 如下: </p>
+          {watchLinkedSiteIds?.map((linkedSiteId) => {
+            const isCurrentRecord =
+              chosenRecord?.ID?.toString() === linkedSiteId
+            return (
+              <Tooltip
+                key={linkedSiteId}
+                title={isCurrentRecord ? '本次新增' : ''}
+              >
+                <Tag
+                  closable={!isCurrentRecord}
+                  onClose={(e) => {
+                    e.preventDefault()
+
+                    handleClose(linkedSiteId)
+                  }}
+                  className={isCurrentRecord ? 'border-dashed' : ''}
+                >
+                  #{linkedSiteId}
+                </Tag>
+              </Tooltip>
+            )
+          })}
+        </>
+      )}
     </Modal>
   )
 }

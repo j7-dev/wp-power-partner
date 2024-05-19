@@ -45,17 +45,17 @@ final class Cron extends Singleton {
 			if ( \is_wp_error( $result ) ) {
 				ob_start();
 				print_r( $result );
-				\J7\WpToolkit\Utils::debug_log( self::SEND_EMAIL_HOOK_NAME . 'wp_schedule_single_event Error: ' . ob_get_clean() );
+				\J7\WpToolkit\Utils::debug_log( self::SEND_EMAIL_HOOK_NAME . ' wp_schedule_single_event Error: ' . ob_get_clean() );
 			}
 		}
 
-		// 啟用外掛後 10 分鐘後同步一次訂閱資料就好
+		// @deprecated 啟用外掛後 10 分鐘後同步一次訂閱資料就好
 		if ( ! \wp_next_scheduled( self::SYNC_SUBSCRIPTION_META_HOOK_NAME ) ) {
 			$result = \wp_schedule_single_event( strtotime( '+10 minute' ), self::SYNC_SUBSCRIPTION_META_HOOK_NAME, array(), true );
 			if ( \is_wp_error( $result ) ) {
 				ob_start();
 				print_r( $result );
-				\J7\WpToolkit\Utils::debug_log( self::SYNC_SUBSCRIPTION_META_HOOK_NAME . 'wp_schedule_single_event Error: ' . ob_get_clean() );
+				\J7\WpToolkit\Utils::debug_log( self::SYNC_SUBSCRIPTION_META_HOOK_NAME . ' wp_schedule_single_event Error: ' . ob_get_clean() );
 			}
 		}
 	}

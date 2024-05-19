@@ -30,13 +30,23 @@ final class User {
 	public function register_apis(): void {
 		\register_rest_route(
 			Plugin::KEBAB,
-			'customers',
+			'customers-by-search',
 			array(
 				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_customers' ),
+				'callback'            => array( $this, 'get_customers_by_search_callback' ),
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
+			)
+		);
+
+		\register_rest_route(
+			Plugin::KEBAB,
+			'customers',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_customers_callback' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 	}
@@ -48,7 +58,7 @@ final class User {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function get_customers( $request ) { // phpcs:ignore
+	public function get_customers_by_search_callback( $request ) { // phpcs:ignore
 		$params = $request?->get_query_params() ?? array();
 		$id     = $params['id'] ?? '0';
 		$search = $params['search'] ?? '';
@@ -105,6 +115,54 @@ final class User {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Get customers callback
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function get_customers_callback( $request ): \WP_REST_Response {
+
+		$params   = $request?->get_query_params() ?? array();
+		$user_ids = $params['user_ids'] ?? array();
+
+		if ( empty( $user_ids ) ) {
+			return new \WP_REST_Response(
+				array(
+					'status'  => 500,
+					'message' => 'missing user ids',
+				),
+				500
+			);
+		}
+
+		$users = \get_users(
+			array(
+				'include' => $user_ids,
+			)
+		);
+
+		$formatted_users = array_map(
+			function ( $user ) {
+				return array(
+					'id'           => (string) $user->ID,
+					'user_login'   => $user->user_login,
+					'user_email'   => $user->user_email,
+					'display_name' => $user->display_name,
+				);
+			},
+			$users
+		);
+
+		$response = new \WP_REST_Response( $formatted_users );
+
+		// set pagination in header
+		$response->header( 'X-WP-Total', count( $formatted_users ) );
+		$response->header( 'X-WP-TotalPages', 1 );
+
+		return $response;
 	}
 }
 

@@ -11,6 +11,8 @@ use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Email\Email;
+use J7\PowerPartner\Product\Product;
+use J7\PowerPartner\ShopSubscription\ShopSubscription;
 
 /**
  * Class Api
@@ -105,6 +107,18 @@ final class Api {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_subscriptions_callback' ),
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		\register_rest_route(
+			Plugin::KEBAB,
+			'change-subscription',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'post_change_subscription_callback' ),
 				'permission_callback' => function () {
 					return \current_user_can( 'manage_options' );
 				},
@@ -256,10 +270,11 @@ final class Api {
 		$formatted_subscriptions = array_map(
 			function ( $subscription ) {
 				return array(
-					'id'         => $subscription->ID,
-					'status'     => $subscription->post_status,
-					'post_title' => $subscription->post_title,
-					'post_date'  => $subscription->post_date,
+					'id'              => (string) $subscription?->ID,
+					'status'          => $subscription?->post_status,
+					'post_title'      => $subscription?->post_title,
+					'post_date'       => $subscription?->post_date,
+					'linked_site_ids' => ShopSubscription::get_linked_site_ids( $subscription?->ID ),
 				);
 			},
 			$subscriptions
@@ -274,6 +289,76 @@ final class Api {
 		return $response;
 	}
 
+	/**
+	 * Post change subscription callback
+	 * 將網站綁定到指定的訂閱(還有上層訂單)上
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function post_change_subscription_callback( $request ) {
+		try {
+			$body_params     = $request->get_json_params() ?? array();
+			$subscription_id = $body_params['subscription_id'] ?? '';
+			$site_id         = $body_params['site_id'] ?? '';
+			$linked_site_ids = $body_params['linked_site_ids'] ?? array();
+			$subscription    = \wcs_get_subscription( $subscription_id );
+			if ( ! $subscription || empty( $subscription_id || empty( $site_id ) ) ) {
+				return \rest_ensure_response(
+					array(
+						'status'  => 500,
+						'message' => 'missing subscription id or site id',
+					)
+				);
+			}
+
+			$parent_order = $subscription->get_parent();
+			if ( ! $parent_order ) {
+				return \rest_ensure_response(
+					array(
+						'status'  => 500,
+						'message' => 'subscription has no parent order',
+					)
+				);
+			}
+
+			if ( ! is_array( $linked_site_ids ) ) {
+				return \rest_ensure_response(
+					array(
+						'status'  => 500,
+						'message' => 'linked_site_ids is not array',
+					)
+				);
+			}
+
+			$is_update = ShopSubscription::update_linked_site_ids( $subscription_id, $linked_site_ids );
+			if ( $is_update ) {
+				return \rest_ensure_response(
+					array(
+						'status'  => 200,
+						'message' => 'post change subscription success, subscription id: ' . $subscription_id . ' linked site ids: ' . \implode( ',', $linked_site_ids ),
+					)
+				);
+			} else {
+				return \rest_ensure_response(
+					array(
+						'status'  => 500,
+						'message' => 'post change subscription fail',
+					)
+				);
+			}
+		} catch ( \Throwable $th ) {
+			ob_start();
+			print_r( $th );
+			\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
+			return \rest_ensure_response(
+				array(
+					'status'  => 500,
+					'message' => 'post change subscription fail',
+				)
+			);
+		}
+	}
 
 	/**
 	 * Post emails callback

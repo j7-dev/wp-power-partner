@@ -1,29 +1,35 @@
 import { FC } from 'react'
-import { Table, TableProps, Tooltip, notification } from 'antd'
-import { UserSwitchOutlined } from '@ant-design/icons'
+import { Table, TableProps, notification } from 'antd'
 import { SystemInfo } from '@/components'
-import { DataType } from '@/components/SiteListTable/types'
+import {
+  DataType,
+  TGetCustomersResponse,
+} from '@/components/SiteListTable/types'
 import ToggleSslButton from '@/components/SiteListTable/ToggleSslButton'
 import ToggleSiteButton from '@/components/SiteListTable/ToggleSiteButton'
+import Customer from '@/components/SiteListTable/Customer'
+
 import { BreathLight } from 'antd-toolkit'
 import {
   ChangeDomainModal,
   ChangeDomainButton,
   useChangeDomain,
 } from '@/components/SiteListTable/ChangeDomainButton'
-
 import {
   ChangeCustomerModal,
   ChangeCustomerButton,
   useChangeCustomer,
 } from '@/components/SiteListTable/ChangeCustomerButton'
+import { UseQueryResult } from '@tanstack/react-query'
 
 export * from './types'
+export * from './useCustomers'
 
 export const SiteListTable: FC<{
   tableProps: TableProps<DataType>
+  customerResult: UseQueryResult<TGetCustomersResponse, Error>
   isAdmin?: boolean
-}> = ({ tableProps, isAdmin = false }) => {
+}> = ({ tableProps, isAdmin = false, customerResult }) => {
   const [api, contextHolder] = notification.useNotification({
     placement: 'bottomRight',
     stack: { threshold: 1 },
@@ -88,15 +94,14 @@ export const SiteListTable: FC<{
       ),
     },
     {
-      title: '使用者',
+      title: isAdmin ? '客戶資料' : '用戶資料',
       dataIndex: 'wpapp_user',
       render: (_: string, record) => (
-        <div className="grid grid-cols-[4rem_8rem] gap-1 text-xs">
-          <span className="bg-gray-200 px-2">使用者</span>
-          <span className="place-self-end">{record?.wpapp_user}</span>
-          <span className="bg-gray-200 px-2">Email</span>
-          <span className="place-self-end">{record?.wpapp_email}</span>
-        </div>
+        <Customer
+          record={record}
+          customerResult={customerResult}
+          isAdmin={isAdmin}
+        />
       ),
     },
     {

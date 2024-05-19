@@ -1,6 +1,10 @@
 import { useState, useLayoutEffect } from 'react'
 import { TParamsBase, TPagination } from '@/types'
-import { UseQueryOptions, useQuery } from '@tanstack/react-query'
+import {
+  UseQueryOptions,
+  useQuery,
+  UndefinedInitialDataOptions,
+} from '@tanstack/react-query'
 import { cloudAxios } from '@/api'
 import { TableProps } from 'antd'
 
@@ -39,7 +43,7 @@ export const useTable = <T, K>({
     queryKey: [`${resource}`, JSON.stringify(params)] as any,
     queryFn: () => cloudAxios.get(`/${resource}`, { params }),
     ...queryOptions,
-  })
+  } as any)
 
   const handlePaginationChange = (page: number, pageSize: number) => {
     const offset = (page - 1) * (pageSize || 10)

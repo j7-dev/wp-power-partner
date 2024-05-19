@@ -2,22 +2,33 @@ import { useState, useEffect } from 'react'
 import { DataType } from '@/components/SiteListTable/types'
 import { Button, Form } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
-import { cloudAxios } from '@/api'
+import { cloudAxios, axios } from '@/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { chosenRecordAtom } from '@/components/SiteListTable/atom'
 import { useAtom } from 'jotai'
 import { NotificationInstance } from 'antd/es/notification/interface'
-import { partner_id } from '@/utils'
+import { kebab, partner_id } from '@/utils'
 
 type TChangeCustomerParams = {
   site_id: string
   customer_id: string
+  subscription_id?: string
+  partner_id: string
+  record: DataType | null
+}
+
+type TChangeSubscriptionParams = {
+  site_id: string
+  subscription_id?: string
+  linked_site_ids?: string[]
   partner_id: string
   record: DataType | null
 }
 
 type TFormValues = {
   new_customer_id: string
+  subscription_id: string
+  linked_site_ids: string[] | undefined
 }
 
 type TUseChangeCustomerParams = {
@@ -40,9 +51,13 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
     setChosenRecord(record)
   }
 
-  const { mutate: changeCustomer } = useMutation({
+  const { mutate: changeCustomer, isPending: isPendingCC } = useMutation({
     mutationFn: (values: TChangeCustomerParams) => {
-      const { record: _, ...rest } = values
+      const {
+        record: _record,
+        subscription_id: _subscription_id,
+        ...rest
+      } = values
       return cloudAxios.post('/v2/change-customer', rest)
     },
     onMutate: (values) => {
@@ -69,6 +84,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
           description: `${record?.wpapp_domain} 已成功變更為 #${customer_id} 用戶`,
         })
         queryClient.invalidateQueries({ queryKey: ['apps'] })
+        close()
       } else {
         api.error({
           key: `loading-change-customer-${site_id}`,
@@ -88,14 +104,64 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
     },
   })
 
-  const handleChangeCustomer = () => {
-    form.validateFields().then((formValues: TFormValues) => {
-      changeCustomer({
-        site_id: chosenRecord?.ID.toString() || '',
-        customer_id: formValues?.new_customer_id,
-        partner_id,
-        record: chosenRecord,
+  const { mutate: changeSubscription, isPending: isPendingCS } = useMutation({
+    mutationFn: (values: TChangeSubscriptionParams) => {
+      const { record: _record, ...rest } = values
+      return axios.post(`/${kebab}/change-subscription`, rest)
+    },
+    onSuccess: (data, values) => {
+      const { record, site_id, subscription_id } = values
+      const status = data?.data?.status
+
+      if (200 === status) {
+        api.success({
+          key: `loading-change-subscription-${site_id}`,
+          message: '客戶變更成功',
+          description: `${record?.wpapp_domain} 已綁定網站 #${site_id} 到訂閱 #${subscription_id} 成功`,
+        })
+        queryClient.invalidateQueries({ queryKey: ['apps'] })
+        close()
+      } else {
+        api.error({
+          key: `loading-change-subscription-${site_id}`,
+          message: 'OOPS! 綁定網站到訂閱時發生問題',
+          description: `${record?.wpapp_domain} 已綁定網站 #${site_id} 到訂閱 #${subscription_id} 失敗`,
+        })
+      }
+    },
+    onError: (err, values) => {
+      const { record, site_id, subscription_id } = values
+      console.log('err', err)
+      api.error({
+        key: `loading-change-subscription-${site_id}`,
+        message: 'OOPS! 綁定網站到訂閱時發生問題',
+        description: `${record?.wpapp_domain} 已綁定網站 #${site_id} 到訂閱 #${subscription_id} 失敗`,
       })
+    },
+  })
+
+  const handleChangeCustomer = () => {
+    const customerId = chosenRecord?.customer_id
+    form.validateFields().then((formValues: TFormValues) => {
+      const subscription_id = formValues?.subscription_id
+      if (customerId !== formValues?.new_customer_id) {
+        changeCustomer({
+          site_id: chosenRecord?.ID.toString() || '',
+          customer_id: formValues?.new_customer_id,
+          partner_id,
+          record: chosenRecord,
+        })
+      }
+
+      if (subscription_id) {
+        changeSubscription({
+          subscription_id,
+          site_id: chosenRecord?.ID.toString() || '',
+          linked_site_ids: formValues?.linked_site_ids,
+          partner_id,
+          record: chosenRecord,
+        })
+      }
     })
   }
 
@@ -104,7 +170,9 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
 
     if (isModalOpen) {
       form.setFieldsValue({
-        new_customer_id: '',
+        new_customer_id: undefined,
+        subscription_id: undefined,
+        linked_site_ids: undefined,
       })
     }
   }, [isModalOpen])
@@ -120,6 +188,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
         danger
         onClick={handleChangeCustomer}
         className="mr-0"
+        loading={isPendingCC || isPendingCS}
       >
         確認變更客戶
       </Button>

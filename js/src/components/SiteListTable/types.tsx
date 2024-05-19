@@ -1,3 +1,5 @@
+import { AxiosResponse } from 'axios'
+
 export type DataType = {
   ID: number
   ipv4: string
@@ -59,3 +61,12 @@ export type DataType = {
   wpapp_wc_subscription_id: string
   wpapp_site_status: string
 }
+
+export type TCustomer = {
+  id: string
+  user_login: string
+  user_email: string
+  display_name: string
+}
+
+export type TGetCustomersResponse = AxiosResponse<TCustomer[]>
