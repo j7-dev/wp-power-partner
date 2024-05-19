@@ -210,7 +210,7 @@ export const ChangeCustomerModal = ({
             name: ['subscription_id'],
             label: (
               <span className="inline">
-                {`將此網站 #${chosenRecord?.ID} 綁訂到新客戶的訂閱上`}
+                {`將此網站 #${chosenRecord?.ID} 綁定到新客戶的訂閱上`}
                 <br />
                 目前綁定的訂閱為
                 {subscription_ids_node}
