@@ -1,12 +1,10 @@
 import {
   SiteListTable,
-  DataType,
   useCustomers,
+  useTable,
 } from '@/components/SiteListTable'
-import { TSiteExtraParams } from './types'
 import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useTable } from '@/hooks'
 import { useEffect } from 'react'
 
 const index = () => {
@@ -15,7 +13,7 @@ const index = () => {
 
   const user_id = identity.data?.user_id || ''
 
-  const { tableProps, result } = useTable<TSiteExtraParams, DataType>({
+  const { tableProps } = useTable({
     resource: 'apps',
     defaultParams: {
       user_id,
@@ -39,13 +37,13 @@ const index = () => {
   const customerResult = useCustomers({ user_ids: all_customer_ids })
 
   useEffect(() => {
-    if (!result?.isFetching) {
+    if (!tableProps?.loading) {
       setGlobalLoading({
         isLoading: false,
         label: '',
       })
     }
-  }, [result?.isFetching])
+  }, [tableProps?.loading])
 
   return (
     <SiteListTable

@@ -1,4 +1,4 @@
 import { atom } from 'jotai'
-import { DataType } from '@/components/SiteListTable/types'
+import { DataTypeWithSubscriptionIds } from '@/components/SiteListTable/types'
 
-export const chosenRecordAtom = atom<DataType | null>(null)
+export const chosenRecordAtom = atom<DataTypeWithSubscriptionIds | null>(null)

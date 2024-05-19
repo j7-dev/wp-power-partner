@@ -13,7 +13,7 @@ import { chosenRecordAtom } from '@/components/SiteListTable/atom'
 import { useAtomValue } from 'jotai'
 import { useQuery } from '@tanstack/react-query'
 import { axios } from '@/api'
-import { kebab } from '@/utils'
+import { kebab, siteUrl } from '@/utils'
 import { AxiosResponse } from 'axios'
 import { debounce } from 'lodash-es'
 import { SubscriptionSelect, useSubscriptionSelect } from '@/components'
@@ -130,7 +130,7 @@ export const ChangeCustomerModal = ({
     if (!chosenRecord) {
       return
     }
-    const includeCurrentRecord = linkedSiteIds.includes(
+    const includeCurrentRecord = linkedSiteIds?.includes(
       chosenRecord?.ID?.toString(),
     )
     const linkedSiteIdsInForm = includeCurrentRecord
@@ -150,6 +150,17 @@ export const ChangeCustomerModal = ({
       })
     }
   }, [watchNewCustomerId])
+
+  const subscription_ids = chosenRecord?.subscription_ids || []
+  const subscription_ids_node = subscription_ids.map((id) => (
+    <a
+      key={id}
+      className="ml-2 inline"
+      href={`${siteUrl}/wp-admin/post.php?post=${id}&action=edit`}
+      target="_blank"
+      rel="noreferrer"
+    >{`#${id}`}</a>
+  ))
 
   return (
     <Modal {...modalProps}>
@@ -197,7 +208,14 @@ export const ChangeCustomerModal = ({
         <SubscriptionSelect
           formItemProps={{
             name: ['subscription_id'],
-            label: `將此網站 #${chosenRecord?.ID} 綁訂到新客戶的訂閱上`,
+            label: (
+              <span className="inline">
+                {`將此網站 #${chosenRecord?.ID} 綁訂到新客戶的訂閱上`}
+                <br />
+                目前綁定的訂閱為
+                {subscription_ids_node}
+              </span>
+            ),
           }}
           selectProps={{
             ...selectProps,

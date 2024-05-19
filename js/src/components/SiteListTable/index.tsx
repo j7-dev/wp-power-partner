@@ -2,7 +2,7 @@ import { FC } from 'react'
 import { Table, TableProps, notification } from 'antd'
 import { SystemInfo } from '@/components'
 import {
-  DataType,
+  DataTypeWithSubscriptionIds as DataType,
   TGetCustomersResponse,
 } from '@/components/SiteListTable/types'
 import ToggleSslButton from '@/components/SiteListTable/ToggleSslButton'
@@ -21,9 +21,12 @@ import {
   useChangeCustomer,
 } from '@/components/SiteListTable/ChangeCustomerButton'
 import { UseQueryResult } from '@tanstack/react-query'
+import { siteUrl } from '@/utils'
 
 export * from './types'
 export * from './useCustomers'
+export * from './useApps'
+export * from './useTable'
 
 export const SiteListTable: FC<{
   tableProps: TableProps<DataType>
@@ -107,20 +110,42 @@ export const SiteListTable: FC<{
     {
       title: '創建日期',
       dataIndex: 'post_date',
-      render: (_: string, record) => (
-        <div className="grid grid-cols-[4rem_8rem] gap-1 text-xs">
-          <span className="bg-gray-200 px-2">創建</span>
-          <span className="place-self-end">{record?.post_date}</span>
-          <span className="bg-gray-200 px-2">上次變更</span>
-          <span className="place-self-end">{record?.post_modified}</span>
-          <span className="bg-gray-200 px-2">網站 id</span>
-          <span className="place-self-end">#{record?.ID}</span>
-          <span className="bg-gray-200 px-2">訂單編號</span>
-          <span className="place-self-end">
-            {record?.wpapp_wc_order_id ? `#${record?.wpapp_wc_order_id}` : '-'}
-          </span>
-        </div>
-      ),
+      render: (_: string, record) => {
+        const subscription_ids = record?.subscription_ids || []
+        const subscription_ids_node = subscription_ids.map((id) => (
+          <a
+            key={id}
+            className="ml-2"
+            href={`${siteUrl}/wp-admin/post.php?post=${id}&action=edit`}
+            target="_blank"
+            rel="noreferrer"
+          >{`#${id}`}</a>
+        ))
+
+        return (
+          <div className="grid grid-cols-[4rem_8rem] gap-1 text-xs">
+            <span className="bg-gray-200 px-2">創建</span>
+            <span className="place-self-end">{record?.post_date}</span>
+            <span className="bg-gray-200 px-2">上次變更</span>
+            <span className="place-self-end">{record?.post_modified}</span>
+            <span className="bg-gray-200 px-2">網站 id</span>
+            <span className="place-self-end">#{record?.ID}</span>
+
+            {isAdmin && (
+              <>
+                <span className="bg-gray-200 px-2">訂單編號</span>
+                <span className="place-self-end">
+                  {record?.wpapp_wc_order_id
+                    ? `#${record?.wpapp_wc_order_id}`
+                    : '-'}
+                </span>
+                <span className="bg-gray-200 px-2">對應訂閱</span>
+                <span className="place-self-end">{subscription_ids_node}</span>
+              </>
+            )}
+          </div>
+        )
+      },
     },
     {
       title: '系統資訊',

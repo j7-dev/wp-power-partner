@@ -112,4 +112,22 @@ abstract class Base {
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		\wp_mail( $email, $subject, $message, $headers );
 	}
+
+
+	/**
+	 * Delete post meta by meta id
+	 *
+	 * @param int $mid - meta id
+	 * @return string
+	 */
+	public static function delete_post_meta_by_mid( $mid ) {
+		global $wpdb;
+
+		// 执行删除查询
+		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}postmeta WHERE meta_id = %d", $mid ) );
+
+		$delete_success = $deleted !== false;
+
+		return $delete_success;
+	}
 }

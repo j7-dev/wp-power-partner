@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { DataType } from '@/components/SiteListTable/types'
+import { DataTypeWithSubscriptionIds as DataType } from '@/components/SiteListTable/types'
 import { Button, Form } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import { cloudAxios } from '@/api'

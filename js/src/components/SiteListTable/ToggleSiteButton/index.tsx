@@ -6,7 +6,7 @@ import {
   LoadingOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
-import { DataType } from '@/components/SiteListTable/types'
+import { DataTypeWithSubscriptionIds as DataType } from '@/components/SiteListTable/types'
 import { cloudAxios } from '@/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { NotificationInstance } from 'antd/es/notification/interface'

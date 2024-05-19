@@ -10,6 +10,7 @@ namespace J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Product\Product;
+use J7\PowerPartner\Utils\Base;
 
 
 /**
@@ -168,18 +169,53 @@ final class ShopSubscription {
 	 * @param int $subscription_id subscription id
 	 * @return array
 	 */
-	public static function get_linked_site_ids( $subscription_id ) {
-		$order_id = \wp_get_post_parent_id( $subscription_id );
+	public static function get_linked_site_ids( $subscription_id ): array {
+		self::compatible_linked_site_ids( $subscription_id );
 
-		if ( ! $order_id ) {
-			return array();
+		$subscription = \wcs_get_subscription( $subscription_id );
+
+		$meta_data       = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
+		$linked_site_ids = array();
+		foreach ( $meta_data as $meta ) {
+			$meta_id                     = $meta->__get( 'id' );
+			$value                       = $meta->__get( 'value' );
+			$linked_site_ids[ $meta_id ] = $value;
 		}
-		$order = \wc_get_order( $order_id );
-		if ( ! $order ) {
-			return array();
+
+		return is_array( $linked_site_ids ) ? array_unique( $linked_site_ids ) : array();
+	}
+
+	/**
+	 * 這邊是為了處理舊的資料，舊的資料是直接存一個 array
+	 *
+	 * @deprecated version 2.0.0
+	 * @param int $subscription_id subscription id
+	 * @return void
+	 */
+	public static function compatible_linked_site_ids( $subscription_id ): void {
+		$subscription = \wcs_get_subscription( $subscription_id );
+
+		$old_meta_data = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, true );
+		if ( is_array( $old_meta_data ) ) {
+			foreach ( $old_meta_data as $old_site_id ) {
+				$subscription?->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $old_site_id );
+			}
+			$subscription?->save();
 		}
-		$linked_site_ids = $order?->get_meta( Product::LINKED_SITE_IDS_META_KEY, true );
-		return is_array( $linked_site_ids ) ? $linked_site_ids : array();
+		$to_delete_mids = array();
+
+		$meta_data = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
+		foreach ( $meta_data as $meta ) {
+			$meta_id = $meta->__get( 'id' );
+			$value   = $meta->__get( 'value' );
+			if ( is_array( $value ) ) {
+				$to_delete_mids[] = $meta_id;
+			}
+		}
+
+		foreach ( $to_delete_mids as $mid ) {
+			Base::delete_post_meta_by_mid( $mid );
+		}
 	}
 
 	/**
@@ -191,18 +227,25 @@ final class ShopSubscription {
 	 * @return bool
 	 */
 	public static function update_linked_site_ids( $subscription_id, $linked_site_ids ) {
-		$order_id = \wp_get_post_parent_id( $subscription_id );
-		if ( ! $order_id ) {
-			return false;
-		}
+		$subscription = \wcs_get_subscription( $subscription_id );
 
 		$old_linked_site_ids = self::get_linked_site_ids( $subscription_id );
 
-		$order = \wc_get_order( $order_id );
-		$order?->update_meta_data( Product::LINKED_SITE_IDS_META_KEY, $linked_site_ids );
-		$order?->save();
+		$to_add_sites    = array_diff( $linked_site_ids, $old_linked_site_ids );
+		$to_delete_sites = array_diff( $old_linked_site_ids, $linked_site_ids );
 
-		$subscription = \wcs_get_subscription( $subscription_id );
+		foreach ( $to_add_sites as $to_add_site ) {
+			$subscription?->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $to_add_site );
+		}
+
+		foreach ( $to_delete_sites as $to_delete_site ) {
+			$mid = array_search( $to_delete_site, $old_linked_site_ids );
+			if ( $mid ) {
+				Base::delete_post_meta_by_mid( $mid );
+			}
+		}
+
+		$subscription?->save();
 
 		$subscription?->add_order_note(
 			\sprintf(
@@ -214,6 +257,73 @@ final class ShopSubscription {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Change linked site ids
+	 * 變更訂閱的 site ids
+	 *
+	 * @param int   $subscription_id subscription id
+	 * @param array $linked_site_ids linked site ids
+	 * @return bool
+	 */
+	public static function change_linked_site_ids( $subscription_id, $linked_site_ids ) {
+		try {
+			self::remove_linked_site_ids( $linked_site_ids );
+			self::update_linked_site_ids( $subscription_id, $linked_site_ids );
+
+			return true;
+		} catch ( \Throwable $th ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Remove linked site ids
+	 * 移除訂單網站的 site id
+	 *
+	 * @param array $linked_site_ids site ids to remove
+	 * @return bool
+	 */
+	public static function remove_linked_site_ids( $linked_site_ids ): bool {
+		try {
+			// 移除原本連結的訂閱
+			$subscription_ids_to_check = array();
+
+			foreach ( $linked_site_ids as $site_id ) {
+				$args = array(
+					'post_type'      => self::POST_TYPE,
+					'posts_per_page' => -1,
+					'post_status'    => 'any',
+					'fields'         => 'ids',
+					'meta_key'       => Product::LINKED_SITE_IDS_META_KEY,
+					'meta_value'     => $site_id,
+				);
+
+				$subscription_ids          = \get_posts( $args );
+				$subscription_ids_to_check = array(
+					...$subscription_ids_to_check,
+					...$subscription_ids,
+				);
+			}
+
+			foreach ( $subscription_ids_to_check as $subscription_id ) {
+				$old_linked_site_ids    = self::get_linked_site_ids( $subscription_id );
+				$filter_linked_site_ids = array_filter(
+					$old_linked_site_ids,
+					function ( $old_site_id ) use ( $linked_site_ids ) {
+						return ! in_array( $old_site_id, $linked_site_ids );
+					}
+				);
+
+				self::update_linked_site_ids( $subscription_id, $filter_linked_site_ids );
+			}
+
+			return true;
+		} catch ( \Throwable $th ) {
+
+			return false;
+		}
 	}
 
 	/**

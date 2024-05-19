@@ -1,9 +1,10 @@
 import React, { FC } from 'react'
 import {
-  DataType,
+  DataTypeWithSubscriptionIds as DataType,
   TGetCustomersResponse,
 } from '@/components/SiteListTable/types'
 import { UseQueryResult } from '@tanstack/react-query'
+import { siteUrl } from '@/utils'
 
 const index: FC<{
   record: DataType
@@ -59,7 +60,14 @@ const index: FC<{
       {isAdmin && (
         <>
           <span className="bg-gray-200 px-2">user id</span>
-          <span className="place-self-end">{findCustomer?.id}</span>
+          <a
+            className="place-self-end"
+            href={`${siteUrl}/wp-admin/user-edit.php?user_id=${findCustomer?.id}&wp_http_referer=%2Fwp-admin%2Fusers.php`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            #{findCustomer?.id}
+          </a>
         </>
       )}
       <span className="bg-gray-200 px-2">用戶名稱</span>

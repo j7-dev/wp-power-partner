@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { DataType } from '@/components/SiteListTable/types'
+import { DataTypeWithSubscriptionIds as DataType } from '@/components/SiteListTable/types'
 import { Button, Form } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import { cloudAxios, axios } from '@/api'
@@ -119,7 +119,7 @@ export const useChangeCustomer = ({ api }: TUseChangeCustomerParams) => {
           message: '客戶變更成功',
           description: `${record?.wpapp_domain} 已綁定網站 #${site_id} 到訂閱 #${subscription_id} 成功`,
         })
-        queryClient.invalidateQueries({ queryKey: ['apps'] })
+        queryClient.invalidateQueries({ queryKey: ['get_partner_apps'] })
         close()
       } else {
         api.error({

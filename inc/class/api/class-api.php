@@ -124,6 +124,16 @@ final class Api {
 				},
 			)
 		);
+
+		\register_rest_route(
+			Plugin::KEBAB,
+			'apps',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_apps_callback' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -274,7 +284,7 @@ final class Api {
 					'status'          => $subscription?->post_status,
 					'post_title'      => $subscription?->post_title,
 					'post_date'       => $subscription?->post_date,
-					'linked_site_ids' => ShopSubscription::get_linked_site_ids( $subscription?->ID ),
+					'linked_site_ids' => array_values( ShopSubscription::get_linked_site_ids( $subscription?->ID ) ),
 				);
 			},
 			$subscriptions
@@ -331,8 +341,9 @@ final class Api {
 				);
 			}
 
-			$is_update = ShopSubscription::update_linked_site_ids( $subscription_id, $linked_site_ids );
-			if ( $is_update ) {
+			$is_success = ShopSubscription::change_linked_site_ids( $subscription_id, $linked_site_ids );
+
+			if ( $is_success ) {
 				return \rest_ensure_response(
 					array(
 						'status'  => 200,
@@ -358,6 +369,42 @@ final class Api {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Get apps callback
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function get_apps_callback( $request ): \WP_REST_Response {
+		$params  = $request?->get_query_params() ?? array();
+		$app_ids = $params['app_ids'] ?? array();
+
+		$apps = array();
+
+		foreach ( $app_ids as $app_id ) {
+			$args = array(
+				'post_type'      => ShopSubscription::POST_TYPE,
+				'posts_per_page' => -1,
+				'post_status'    => 'any',
+				'fields'         => 'ids',
+				'meta_key'       => Product::LINKED_SITE_IDS_META_KEY,
+				'meta_value'     => $app_id,
+			);
+
+			$subscription_ids = \get_posts( $args );
+
+			$apps[] = array(
+				'app_id'           => (string) $app_id,
+				'subscription_ids' => $subscription_ids,
+			);
+		}
+
+		return new \WP_REST_Response(
+			$apps,
+			200
+		);
 	}
 
 	/**

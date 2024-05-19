@@ -1,4 +1,5 @@
 import { AxiosResponse } from 'axios'
+import { TParamsBase } from '@/types'
 
 export type DataType = {
   ID: number
@@ -62,6 +63,16 @@ export type DataType = {
   wpapp_site_status: string
 }
 
+export type DataTypeWithSubscriptionIds = DataType & {
+  subscription_ids: string[]
+}
+
+export type TSiteExtraParams = TParamsBase & {
+  user_id?: string
+  customer_id?: string
+  disabled?: string
+}
+
 export type TCustomer = {
   id: string
   user_login: string
@@ -70,3 +81,10 @@ export type TCustomer = {
 }
 
 export type TGetCustomersResponse = AxiosResponse<TCustomer[]>
+
+export type TApp = {
+  app_id: string
+  subscription_ids: string[]
+}
+
+export type TGetAppsResponse = AxiosResponse<TApp[]>

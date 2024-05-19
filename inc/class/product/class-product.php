@@ -76,8 +76,6 @@ final class Product {
 		$items     = $order?->get_items();
 		$responses = array();
 
-		// 考慮訂單中每個商品都可能會綁定到不同的網站，所以做成 array
-		$linked_site_ids = array();
 		foreach ( $items as $item ) {
 			/**
 			 * Type
@@ -89,14 +87,15 @@ final class Product {
 
 			// 如果不是可變訂閱商品，就不處理
 			if ( 'variable-subscription' === $product?->get_type() ) {
-				$variation_id      = $item?->get_variation_id();
-				$host_position     = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id    = \get_post_meta( $variation_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$variation_id   = $item?->get_variation_id();
+				$host_position  = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id = \get_post_meta( $variation_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$subscription?->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
 				$linked_site_ids[] = $linked_site_id;
 			} elseif ( 'subscription' === $product?->get_type() ) {
-				$host_position     = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id    = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
-				$linked_site_ids[] = $linked_site_id;
+				$host_position  = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$subscription?->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
 			} else {
 				continue;
 			}
@@ -156,7 +155,6 @@ final class Product {
 		}
 
 		$order?->update_meta_data( self::CREATE_SITE_RESPONSES_META_KEY, \wp_json_encode( $responses ) );
-		$order?->update_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_ids );
 
 		$order?->save();
 	}
