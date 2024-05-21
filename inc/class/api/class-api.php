@@ -268,12 +268,12 @@ final class Api {
 			);
 		}
 
-		$subscriptions = get_posts(
+		$subscriptions = \get_posts(
 			array(
 				'numberposts' => -1,
 				'post_type'   => 'shop_subscription',
 				'author'      => $user_id,
-				'post_status' => array( 'wc-on-hold', 'wc-active', 'wc-pending', 'wc-expired' ), // wc-on-hold wc-active
+				'post_status' => 'any', // wc-on-hold wc-active
 			)
 		);
 
