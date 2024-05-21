@@ -1,7 +1,7 @@
 {
   "name": "wp-power-partner",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "type": "module",
   "scripts": {
     "bootstrap": "yarn install && composer install --no-interaction",
