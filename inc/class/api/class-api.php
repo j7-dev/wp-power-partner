@@ -272,8 +272,9 @@ final class Api {
 			array(
 				'numberposts' => -1,
 				'post_type'   => 'shop_subscription',
-				'author'      => $user_id,
-				'post_status' => 'any', // wc-on-hold wc-active
+				'post_status' => array( 'wc-on-hold', 'wc-active', 'wc-pending', 'wc-expired' ), // wc-on-hold wc-active
+				'meta_key'    => '_customer_user',
+				'meta_value'  => $user_id,
 			)
 		);
 
