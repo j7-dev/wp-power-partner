@@ -236,6 +236,10 @@ final class ShopSubscription {
 	public static function update_linked_site_ids( $subscription_id, $linked_site_ids ) {
 		$subscription = \wcs_get_subscription( $subscription_id );
 
+		if ( ! $subscription ) {
+			return false;
+		}
+
 		$old_linked_site_ids = self::get_linked_site_ids( $subscription_id );
 
 		$to_add_sites    = array_diff( $linked_site_ids, $old_linked_site_ids );

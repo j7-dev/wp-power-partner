@@ -62,6 +62,10 @@ final class Product {
 	 */
 	public function site_sync_by_subscription(\WC_Subscription $subscription ): void { // phpcs:ignore
 
+		if ( ! $subscription ) {
+			return;
+		}
+
 		$order_ids = $this->get_related_order_ids( $subscription );
 
 		$order = $subscription?->get_parent();
