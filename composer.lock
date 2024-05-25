@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4c014452cd33b62ec642aed3bb88d5d7",
+    "content-hash": "45589b623cf1f8e4cbbf240289ea76d6",
     "packages": [
         {
             "name": "j7-dev/tgm-plugin-activation-forked",
-            "version": "1.0.0",
+            "version": "1.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/j7-dev/tgm-plugin-activation-forked.git",
-                "reference": "d6724f0a610da6f7d3aefd8971f516041d63bb77"
+                "reference": "42433f3d49088a8435f46806ae001bbc0bf96156"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/j7-dev/tgm-plugin-activation-forked/zipball/d6724f0a610da6f7d3aefd8971f516041d63bb77",
-                "reference": "d6724f0a610da6f7d3aefd8971f516041d63bb77",
+                "url": "https://api.github.com/repos/j7-dev/tgm-plugin-activation-forked/zipball/42433f3d49088a8435f46806ae001bbc0bf96156",
+                "reference": "42433f3d49088a8435f46806ae001bbc0bf96156",
                 "shasum": ""
             },
             "require": {
@@ -26,7 +26,7 @@
             "type": "library",
             "autoload": {
                 "files": [
-                    "class-tgm-plugin-activation.php"
+                    "index.php"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -54,7 +54,7 @@
                 "issues": "https://github.com/j7-dev/tgm-plugin-activation-forked/issues",
                 "source": "https://github.com/j7-dev/tgm-plugin-activation-forked"
             },
-            "time": "2024-04-02T09:57:40+00:00"
+            "time": "2024-05-21T17:57:04+00:00"
         },
         {
             "name": "kucrut/vite-for-wp",
@@ -387,5 +387,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.6.0"
 }
