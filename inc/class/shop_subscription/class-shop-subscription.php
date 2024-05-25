@@ -174,6 +174,9 @@ final class ShopSubscription {
 
 		$subscription = \wcs_get_subscription( $subscription_id );
 
+		if ( ! $subscription ) {
+			return array();
+		}
 		$meta_data       = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
 		$linked_site_ids = array();
 		foreach ( $meta_data as $meta ) {
@@ -194,6 +197,10 @@ final class ShopSubscription {
 	 */
 	public static function compatible_linked_site_ids( $subscription_id ): void {
 		$subscription = \wcs_get_subscription( $subscription_id );
+
+		if ( ! $subscription ) {
+			return;
+		}
 
 		$old_meta_data = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, true );
 		if ( is_array( $old_meta_data ) ) {

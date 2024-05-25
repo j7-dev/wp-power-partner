@@ -50,9 +50,13 @@ final class OrderView {
 		global $post;
 
 		if ( Product::CREATE_SITE_RESPONSES_META_KEY === $column ) {
-			$order_id         = $post->ID;
-			$order            = \wc_get_order( $order_id );
-			$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
+			$order_id = $post->ID;
+			$order    = \wc_get_order( $order_id );
+			if ( ! $order ) {
+				return;
+			}
+
+			$responses_string = $order?->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 
 			try {
 				$responses = json_decode( $responses_string, true ) ?? array();
@@ -82,7 +86,7 @@ final class OrderView {
 		if ( ! $order ) {
 			return;
 		}
-		$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
+		$responses_string = $order?->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 		if ( ! $responses_string ) {
 			return;
 		}
@@ -97,9 +101,13 @@ final class OrderView {
 	 */
 	public function pp_create_site_responses_callback(): void {
 		global $post;
-		$order_id         = $post->ID;
-		$order            = \wc_get_order( $order_id );
-		$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
+		$order_id = $post->ID;
+		$order    = \wc_get_order( $order_id );
+		if ( ! $order ) {
+			echo '找不到訂單 #' . $order_id; // phpcs:ignore
+			return;
+		}
+		$responses_string = $order?->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 		try {
 			$responses = json_decode( $responses_string, true ) ?? array();
 			$data      = $responses[0]['data'] ?? array();
