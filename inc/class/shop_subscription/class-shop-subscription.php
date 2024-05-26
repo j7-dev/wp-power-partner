@@ -1,9 +1,10 @@
 <?php
+
 /**
  * ShopSubscription 相關
  */
 
-declare (strict_types = 1);
+declare(strict_types=1);
 
 namespace J7\PowerPartner\ShopSubscription;
 
@@ -17,13 +18,14 @@ use J7\PowerPartner\Utils\Base;
  * Class ShopSubscription
  *
  * Status:
- * wc-active 已啟用
- * wc-cancelled 已取消
- * wc-expired 已過期
- * wc-on-hold 保留
- * wc-pending-cancel 待取消
+ * active 已啟用
+ * cancelled 已取消
+ * expired 已過期
+ * on-hold 保留
+ * pending-cancel 待取消
  */
 final class ShopSubscription {
+
 
 	const IS_POWER_PARTNER_SUBSCRIPTION  = 'is_' . Plugin::SNAKE;
 	const LAST_FAILED_TIMESTAMP_META_KEY = Plugin::SNAKE . '_last_failed_timestamp';
@@ -34,36 +36,35 @@ final class ShopSubscription {
 	 *
 	 * @var array
 	 */
-	public static $success_statuses = array( 'wc-active' );
+	public static $success_statuses = array( 'active' );
 
 	/**
 	 * Failed statuses
 	 *
 	 * @var array
 	 */
-	public static $failed_statuses = array( 'wc-cancelled', 'wc-on-hold', 'wc-pending-cancel' );
-
+	public static $failed_statuses = array( 'cancelled', 'on-hold', 'pending-cancel' );
 
 	/**
 	 * Not failed statuses
 	 *
 	 * @var array
 	 */
-	public static $not_failed_statuses = array( 'wc-active', 'wc-expired' );
+	public static $not_failed_statuses = array( 'active', 'expired' );
 
 	/**
 	 * All statuses
 	 *
 	 * @var array
 	 */
-	public static $all_statuses = array( 'wc-active', 'wc-cancelled', 'wc-expired', 'wc-on-hold', 'wc-pending-cancel' );
+	public static $all_statuses = array( 'active', 'cancelled', 'expired', 'on-hold', 'pending-cancel' );
 
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		\add_action( 'transition_post_status', array( $this, 'subscription_failed' ), 10, 3 );
+		\add_action( 'woocommerce_subscription_pre_update_status', array( $this, 'subscription_failed' ), 10, 3 );
 		\add_action( 'wcs_create_subscription', array( $this, 'add_meta' ), 10, 1 );
 		\add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 		\add_action( 'save_post', array( $this, 'save' ) );
@@ -80,15 +81,11 @@ final class ShopSubscription {
 	 * @param \WP_POST $post post
 	 * @return void
 	 */
-	public function subscription_failed( $new_status, $old_status, $post ): void {
+	public function subscription_failed( $old_status, $new_status, $subscription ): void {
 
-		// 如果不是訂閱 就不處理
-		if ( self::POST_TYPE !== $post?->post_type ) {
-			return;
-		}
+		$subscription_id               = $subscription?->get_id();
+		$is_power_partner_subscription = $subscription?->get_meta( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
 
-		$subscription_id               = $post?->ID;
-		$is_power_partner_subscription = \get_post_meta( $subscription_id, self::IS_POWER_PARTNER_SUBSCRIPTION, true );
 		// 如果不是 power partner 網站訂閱 就不處理
 		if ( ! $is_power_partner_subscription ) {
 			return;
@@ -111,6 +108,9 @@ final class ShopSubscription {
 		// disable 訂單網站
 		foreach ( $linked_site_ids as $site_id ) {
 			Fetch::disable_site( $site_id, "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}" );
+
+			$subscription->add_order_note( "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: #{$subscription_id}，上層訂單號碼: #{$order_id}" );
+			$subscription->save();
 		}
 
 		// 記錄失敗時間，因為要搭配 CRON 判斷過了多久然後發信
@@ -242,6 +242,18 @@ final class ShopSubscription {
 
 		$old_linked_site_ids = self::get_linked_site_ids( $subscription_id );
 
+		// 創建 $old_linked_site_ids 的新排序副本
+		$new_old_linked_site_ids = array_values( array_map( 'intval', $old_linked_site_ids ) );
+		sort( $new_old_linked_site_ids );
+
+		// 創建 $linked_site_ids 的新排序副本
+		$new_linked_site_ids = array_values( array_map( 'intval', $linked_site_ids ) );
+		sort( $new_linked_site_ids );
+
+		if ( $new_old_linked_site_ids === $new_linked_site_ids ) {
+			return false;
+		}
+
 		$to_add_sites    = array_diff( $linked_site_ids, $old_linked_site_ids );
 		$to_delete_sites = array_diff( $old_linked_site_ids, $linked_site_ids );
 
@@ -256,8 +268,6 @@ final class ShopSubscription {
 			}
 		}
 
-		$subscription?->save();
-
 		$subscription?->add_order_note(
 			\sprintf(
 				/* translators: %s: linked site ids */
@@ -266,6 +276,8 @@ final class ShopSubscription {
 				\implode( ', ', $linked_site_ids )
 			)
 		);
+
+		$subscription?->save();
 
 		return true;
 	}
@@ -396,11 +408,13 @@ final class ShopSubscription {
 			)
 		);
 		?>
-<script>
-	(function($){
-	$('#<?php echo Product::LINKED_SITE_IDS_META_KEY;//phpcs:ignore ?>').selectWoo();
-})(jQuery)
-</script>
+		<script>
+			(function($) {
+				$('#<?php echo Product::LINKED_SITE_IDS_META_KEY; //phpcs:ignore
+				?>
+						').selectWoo();
+			})(jQuery)
+		</script>
 		<?php
 	}
 
@@ -413,8 +427,8 @@ final class ShopSubscription {
 	 */
 	public function save( $post_id ) {
 
-		$nonce = $_POST[ Product::LINKED_SITE_IDS_META_KEY . '_nonce' ] ?? ''; // phpcs:ignore
-		$linked_site_ids = $_POST[ Product::LINKED_SITE_IDS_META_KEY ] ?? []; // phpcs:ignore
+		$nonce = $_POST[Product::LINKED_SITE_IDS_META_KEY . '_nonce'] ?? ''; // phpcs:ignore
+		$linked_site_ids = $_POST[Product::LINKED_SITE_IDS_META_KEY] ?? []; // phpcs:ignore
 
 		// Verify that the nonce is valid.
 		if ( ! \wp_verify_nonce( $nonce, Product::LINKED_SITE_IDS_META_KEY . '_action' ) ) {
@@ -459,7 +473,6 @@ final class ShopSubscription {
 			$linked_site_ids = self::get_linked_site_ids( $subscription_id );
 
 			echo \esc_html( implode( ', ', $linked_site_ids ) );
-
 		}
 	}
 }
