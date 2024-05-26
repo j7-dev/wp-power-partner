@@ -55,6 +55,16 @@ final class Api {
 
 		\register_rest_route(
 			Plugin::KEBAB,
+			'link-site',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'post_link_site_callback' ),
+				'permission_callback' => array( $this, 'check_ip_permission' ),
+			)
+		);
+
+		\register_rest_route(
+			Plugin::KEBAB,
 			'manual-site-sync',
 			array(
 				'methods'             => 'POST',
@@ -232,6 +242,47 @@ final class Api {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Post link site callback
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function post_link_site_callback( $request ) {
+		/**
+		 * Body params
+		 *
+		 * @param string $subscription_id
+		 * @param string $site_id
+		 */
+		$body_params     = $request->get_json_params() ?? array();
+		$subscription_id = $body_params['subscription_id'] ?? '';
+		$site_id         = $body_params['site_id'] ?? '';
+		$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
+		array_push( $linked_site_ids, $site_id );
+		$update_success = ShopSubscription::update_linked_site_ids( $subscription_id, $linked_site_ids );
+
+		if ( $update_success ) {
+			return new \WP_REST_Response(
+				array(
+					'status'  => 200,
+					'message' => 'post link site success',
+					'data'    => 'subscription id: ' . $subscription_id . ' linked site ids: ' . \implode( ',', $linked_site_ids ),
+				),
+				200
+			);
+		} else {
+			return new \WP_REST_Response(
+				array(
+					'status'  => 500,
+					'message' => 'post link site fail',
+					'data'    => 'subscription id: ' . $subscription_id . ' linked site ids: ' . \implode( ',', $linked_site_ids ),
+				),
+				500
+			);
+		}
 	}
 
 	/**

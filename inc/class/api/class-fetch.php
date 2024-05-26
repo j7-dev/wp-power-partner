@@ -50,6 +50,9 @@ final class Fetch {
 
 		try {
 			$response_obj = json_decode( $response['body'] );
+
+			\do_action( 'pp_after_site_sync', $response_obj );
+
 			return $response_obj;
 		} catch ( \Throwable $th ) {
 			ob_start();

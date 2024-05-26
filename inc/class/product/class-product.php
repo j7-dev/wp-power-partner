@@ -112,11 +112,11 @@ final class Product {
 
 			$response_obj = Fetch::site_sync(
 				array(
-					'site_url'      => \site_url(),
-					'site_id'       => $linked_site_id,
-					'host_position' => $host_position,
-					'partner_id'    => \get_option( Plugin::SNAKE . '_partner_id', '0' ),
-					'customer'      => array(
+					'site_url'        => \site_url(),
+					'site_id'         => $linked_site_id,
+					'host_position'   => $host_position,
+					'partner_id'      => \get_option( Plugin::SNAKE . '_partner_id', '0' ),
+					'customer'        => array(
 						'id'         => $order?->get_customer_id(),
 						'first_name' => $order?->get_billing_first_name(),
 						'last_name'  => $order?->get_billing_last_name(),
@@ -124,6 +124,7 @@ final class Product {
 						'email'      => $order?->get_billing_email(),
 						'phone'      => $order?->get_billing_phone(),
 					),
+					'subscription_id' => $subscription?->get_id(),
 				)
 			);
 
