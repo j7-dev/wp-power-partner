@@ -68,9 +68,13 @@ final class Product {
 
 		$order_ids = $this->get_related_order_ids( $subscription );
 
-		$order = $subscription?->get_parent();
+		$order = $subscription->get_parent();
 
-		$parent_order_id = $order?->get_id();
+		if ( ! $order ) {
+			return;
+		}
+
+		$parent_order_id = $order->get_id();
 
 		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
 		if ( empty( $order ) || count( $order_ids ) !== 1 || ( $order_ids[0] ?? 0 ) !== $parent_order_id ) {

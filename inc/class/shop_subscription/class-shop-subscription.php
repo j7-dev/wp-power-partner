@@ -82,8 +82,12 @@ final class ShopSubscription {
 	 */
 	public function subscription_failed( $old_status, $new_status, $subscription ): void {
 
-		$subscription_id               = $subscription?->get_id();
-		$is_power_partner_subscription = $subscription?->get_meta( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
+		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
+			return;
+		}
+
+		$subscription_id               = $subscription->get_id();
+		$is_power_partner_subscription = $subscription->get_meta( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
 
 		// 如果不是 power partner 網站訂閱 就不處理
 		if ( ! $is_power_partner_subscription ) {
@@ -95,27 +99,14 @@ final class ShopSubscription {
 
 		// 如果訂閱沒失敗 就不處理，並且刪除 上次失敗的時間 紀錄
 		if ( ! $is_subscription_failed ) {
-			\delete_post_meta( $subscription_id, self::LAST_FAILED_TIMESTAMP_META_KEY );
+			$subscription->delete_meta_data( self::LAST_FAILED_TIMESTAMP_META_KEY );
+			$subscription->save();
 			return;
 		}
 
-		/*
-		// 找到連結的訂單， post_parent 是訂單編號
-		$linked_site_ids = self::get_linked_site_ids( $subscription_id );
-
-		$order_id = \wp_get_post_parent_id( $subscription_id );
-
-		// disable 訂單網站
-		foreach ( $linked_site_ids as $site_id ) {
-		Fetch::disable_site( $site_id, "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}" );
-
-		$subscription->add_order_note( "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: #{$subscription_id}，上層訂單號碼: #{$order_id}" );
-		$subscription->save();
-		}
-		*/
-
 		// 記錄當下失敗時間，因為要搭配 CRON 判斷過了多久然後發信
-		\update_post_meta( $subscription_id, self::LAST_FAILED_TIMESTAMP_META_KEY, time() );
+		$subscription->update_meta_data( self::LAST_FAILED_TIMESTAMP_META_KEY, time() );
+		$subscription->save();
 	}
 
 	/**
@@ -126,9 +117,12 @@ final class ShopSubscription {
 	 * @return void
 	 */
 	public function add_meta( $subscription ) {
-		$subscription    = \wcs_get_subscription( $subscription );
-		$subscription_id = $subscription?->get_id();
-		\update_post_meta( $subscription_id, self::IS_POWER_PARTNER_SUBSCRIPTION, true );
+		$subscription = \wcs_get_subscription( $subscription );
+		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
+			return;
+		}
+		$subscription->add_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, true, true );
+		$subscription->save();
 	}
 
 	/**
@@ -152,12 +146,22 @@ final class ShopSubscription {
 				)
 			);
 			foreach ( $subscription_ids as $subscription_id ) {
-				$subscription_top_order    = \get_post_parent( $subscription_id );
-				$subscription_top_order_id = $subscription_top_order?->ID;
-				$create_site_response      = \get_post_meta( $subscription_top_order_id, Product::CREATE_SITE_RESPONSES_META_KEY, true );
-				$is_power_partner_order    = ! empty( $create_site_response );
+				$subscription = \wcs_get_subscription( $subscription_id );
+
+				if ( ! ( $subscription instanceof \WC_Subscription ) ) {
+					continue;
+				}
+				$parent_order = $subscription->get_parent();
+
+				if ( ! ( $parent_order instanceof \WC_Order ) ) {
+					continue;
+				}
+
+				$create_site_response   = $parent_order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY, true );
+				$is_power_partner_order = ! empty( $create_site_response );
 				if ( $is_power_partner_order ) {
-					\update_post_meta( $subscription_id, self::IS_POWER_PARTNER_SUBSCRIPTION, true );
+					$subscription->update_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
+					$subscription->save();
 				}
 			}
 		}

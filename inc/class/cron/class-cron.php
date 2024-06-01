@@ -127,11 +127,6 @@ final class Cron extends Singleton {
 	 * @return void
 	 */
 	public static function disable_sites() {
-		static $executed = false;
-		if ( $executed ) {
-			return;
-		}
-
 		// 取得所有失敗(非啟用、非過期)的訂閱
 		$failed_statuses = ShopSubscription::$failed_statuses;
 		// 已經取消的訂閱，不進判斷
@@ -177,7 +172,7 @@ final class Cron extends Singleton {
 			}
 
 			$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
-			$order_id        = \wp_get_post_parent_id( $subscription_id );
+			$order_id        = $subscription->get_parent_id();
 
 			// disable 訂單網站
 			foreach ( $linked_site_ids as $site_id ) {
@@ -304,8 +299,14 @@ final class Cron extends Singleton {
 	 * @return array
 	 */
 	public static function get_subscription_tokens( \WC_Subscription $subscription ): array {
-		$parent_id      = $subscription->get_parent_id();
-		$site_responses = \get_post_meta( $parent_id, Product::CREATE_SITE_RESPONSES_META_KEY, true );
+
+		$order = $subscription->get_parent();
+
+		if ( ! $order ) {
+			return array();
+		}
+
+		$site_responses = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY, true );
 		$tokens         = array();
 		try {
 			$site_responses_arr = \json_decode( $site_responses, true );
