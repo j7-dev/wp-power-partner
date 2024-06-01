@@ -182,7 +182,7 @@ final class ShopSubscription {
 		if ( ! $subscription ) {
 			return array();
 		}
-		$meta_data       = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
+		$meta_data       = $subscription->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
 		$linked_site_ids = array();
 		foreach ( $meta_data as $meta ) {
 			$meta_id                     = $meta->__get( 'id' );
@@ -207,16 +207,16 @@ final class ShopSubscription {
 			return;
 		}
 
-		$old_meta_data = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, true );
+		$old_meta_data = $subscription->get_meta( Product::LINKED_SITE_IDS_META_KEY, true );
 		if ( is_array( $old_meta_data ) ) {
 			foreach ( $old_meta_data as $old_site_id ) {
-				$subscription?->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $old_site_id );
+				$subscription->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $old_site_id );
 			}
-			$subscription?->save();
+			$subscription->save();
 		}
 		$to_delete_mids = array();
 
-		$meta_data = $subscription?->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
+		$meta_data = $subscription->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
 		foreach ( $meta_data as $meta ) {
 			$meta_id = $meta->__get( 'id' );
 			$value   = $meta->__get( 'value' );
@@ -263,7 +263,7 @@ final class ShopSubscription {
 		$to_delete_sites = array_diff( $old_linked_site_ids, $linked_site_ids );
 
 		foreach ( $to_add_sites as $to_add_site ) {
-			$subscription?->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $to_add_site );
+			$subscription->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $to_add_site );
 		}
 
 		foreach ( $to_delete_sites as $to_delete_site ) {
@@ -273,7 +273,7 @@ final class ShopSubscription {
 			}
 		}
 
-		$subscription?->add_order_note(
+		$subscription->add_order_note(
 			\sprintf(
 				/* translators: %s: linked site ids */
 				__( '更新了此訂閱的連結的網站 id: %1$s -> %2$s', 'power_partner' ),
@@ -282,7 +282,7 @@ final class ShopSubscription {
 			)
 		);
 
-		$subscription?->save();
+		$subscription->save();
 
 		return true;
 	}
@@ -387,7 +387,7 @@ final class ShopSubscription {
 
 		echo '只能移除，不能新增';
 
-		$linked_site_ids = self::get_linked_site_ids( $post?->ID );
+		$linked_site_ids = self::get_linked_site_ids( $post->ID );
 
 		$options = array();
 

@@ -306,7 +306,7 @@ final class Api {
 	 * @return \WP_REST_Response
 	 */
 	public function get_subscriptions_callback( $request ): \WP_REST_Response {
-		$params  = $request?->get_query_params() ?? array();
+		$params  = $request->get_query_params() ?? array();
 		$user_id = $params['user_id'] ?? 0;
 
 		if ( empty( $user_id ) ) {
@@ -332,11 +332,11 @@ final class Api {
 		$formatted_subscriptions = array_map(
 			function ( $subscription ) {
 				return array(
-					'id'              => (string) $subscription?->ID,
-					'status'          => $subscription?->post_status,
-					'post_title'      => $subscription?->post_title,
-					'post_date'       => $subscription?->post_date,
-					'linked_site_ids' => array_values( ShopSubscription::get_linked_site_ids( $subscription?->ID ) ),
+					'id'              => (string) $subscription->ID,
+					'status'          => $subscription->post_status,
+					'post_title'      => $subscription->post_title,
+					'post_date'       => $subscription->post_date,
+					'linked_site_ids' => array_values( ShopSubscription::get_linked_site_ids( $subscription->ID ) ),
 				);
 			},
 			$subscriptions
@@ -430,7 +430,7 @@ final class Api {
 	 * @return \WP_REST_Response
 	 */
 	public function get_apps_callback( $request ): \WP_REST_Response {
-		$params  = $request?->get_query_params() ?? array();
+		$params  = $request->get_query_params() ?? array();
 		$app_ids = $params['app_ids'] ?? array();
 
 		$apps = array();

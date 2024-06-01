@@ -59,7 +59,7 @@ final class User {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_customers_by_search_callback( $request ) { // phpcs:ignore
-		$params = $request?->get_query_params() ?? array();
+		$params = $request->get_query_params() ?? array();
 		$id     = $params['id'] ?? '0';
 		$search = $params['search'] ?? '';
 
@@ -125,7 +125,7 @@ final class User {
 	 */
 	public function get_customers_callback( $request ): \WP_REST_Response {
 
-		$params   = $request?->get_query_params() ?? array();
+		$params   = $request->get_query_params() ?? array();
 		$user_ids = $params['user_ids'] ?? array();
 
 		if ( empty( $user_ids ) ) {

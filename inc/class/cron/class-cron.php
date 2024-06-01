@@ -227,13 +227,13 @@ final class Cron extends Singleton {
 		foreach ( $subscription_ids as $subscription_id ) {
 			$subscription = new \WC_Subscription( $subscription_id );
 			// @param string $date_type 'date_created', 'trial_end', 'next_payment', 'last_order_date_created', 'end' or 'end_of_prepaid_term'
-			$date_created            = $subscription?->get_time( 'date_created' );
-			$trial_end               = $subscription?->get_time( 'trial_end' );
-			$next_payment            = $subscription?->get_time( 'next_payment' );
-			$last_order_date_created = $subscription?->get_time( 'last_order_date_created' );
-			$end                     = $subscription?->get_time( 'end' );
-			$end_of_prepaid_term     = $subscription?->get_time( 'end_of_prepaid_term' );
-			$last_order              = $subscription?->get_last_order(); // order | order_id
+			$date_created            = $subscription->get_time( 'date_created' );
+			$trial_end               = $subscription->get_time( 'trial_end' );
+			$next_payment            = $subscription->get_time( 'next_payment' );
+			$last_order_date_created = $subscription->get_time( 'last_order_date_created' );
+			$end                     = $subscription->get_time( 'end' );
+			$end_of_prepaid_term     = $subscription->get_time( 'end_of_prepaid_term' );
+			$last_order              = $subscription->get_last_order(); // order | order_id
 			if ( is_numeric( $last_order ) ) {
 				$last_order = \wc_get_order( $last_order );
 			}
@@ -241,13 +241,13 @@ final class Cron extends Singleton {
 			if ( ! $last_order ) {
 				continue;
 			}
-			$last_order_id = $last_order?->get_id();
+			$last_order_id = $last_order->get_id();
 
 			$tokens = array_merge( self::get_order_tokens( $last_order ), self::get_subscription_tokens( $subscription ) );
 
 			$arr[] = array(
 				'order_id'                => (string) $last_order_id,
-				'customer_email'          => $last_order?->get_billing_email(),
+				'customer_email'          => $last_order->get_billing_email(),
 				'date_created'            => $date_created,
 				'trial_end'               => $trial_end,
 				'last_order_date_created' => $last_order_date_created,
@@ -268,26 +268,26 @@ final class Cron extends Singleton {
 	 * @return array
 	 */
 	public static function get_order_tokens( \WC_Order $order ): array {
-		$customer = $order?->get_user();
+		$customer = $order->get_user();
 
 		$products = array();
-		foreach ( $order?->get_items() as $item_id => $item ) {
-			$product_name = $item?->get_name();
+		foreach ( $order->get_items() as $item_id => $item ) {
+			$product_name = $item->get_name();
 			$products[]   = $product_name;
 		}
 		$products_text = implode( ', ', $products );
 
 		$tokens                         = array();
-		$tokens['FIRST_NAME']           = $customer?->first_name;
-		$tokens['LAST_NAME']            = $customer?->last_name;
-		$tokens['NICE_NAME']            = $customer?->user_nicename;
-		$tokens['EMAIL']                = $customer?->user_email;
-		$tokens['ORDER_ID']             = $order?->get_id();
+		$tokens['FIRST_NAME']           = $customer->first_name;
+		$tokens['LAST_NAME']            = $customer->last_name;
+		$tokens['NICE_NAME']            = $customer->user_nicename;
+		$tokens['EMAIL']                = $customer->user_email;
+		$tokens['ORDER_ID']             = $order->get_id();
 		$tokens['ORDER_ITEMS']          = $products_text;
-		$tokens['CHECKOUT_PAYMENT_URL'] = $order?->get_checkout_payment_url();
-		$tokens['VIEW_ORDER_URL']       = $order?->get_view_order_url();
-		$tokens['ORDER_STATUS']         = $order?->get_status();
-		$tokens['ORDER_DATE']           = $order?->get_date_created()?->format( 'Y-m-d' );
+		$tokens['CHECKOUT_PAYMENT_URL'] = $order->get_checkout_payment_url();
+		$tokens['VIEW_ORDER_URL']       = $order->get_view_order_url();
+		$tokens['ORDER_STATUS']         = $order->get_status();
+		$tokens['ORDER_DATE']           = $order->get_date_created()->format( 'Y-m-d' );
 
 		return $tokens;
 	}

@@ -56,7 +56,7 @@ final class OrderView {
 				return;
 			}
 
-			$responses_string = $order?->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
+			$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 
 			try {
 				$responses = json_decode( $responses_string, true ) ?? array();
@@ -86,7 +86,7 @@ final class OrderView {
 		if ( ! $order ) {
 			return;
 		}
-		$responses_string = $order?->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
+		$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 		if ( ! $responses_string ) {
 			return;
 		}
@@ -107,7 +107,7 @@ final class OrderView {
 			echo '找不到訂單 #' . $order_id; // phpcs:ignore
 			return;
 		}
-		$responses_string = $order?->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
+		$responses_string = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY );
 		try {
 			$responses = json_decode( $responses_string, true ) ?? array();
 			$data      = $responses[0]['data'] ?? array();

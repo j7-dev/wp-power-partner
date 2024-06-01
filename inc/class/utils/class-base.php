@@ -99,7 +99,7 @@ abstract class Base {
 		}
 
 		if ( is_numeric( $mix ) && $mix > 0 ) {
-			$added_email = \get_user_by( 'id', $mix )?->user_email;
+			$added_email = \get_user_by( 'id', $mix )->user_email;
 			$email       = array( ...$email, $added_email );
 		}
 
