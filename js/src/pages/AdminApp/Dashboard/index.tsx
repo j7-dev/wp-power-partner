@@ -5,6 +5,7 @@ import {
   InfoCircleOutlined,
   MailOutlined,
   CodeOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import { Tabs, TabsProps } from 'antd'
 import AccountIcon from './AccountIcon'
@@ -13,6 +14,8 @@ import LogList from './LogList'
 import Description from './Description'
 import EmailSetting from './EmailSetting'
 import ManualSiteSync from './ManualSiteSync'
+import Settings from './Settings'
+
 import { windowWidth } from '@/utils'
 
 const index: React.FC = () => {
@@ -43,6 +46,13 @@ const index: React.FC = () => {
       icon: <CodeOutlined />,
       label: '手動開站',
       children: <ManualSiteSync />,
+      forceRender: true,
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: '設定',
+      children: <Settings />,
       forceRender: true,
     },
     {

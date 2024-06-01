@@ -32,3 +32,5 @@ export const allowed_template_options = (window?.[APP_DOMAIN]?.env
 }
 
 export const partner_id: string = window?.[APP_DOMAIN]?.env?.partner_id || ''
+export const disable_site_after_n_days: number =
+  window?.[APP_DOMAIN]?.env?.disable_site_after_n_days || 7

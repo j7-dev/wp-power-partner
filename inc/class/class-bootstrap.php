@@ -90,26 +90,29 @@ final class Bootstrap extends Singleton {
 		$permalink                = \get_permalink( $post_id );
 		$allowed_template_options = Fetch::get_allowed_template_options();
 
+		global $power_plugins_settings;
+
 		\wp_localize_script(
 			Plugin::KEBAB,
 			Plugin::SNAKE . '_data',
 			array(
 				'env' => array(
-					'siteUrl'                  => \site_url(),
-					'ajaxUrl'                  => \admin_url( 'admin-ajax.php' ),
-					'userId'                   => \wp_get_current_user()->data->ID ?? null,
-					'postId'                   => $post_id,
-					'permalink'                => $permalink,
-					'APP_NAME'                 => Plugin::APP_NAME,
-					'KEBAB'                    => Plugin::KEBAB,
-					'SNAKE'                    => Plugin::SNAKE,
-					'BASE_URL'                 => Base::BASE_URL,
-					'APP1_SELECTOR'            => Base::APP1_SELECTOR,
-					'APP2_SELECTOR'            => Base::APP2_SELECTOR,
-					'API_TIMEOUT'              => Base::API_TIMEOUT,
-					'nonce'                    => \wp_create_nonce( Plugin::KEBAB ),
-					'allowed_template_options' => $allowed_template_options,
-					'partner_id'               => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
+					'siteUrl'                   => \site_url(),
+					'ajaxUrl'                   => \admin_url( 'admin-ajax.php' ),
+					'userId'                    => \wp_get_current_user()->data->ID ?? null,
+					'postId'                    => $post_id,
+					'permalink'                 => $permalink,
+					'APP_NAME'                  => Plugin::APP_NAME,
+					'KEBAB'                     => Plugin::KEBAB,
+					'SNAKE'                     => Plugin::SNAKE,
+					'BASE_URL'                  => Base::BASE_URL,
+					'APP1_SELECTOR'             => Base::APP1_SELECTOR,
+					'APP2_SELECTOR'             => Base::APP2_SELECTOR,
+					'API_TIMEOUT'               => Base::API_TIMEOUT,
+					'nonce'                     => \wp_create_nonce( Plugin::KEBAB ),
+					'allowed_template_options'  => $allowed_template_options,
+					'partner_id'                => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
+					'disable_site_after_n_days' => (int) ( $power_plugins_settings['power_partner_disable_site_after_n_days'] ?? '7' ),
 				),
 			)
 		);
