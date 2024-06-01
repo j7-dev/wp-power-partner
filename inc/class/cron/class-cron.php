@@ -15,6 +15,7 @@ use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Email\Email;
 use Micropackage\Singleton\Singleton;
 use J7\PowerPartner\ShopSubscription\ShopSubscription;
+use J7\PowerPartner\Api\Fetch;
 /**
  * Class Cron
  */
@@ -30,6 +31,7 @@ final class Cron extends Singleton {
 		\add_action( 'init', array( $this, 'register_single_event' ) );
 		\add_action( self::SYNC_SUBSCRIPTION_META_HOOK_NAME, array( 'J7\PowerPartner\ShopSubscription\ShopSubscription', 'sync_post_meta' ) );
 		\add_action( self::SEND_EMAIL_HOOK_NAME, array( $this, 'send_email' ) );
+		\add_action( self::SEND_EMAIL_HOOK_NAME, array( $this, 'disable_sites' ) );
 	}
 
 	/**
@@ -49,7 +51,7 @@ final class Cron extends Singleton {
 			}
 		}
 
-		// @deprecated 啟用外掛後 10 分鐘後同步一次訂閱資料就好
+		// DELETE @deprecated 啟用外掛後 10 分鐘後同步一次訂閱資料就好
 		if ( ! \wp_next_scheduled( self::SYNC_SUBSCRIPTION_META_HOOK_NAME ) ) {
 			$result = \wp_schedule_single_event( strtotime( '+10 minute' ), self::SYNC_SUBSCRIPTION_META_HOOK_NAME, array(), true );
 			if ( \is_wp_error( $result ) ) {
@@ -115,6 +117,74 @@ final class Cron extends Singleton {
 						);
 					}
 				}
+			}
+		}
+	}
+
+	/**
+	 * Disable sites
+	 *
+	 * @return void
+	 */
+	public static function disable_sites() {
+		static $executed = false;
+		if ( $executed ) {
+			return;
+		}
+
+		// 取得所有失敗(非啟用、非過期)的訂閱
+		$failed_statuses = ShopSubscription::$failed_statuses;
+		// 已經取消的訂閱，不進判斷
+		$failed_statuses = array_filter(
+			$failed_statuses,
+			function ( $status ) {
+				return $status !== 'cancelled';
+			}
+		);
+		// 加上前綴 wc- 才篩選得出來
+		$failed_statuses = array_map(
+			function ( $status ) {
+				return 'wc-' . $status;
+			},
+			$failed_statuses
+		);
+
+		$args = array(
+			'post_type'      => ShopSubscription::POST_TYPE,
+			'posts_per_page' => -1,
+			'post_status'    => $failed_statuses,
+			'fields'         => 'ids',
+		);
+
+		$subscription_ids = \get_posts( $args );
+
+		foreach ( $subscription_ids as $subscription_id ) {
+			$subscription = \wcs_get_subscription( $subscription_id );
+			if ( ! ( $subscription instanceof \WC_Subscription ) ) {
+				continue;
+			}
+
+			$last_failed_timestamp = (int) ( $subscription->get_meta( ShopSubscription::LAST_FAILED_TIMESTAMP_META_KEY, true ) );
+			$diff                  = time() - $last_failed_timestamp;
+			$diff_in_days          = round( $diff / 86400, 2 ); // 今天與上次失敗的時間差幾天
+
+			// 取得設定中，過 N 天要禁用網站，N 的天數
+			global $power_plugins_settings;
+			$disable_site_after_n_days = (int) ( $power_plugins_settings['power_partner_disable_site_after_n_days'] ?? '7' );
+
+			if ( ( $diff_in_days < $disable_site_after_n_days ) ) {
+				continue;
+			}
+
+			$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
+			$order_id        = \wp_get_post_parent_id( $subscription_id );
+
+			// disable 訂單網站
+			foreach ( $linked_site_ids as $site_id ) {
+				Fetch::disable_site( $site_id, "訂閱失敗已經過了 {$diff_in_days} 天，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}" );
+
+				$subscription->add_order_note( "訂閱失敗已經過了 {$diff_in_days} 天，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}" );
+				$subscription->save();
 			}
 		}
 	}
