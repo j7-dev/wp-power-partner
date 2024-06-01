@@ -59,14 +59,18 @@ const useSave = (form: FormInstance<DataType[]>) => {
   }
 
   useEffect(() => {
-    const saveBtnNode = document.getElementById('redux_bottom_save')
-    if (saveBtnNode) {
-      saveBtnNode.addEventListener('click', handleSave)
+    const saveBtnNode1 = document.getElementById('redux_bottom_save')
+    const saveBtnNode2 = document.getElementById('redux_top_save')
+    const nodes = [saveBtnNode1, saveBtnNode2]
+    nodes.forEach((node) => {
+      if (node) {
+        node.addEventListener('click', handleSave)
 
-      return () => {
-        saveBtnNode.removeEventListener('click', handleSave)
+        return () => {
+          node.removeEventListener('click', handleSave)
+        }
       }
-    }
+    })
   }, [])
 
   return {
