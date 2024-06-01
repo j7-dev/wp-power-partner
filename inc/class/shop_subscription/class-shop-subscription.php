@@ -1,5 +1,4 @@
 <?php
-
 /**
  * ShopSubscription 相關
  */
@@ -76,9 +75,9 @@ final class ShopSubscription {
 	 * Subscription failed
 	 * 如果用戶續訂失敗，則停用訂單網站
 	 *
-	 * @param string   $new_status new status
-	 * @param string   $old_status old status
-	 * @param \WP_POST $post post
+	 * @param string           $old_status old status
+	 * @param string           $new_status new status
+	 * @param \WC_Subscription $subscription post
 	 * @return void
 	 */
 	public function subscription_failed( $old_status, $new_status, $subscription ): void {
@@ -94,12 +93,13 @@ final class ShopSubscription {
 		// 從 [已啟用] 變成 [已取消] 或 [保留] 等等  就算失敗， [已過期] 不算
 		$is_subscription_failed = ( ! in_array( $new_status, self::$not_failed_statuses, true ) ) && in_array( $old_status, self::$success_statuses, true );
 
-		// 如果訂閱沒失敗 就不處理，並且清除上次失敗的時間
+		// 如果訂閱沒失敗 就不處理，並且刪除 上次失敗的時間 紀錄
 		if ( ! $is_subscription_failed ) {
 			\delete_post_meta( $subscription_id, self::LAST_FAILED_TIMESTAMP_META_KEY );
 			return;
 		}
 
+		/*
 		// 找到連結的訂單， post_parent 是訂單編號
 		$linked_site_ids = self::get_linked_site_ids( $subscription_id );
 
@@ -107,13 +107,14 @@ final class ShopSubscription {
 
 		// disable 訂單網站
 		foreach ( $linked_site_ids as $site_id ) {
-			Fetch::disable_site( $site_id, "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}" );
+		Fetch::disable_site( $site_id, "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}" );
 
-			$subscription->add_order_note( "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: #{$subscription_id}，上層訂單號碼: #{$order_id}" );
-			$subscription->save();
+		$subscription->add_order_note( "訂閱失敗，狀態從 {$old_status} 轉為 {$new_status}，訂閱ID: #{$subscription_id}，上層訂單號碼: #{$order_id}" );
+		$subscription->save();
 		}
+		*/
 
-		// 記錄失敗時間，因為要搭配 CRON 判斷過了多久然後發信
+		// 記錄當下失敗時間，因為要搭配 CRON 判斷過了多久然後發信
 		\update_post_meta( $subscription_id, self::LAST_FAILED_TIMESTAMP_META_KEY, time() );
 	}
 
@@ -407,15 +408,16 @@ final class ShopSubscription {
 				),
 			)
 		);
+
+		// phpcs:disable
 		?>
 		<script>
 			(function($) {
-				$('#<?php echo Product::LINKED_SITE_IDS_META_KEY; //phpcs:ignore
-				?>
-						').selectWoo();
+				$('#<?php echo Product::LINKED_SITE_IDS_META_KEY;?>').selectWoo();
 			})(jQuery)
 		</script>
 		<?php
+		// phpcs:enable
 	}
 
 	/**
