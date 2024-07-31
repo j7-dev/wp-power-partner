@@ -50,7 +50,7 @@ final class Bootstrap extends Singleton {
 	 * @return void
 	 */
 	public function admin_enqueue_script( $hook ): void {
-		if ( 'toplevel_page_power_plugins_settings' !== $hook ) {
+		if ( 'plugins_page_power_partner_settings' !== $hook ) {
 			return;
 		}
 		$this->enqueue_script();
