@@ -23,10 +23,6 @@ const mock_list: TLC[] = [
 		product_slug: 'power-shop',
 		quantity: 2,
 	},
-	{
-		product_slug: 'any',
-		quantity: 2,
-	},
 ]
 
 
@@ -75,7 +71,7 @@ export class LinkedLCProductSelector {
 	attachEvent() {
 		this.$el.on('click', 'button[event="add"]', () => {
 			this.list = [...this._list, {
-				product_slug: 'any',
+				product_slug: '',
 				quantity: 1,
 			}]
 		})
