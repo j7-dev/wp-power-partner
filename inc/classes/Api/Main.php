@@ -45,16 +45,6 @@ final class Main {
 
 		\register_rest_route(
 			Plugin::$kebab,
-			'customer-notification',
-			[
-				'methods'             => 'GET',
-				'callback'            => [ $this, 'get_customer_notification_callback' ],
-				'permission_callback' => [ $this, 'check_ip_permission' ],
-			]
-		);
-
-		\register_rest_route(
-			Plugin::$kebab,
 			'link-site',
 			[
 				'methods'             => 'POST',
@@ -144,6 +134,18 @@ final class Main {
 				'permission_callback' => '__return_true',
 			]
 		);
+
+		\register_rest_route(
+			Plugin::$kebab,
+			'settings',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'post_change_subscription_callback' ],
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			]
+		);
 	}
 
 	/**
@@ -231,26 +233,6 @@ final class Main {
 	}
 
 	/**
-	 * Get customer notification callback
-	 *
-	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
-	 */
-	public function get_customer_notification_callback( $request ) { // phpcs:ignore
-		$power_plugins_settings = \get_option( 'power_plugins_settings' );
-		return \rest_ensure_response(
-			[
-				'status'  => 200,
-				'message' => 'get customer notification success',
-				'data'    => [
-					'subject' => $power_plugins_settings['power_partner_email_subject'],
-					'body'    => $power_plugins_settings['power_partner_email_body'],
-				],
-			]
-		);
-	}
-
-	/**
 	 * Post link site callback
 	 *
 	 * @param \WP_REST_Request $request Request.
@@ -289,20 +271,6 @@ final class Main {
 				500
 			);
 		}
-	}
-
-	/**
-	 * Get emails callback
-	 *
-	 * @return \WP_REST_Response
-	 */
-	public function get_emails_callback(): \WP_REST_Response {
-		$emails = \get_option( EmailUtils::EMAILS_OPTION_NAME, [] );
-
-		return new \WP_REST_Response(
-			$emails,
-			200
-		);
 	}
 
 	/**
@@ -461,6 +429,21 @@ final class Main {
 
 		return new \WP_REST_Response(
 			$apps,
+			200
+		);
+	}
+
+
+	/**
+	 * Get emails callback
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_emails_callback(): \WP_REST_Response {
+		$emails = \get_option( EmailUtils::EMAILS_OPTION_NAME, [] );
+
+		return new \WP_REST_Response(
+			$emails,
 			200
 		);
 	}

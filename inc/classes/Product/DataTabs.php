@@ -96,7 +96,7 @@ final class DataTabs {
 				[
 					'label'         => '連結的網站 id',
 					'wrapper_class' => 'form-field',
-					'message'       => '<span style="font-size:1rem;">🚩 請先連結你在 https://cloud.luke.cafe/ 的帳號，可以前往 <a target="_blank" href="' . \admin_url( 'admin.php?page=power_plugins_settings&tab=3' ) . '">Power Partner 分頁</a> 進行連結，才可以設定開站</span>',
+					'message'       => '<span style="font-size:1rem;">🚩 請先連結你在 https://cloud.luke.cafe/ 的帳號，可以前往 <a target="_blank" href="' . \admin_url( 'admin.php?page=power-partner' ) . '">Power Partner 分頁</a> 進行連結，才可以設定開站</span>',
 				]
 			);
 		}

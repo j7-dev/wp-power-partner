@@ -20,6 +20,19 @@ import useFormInstance from 'antd/es/form/hooks/useFormInstance'
 
 const DEPOSIT_LINK = 'https://cloud.luke.cafe/product/power-partner/'
 
+type TFormValues = {
+	power_partner_disable_site_after_n_days: number
+	emails: {
+		subject: string
+		key: string
+		body: string
+		enabled: boolean
+		action_name: string
+		days: number
+		operator: string
+	}[]
+}
+
 const index = () => {
 	const [identity, setIdentity] = useAtom(identityAtom)
 	const powerMoney = identity.data?.power_money_amount || '0.00'
@@ -119,7 +132,7 @@ const index = () => {
 	const handleSave = () => {
 		form
 			.validateFields()
-			.then((values) => {
+			.then((values: TFormValues) => {
 				console.log(values)
 			})
 			.catch((error) => {

@@ -58,41 +58,4 @@ abstract class Utils {
 		);
 		return $emails;
 	}
-
-	/**
-	 * Sync_email_content
-	 * 因為v1與v2存的email的欄位不同，所以要做一次轉換
-	 *
-	 * @deprecated version 2.0.0
-	 * @return void
-	 */
-	public static function sync_email_content() {
-		$power_plugins_settings = \get_option( 'power_plugins_settings' );
-		$origin_email_subject   = $power_plugins_settings['power_partner_email_subject'] ?? '';
-		$origin_email_body      = $power_plugins_settings['power_partner_email_body'] ?? '';
-
-		if ( ! empty( $origin_email_subject ) || ! empty( $origin_email_body ) ) {
-			// 如果有舊的email，就同步舊有的email成新的email
-			$sync_email = [
-				'enabled'     => true,
-				'key'         => 'sync_email',
-				'body'        => $origin_email_body,
-				'subject'     => $origin_email_subject,
-				'action_name' => 'site_sync',
-				'days'        => 0,
-				'operator'    => 'after',
-			];
-			\update_option(
-				self::EMAILS_OPTION_NAME,
-				[
-					$sync_email,
-				]
-			);
-
-			// 同步完成，移除舊的email
-			unset( $power_plugins_settings['power_partner_email_subject'] );
-			unset( $power_plugins_settings['power_partner_email_body'] );
-			\update_option( 'power_plugins_settings', $power_plugins_settings );
-		}
-	}
 }

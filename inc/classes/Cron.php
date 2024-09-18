@@ -147,8 +147,8 @@ final class Cron {
 			$diff_in_days          = round( $diff / 86400, 2 ); // 今天與上次失敗的時間差幾天
 
 			// 取得設定中，過 N 天要禁用網站，N 的天數
-			global $power_plugins_settings;
-			$disable_site_after_n_days = (int) ( $power_plugins_settings['power_partner_disable_site_after_n_days'] ?? '7' );
+			$power_partner_settings    = \get_option( 'power_partner_settings' ) ?: [];
+			$disable_site_after_n_days = (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' );
 
 			if ( ( $diff_in_days < $disable_site_after_n_days ) ) {
 				continue;

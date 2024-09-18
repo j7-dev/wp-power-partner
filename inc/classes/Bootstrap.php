@@ -38,7 +38,6 @@ final class Bootstrap {
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 99 );
 		\add_action( 'wp_enqueue_scripts', [ $this, 'frontend_enqueue_script' ], 99 );
-		EmailUtils::sync_email_content();
 
 		Base::$api_url = Plugin::$is_local ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
 	}
@@ -92,7 +91,7 @@ final class Bootstrap {
 		$permalink                = \get_permalink( $post_id );
 		$allowed_template_options = Fetch::get_allowed_template_options();
 
-		global $power_plugins_settings;
+		$power_partner_settings = \get_option( 'power_partner_settings' ) ?: [];
 
 		\wp_localize_script(
 			Plugin::$kebab,
@@ -114,7 +113,7 @@ final class Bootstrap {
 					'nonce'                     => \wp_create_nonce( Plugin::$kebab ),
 					'allowed_template_options'  => $allowed_template_options,
 					'partner_id'                => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
-					'disable_site_after_n_days' => (int) ( $power_plugins_settings['power_partner_disable_site_after_n_days'] ?? '7' ),
+					'disable_site_after_n_days' => (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' ),
 				],
 			]
 		);
