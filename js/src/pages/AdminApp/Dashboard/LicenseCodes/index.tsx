@@ -114,7 +114,7 @@ const columns: TableProps<DataType>['columns'] = [
 	},
 	{
 		title: '每天消耗點數',
-		dataIndex: 'cost',
+		dataIndex: 'rate',
 	},
 	{
 		title: '建立/修改時間',

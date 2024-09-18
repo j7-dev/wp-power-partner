@@ -13,6 +13,12 @@ export type DataType = {
 	product_name: string
 	post_date	:string
 	post_modified: string
+	rate: number
+	rates: {
+		lv_0: number
+		lv_1: number
+		lv_2: number
+	}
 	limit_type: 'unlimited' | 'fixed' | 'assigned'
 	limit_value: number | string
 	limit_unit: 'days' | 'months' | 'years'
