@@ -10,21 +10,32 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner\Product\DataTabs;
 
+use J7\PowerPartner\Plugin;
+use J7\PowerPartner\Utils\Base;
+use J7\WpUtils\Classes\General;
+
 /**
  * Class LinkedLC
  */
 final class LinkedLC {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
+	const LC_PRODUCT_SELECTOR          = 'linked_lc_product_selector';
+	const FIELD_NAME                   = 'linked_lc_products';
+	const CLOUD_PRODUCTS_TRANSIENT_KEY = 'pp_cloud_products';
+	const CACHE_TIME                   = 24 * HOUR_IN_SECONDS;
+
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		\add_action( 'woocommerce_product_options_general_product_data', [ $this, 'custom_field_subscription' ], 30, 1 );
-		// \add_action( 'woocommerce_process_product_meta', [ $this, 'save_subscription' ], 20 );
+		\add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_scripts' ], 30, 1 );
 
-		// \add_action( 'woocommerce_product_after_variable_attributes', [ $this, 'custom_field_variable_subscription' ], 20, 3 );
-		// \add_action( 'woocommerce_save_product_variation', [ $this, 'save_variable_subscription' ], 20, 2 );
+		\add_action( 'woocommerce_product_options_general_product_data', [ __CLASS__, 'custom_field_subscription' ], 30, 1 );
+		\add_action( 'woocommerce_process_product_meta', [ __CLASS__, 'save_subscription' ], 20 );
+
+		\add_action( 'woocommerce_product_after_variable_attributes', [ __CLASS__, 'custom_field_variable_subscription' ], 20, 3 );
+		\add_action( 'woocommerce_save_product_variation', [ __CLASS__, 'save_variable_subscription' ], 20, 2 );
 	}
 
 	/**
@@ -33,33 +44,170 @@ final class LinkedLC {
 	 * @return void
 	 */
 	public static function custom_field_subscription(): void {
+		global $post;
+		$product_id                 = $post->ID;
+		$default_linked_lc_products = \get_post_meta($product_id, self::FIELD_NAME, true);
+		if (!\is_array($default_linked_lc_products)) {
+			$default_linked_lc_products = [];
+		}
+		$default_linked_lc_products_json_encode = htmlspecialchars(\json_encode($default_linked_lc_products), ENT_QUOTES, 'UTF-8'); // @phpstan-ignore-line
+		// 商品 & 授權碼數量選擇器
+		printf(
+		/*html*/"
+			<div class='flex items-center py-4'>
+				<div class='w-[150px] pl-3 mt-2 self-start'>關聯授權碼</div>
+				<div class='%1\$s'>
+					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>
+				</div>
+			</div>
+			",
+		'w-[calc((100%-180px)/2)]',
+		self::LC_PRODUCT_SELECTOR,
+		self::FIELD_NAME,
+		$default_linked_lc_products_json_encode
+		);
+	}
 
-		// TEST
-		$cloud_products = [
-			'65536' => 'Cloud 1000',
-			'65537' => 'Cloud 2000',
-			'65538' => 'Cloud 3000',
-			'65539' => 'Cloud 4000',
-			'65540' => 'Cloud 5000',
-			'65541' => 'Cloud 6000',
-			'65542' => 'Cloud 7000',
-			'65543' => 'Cloud 8000',
-			'65544' => 'Cloud 9000',
+	/**
+	 * Save for subscription
+	 *
+	 * @param int $product_id product id
+	 * @return void
+	 */
+	public static function save_subscription( $product_id ): void {
+		// phpcs:disable
+		if ( isset( $_POST[ self::FIELD_NAME ] ) ) {
+			$linked_lc_products = $_POST[ self::FIELD_NAME ];
+			\update_post_meta( $product_id, self::FIELD_NAME, $linked_lc_products );
+		}
+		// phpcs:enable
+	}
+
+	/**
+	 * Custom field for variable subscription
+	 * Add custom field to product tab
+	 *
+	 * @param int      $loop loop
+	 * @param array    $variation_data variation data
+	 * @param \WP_Post $variation variation post object
+	 *
+	 * @return void
+	 * @phpstan-ignore-next-line
+	 */
+	public static function custom_field_variable_subscription( $loop, $variation_data, $variation ): void { // phpcs:ignore
+
+		$variation_id               = $variation->ID;
+		$default_linked_lc_products = \get_post_meta($variation_id, self::FIELD_NAME, true);
+		if (!\is_array($default_linked_lc_products)) {
+			$default_linked_lc_products = [];
+		}
+
+		$default_linked_lc_products_json_encode = htmlspecialchars(\json_encode($default_linked_lc_products), ENT_QUOTES, 'UTF-8'); // @phpstan-ignore-line
+		// 商品 & 授權碼數量選擇器
+		printf(
+		/*html*/"
+			<div class='clear-both'>
+				<div class=''>關聯授權碼</div>
+				<div class='%1\$s'>
+					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>
+				</div>
+			</div>
+			",
+		'w-full',
+		self::LC_PRODUCT_SELECTOR,
+		self::FIELD_NAME . '[' . $loop . ']',
+		$default_linked_lc_products_json_encode
+		);
+	}
+
+	/**
+	 * Save for variable subscription
+	 *
+	 * @param int $variation_id variation id
+	 * @param int $loop loop
+	 * @return void
+	 */
+	public static function save_variable_subscription( $variation_id, $loop ): void {
+		// phpcs:disable
+		if ( isset( $_POST[ self::FIELD_NAME ][ $loop ] ) ) {
+			$linked_lc_products = $_POST[ self::FIELD_NAME ][ $loop ];
+			\update_post_meta( $variation_id, self::FIELD_NAME, $linked_lc_products );
+		}
+		// phpcs:enable
+	}
+
+	/**
+	 * 載入 linked_lc_product_selector 組件 js
+	 * 只在商品編輯介面載入
+	 *
+	 * @param string $hook 目前頁面
+	 * @return void
+	 */
+	public static function enqueue_scripts( $hook ): void {
+
+		if (!in_array($hook, [ 'post.php', 'post-new.php' ], true)) {
+			return;
+		}
+
+		\wp_enqueue_script(
+		self::LC_PRODUCT_SELECTOR,
+		Plugin::$url . '/inc/assets/dist/linked_lc_product_selector.js',
+		[ 'jquery' ],
+		Plugin::$version,
+		[
+			'strategy'  => 'defer',
+			'in_footer' => true,
+		]
+		);
+
+		$cloud_products = self::get_cloud_products();
+
+		\wp_localize_script(
+			self::LC_PRODUCT_SELECTOR,
+			self::LC_PRODUCT_SELECTOR . '_data',
+			[
+				'cloud_products' => $cloud_products,
+			]
+		);
+	}
+
+	/**
+	 * 取得站長路可授權碼商品
+	 *
+	 * @return array<array{slug: string, label: string, rate: float}>
+	 */
+	public static function get_cloud_products(): array {
+		/**
+		 * @var array<array{slug: string, label: string, rate: float}>|false $cloud_products
+		 */
+		$cloud_products = \get_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY);
+		if (false !== $cloud_products) {
+			return $cloud_products;
+		}
+
+		$args = [
+			'headers' => [
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
+			],
+			'timeout' => 120,
 		];
 
-		foreach ( $cloud_products as $product_id => $product_name ) {
+		$response = \wp_remote_get( Base::$api_url . '/wp-json/power-partner-server/license-codes/products', $args );
 
-			\woocommerce_wp_select(
-			[
-				'id'            => 'linked_lc_product_id',
-				'label'         => '連結的授權商品 id',
-				'wrapper_class' => 'form-field',
-				'desc_tip'      => false,
-				// 'description'   => '<a href="' . $action_url . '"><button type="button" class="button">清除快取</button></a>',
-				'value'         => $linked_site_value,
-				'options'       => [ '' => '請選擇' ] + self::$allowed_template_options,
-			]
-			);
+		if (\is_wp_error($response)) {
+			\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, [], self::CACHE_TIME);
+			return [];
 		}
+
+		$body = \wp_remote_retrieve_body($response);
+
+		/**
+		 * @var array<array{slug: string, label: string, rate: float}> $data
+		 */
+		$data = General::json_parse($body, []);
+		\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, $data, self::CACHE_TIME);
+
+		return $data;
 	}
 }
