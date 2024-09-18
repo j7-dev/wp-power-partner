@@ -1,13 +1,13 @@
 /* eslint-disable quote-props */
 import axios, { AxiosInstance } from 'axios'
-import { apiTimeout, cloudApiUrl, cloudPassword, cloudUserName } from '@/utils'
+import { apiTimeout, cloudApiUrl, t } from '@/utils'
 import { notification } from 'antd'
 
 const instance: AxiosInstance = axios.create({
 	baseURL: cloudApiUrl,
 	timeout: parseInt(apiTimeout, 10),
 	headers: {
-		Authorization: `Basic ${btoa(`${cloudUserName}:${cloudPassword}`)}`,
+		Authorization: `Basic ${t}`,
 		'Content-Type': 'application/json',
 	},
 })

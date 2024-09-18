@@ -7,6 +7,8 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner\Utils;
 
+use J7\PowerPartner\Bootstrap;
+
 /**
  * Class Base
  */
@@ -19,21 +21,44 @@ abstract class Base {
 	const API_TIMEOUT   = '30000';
 	const DEFAULT_IMAGE = 'http://1.gravatar.com/avatar/1c39955b5fe5ae1bf51a77642f052848?s=96&d=mm&r=g';
 
-	const USER_NAME = 'j7.dev.gg';
-	const PASSWORD  = 'YQLj xV2R js9p IWYB VWxp oL2E';
+	const USER_NAME = 'powerpartner';
+	const PASSWORD  = 'uJsk Gu3S pwUG r6ia P9zy Xjrj';
 
 	const TEMPLATE_SERVER_IDS = [ 544413 ];
-	const CACHE_TIME          = 12 * HOUR_IN_SECONDS;
+	const CACHE_TIME          = 24 * HOUR_IN_SECONDS;
 
 	/**
-	 * Api url
-	 * 可以透過 Plugin::$is_local 調整呼叫本地 API 或 cloud API
+	 * Set API auth
 	 *
-	 * @var string $api_url
-	 *
-	 * @return string
+	 * @param string    $env 環境名稱
+	 * @param Bootstrap $bootstrap Bootstrap 實例
+	 * @return void
 	 */
-	public static $api_url = 'https://cloud.luke.cafe';
+	public static function set_api_auth( ?string $env = 'prod', Bootstrap $bootstrap ): void {
+
+		switch ($env) { // phpcs:ignore
+			case 'local': // LOCAL
+				$username = 'powerpartner';
+				$psw      = 'WDdk K7nm SSNr AwGy Dhab sipK';
+				$base_url = 'http://cloud.local';
+				break;
+			case 'staging': // STAGING
+				$username = 'powerpartner';
+				$psw      = '9Nve BO2G oe8y B19G SDNd v68Q';
+				$base_url = 'https://cloud-staging.wpsite.pro';
+				break;
+			default: // PROD
+				$username = 'powerpartner';
+				$psw      = 'uJsk Gu3S pwUG r6ia P9zy Xjrj';
+				$base_url = 'https://cloud.luke.cafe';
+				break;
+		}
+
+		$bootstrap->username = $username;
+		$bootstrap->psw      = $psw;
+		$bootstrap->base_url = $base_url;
+		$bootstrap->t        = base64_encode( "$username:$psw" );
+	}
 
 	/**
 	 * Replaces placeholder tokens in a script.

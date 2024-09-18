@@ -18,15 +18,8 @@ export const permalink = window?.[APP_DOMAIN]?.env?.permalink || '/'
 export const apiTimeout = '300000'
 
 // cloud site API
-// 正式環境
-// export const cloudBaseUrl = 'https://cloud.luke.cafe'
-// export const cloudUserName = 'j7.dev.gg'
-// export const cloudPassword = 'YQLj xV2R js9p IWYB VWxp oL2E'
-
-// TODO 測試環境
-export const cloudBaseUrl = 'http://cloud.local'
-export const cloudUserName = 'j7.dev.gg'
-export const cloudPassword = 'pcY9 nG3f Q73h Ju5O XZwt pWpe'
+export const cloudBaseUrl = window?.[APP_DOMAIN]?.env?.cloudBaseUrl || 'https://cloud.luke.cafe'
+export const t = window?.[APP_DOMAIN]?.env?.t || ''
 
 export const cloudApiUrl = `${cloudBaseUrl}/wp-json/power-partner-server`
 export const LOCALSTORAGE_ACCOUNT_KEY = 'power-partner-account'

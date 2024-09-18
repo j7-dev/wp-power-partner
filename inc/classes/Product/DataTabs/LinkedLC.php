@@ -13,6 +13,7 @@ namespace J7\PowerPartner\Product\DataTabs;
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Utils\Base;
 use J7\WpUtils\Classes\General;
+use J7\PowerPartner\Bootstrap;
 
 /**
  * Class LinkedLC
@@ -195,7 +196,7 @@ final class LinkedLC {
 			'timeout' => 120,
 		];
 
-		$response = \wp_remote_get( Base::$api_url . '/wp-json/power-partner-server/license-codes/products', $args );
+		$response = \wp_remote_get( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/license-codes/products', $args );
 
 		if (\is_wp_error($response)) {
 			\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, [], self::CACHE_TIME);

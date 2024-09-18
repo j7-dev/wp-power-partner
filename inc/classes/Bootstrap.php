@@ -19,10 +19,17 @@ use Kucrut\Vite;
 final class Bootstrap {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
+	public $username = ''; // phpcs:ignore
+	public $psw      = ''; // phpcs:ignore
+	public $base_url = ''; // phpcs:ignore
+	public $t        = ''; // phpcs:ignore
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
+		// TODO 環境變數
+		Base::set_api_auth( 'staging', $this );
+
 		Api\Main::instance();
 		Api\Connect::instance();
 		Api\User::instance();
@@ -44,8 +51,6 @@ final class Bootstrap {
 		// v2 to v3 欄位遷移  相容設定
 		\add_action( 'admin_init', [ $this, 'compatibility_settings' ], 99 );
 		\add_action( 'admin_notices', [ $this, 'notice' ] );
-
-		Base::$api_url = Plugin::$is_local ? 'http://cloud.local' : 'https://cloud.luke.cafe';
 	}
 
 	/**
@@ -120,6 +125,8 @@ final class Bootstrap {
 					'allowed_template_options'  => $allowed_template_options,
 					'partner_id'                => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
 					'disable_site_after_n_days' => (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' ),
+					't'                         => $this->t,
+					'cloudBaseUrl'              => $this->base_url,
 				],
 			]
 		);
