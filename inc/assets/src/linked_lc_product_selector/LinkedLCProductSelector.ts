@@ -3,10 +3,6 @@ import { cloud_products, TCloudProduct } from './utils'
 
 
 const avlProducts: TCloudProduct[] = [
-	{
-		slug: 'any',
-		label: '任意產品'
-	},
 	...(cloud_products?.map(({ slug, label }) => ({
 		slug,
 		label

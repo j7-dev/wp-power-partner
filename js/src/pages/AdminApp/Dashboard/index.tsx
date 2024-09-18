@@ -8,7 +8,7 @@ import {
 	BarcodeOutlined,
 	SettingOutlined,
 } from '@ant-design/icons'
-import { Tabs, TabsProps, Form, Button, message } from 'antd'
+import { Tabs, TabsProps, Form, Button } from 'antd'
 import AccountIcon from './AccountIcon'
 import SiteList from './SiteList'
 import LogList from './LogList'
@@ -17,7 +17,6 @@ import EmailSetting from './EmailSetting'
 import ManualSiteSync from './ManualSiteSync'
 import Settings from './Settings'
 import LicenseCodes from './LicenseCodes'
-import useFormInstance from 'antd/es/form/hooks/useFormInstance'
 import useSave, {
 	TFormValues,
 } from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
@@ -80,7 +79,7 @@ const index: React.FC = () => {
 	const [form] = Form.useForm()
 	const { mutation, contextHolder } = useSave(form)
 	const { mutate: saveSettings, isPending } = mutation
-	const [activeKey, setActiveKey] = useState<string>('siteList')
+	const [activeKey, setActiveKey] = useState<string>('license-codes')
 
 	const handleSave = () => {
 		form

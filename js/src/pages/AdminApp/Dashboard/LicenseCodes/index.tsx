@@ -1,24 +1,16 @@
 import React from 'react'
 import { useTable, useModal } from '@/hooks'
-import {
-	Table,
-	TableProps,
-	Tag,
-	Typography,
-	Button,
-	Modal,
-	Form,
-	Input,
-	InputNumber,
-	Select,
-} from 'antd'
+import { Table, TableProps, Tag, Typography, Button } from 'antd'
 import { identityAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue } from 'jotai'
 import { DataType, TParams, TStatus } from './types'
-import { useRowSelection } from 'antd-toolkit'
+import { useRowSelection, DateTime } from 'antd-toolkit'
+import { siteUrl } from '@/utils'
+import ModalForm from './ModalForm'
+import { getInfo } from './utils'
 
 const { Text } = Typography
-const { Item } = Form
+
 const STATUS_MAP = {
 	available: {
 		label: '可用',
@@ -41,11 +33,14 @@ const STATUS_MAP = {
 const columns: TableProps<DataType>['columns'] = [
 	{
 		title: '授權碼',
-		dataIndex: 'license_code',
-		render: (license_code: string) => (
-			<Text className="font-mono" copyable>
-				{license_code}
-			</Text>
+		dataIndex: 'code',
+		render: (code: string, record: DataType) => (
+			<>
+				<Text className="font-mono" copyable>
+					{code}
+				</Text>
+				<p className="text-xs text-gray-500">id: #{record.id}</p>
+			</>
 		),
 	},
 	{
@@ -60,6 +55,8 @@ const columns: TableProps<DataType>['columns'] = [
 	{
 		title: '期限',
 		dataIndex: 'expire_date',
+		render: (expire_date: number) =>
+			expire_date ? <DateTime date={expire_date * 1000} /> : '無期限',
 	},
 	{
 		title: '綁定網域',
@@ -73,10 +70,23 @@ const columns: TableProps<DataType>['columns'] = [
 	{
 		title: '連接訂閱',
 		dataIndex: 'subscription_id',
+		render: (subscription_id: number) =>
+			subscription_id ? (
+				<a
+					href={`${siteUrl}/wp-admin/post.php?post=${subscription_id}&action=edit`}
+					target="_blank"
+					rel="noreferrer"
+				>
+					{subscription_id}
+				</a>
+			) : (
+				''
+			),
 	},
 	{
 		title: '連接商品',
-		dataIndex: 'product',
+		dataIndex: 'product_name',
+		render: (product_name: string) => product_name || 'N/A',
 	},
 	{
 		title: '每天消耗點數',
@@ -99,12 +109,13 @@ const index = () => {
 	})
 
 	const { selectedRowKeys, rowSelection } = useRowSelection<DataType>()
-	const { modalProps, show } = useModal()
-	const label = selectedRowKeys.length ? '修改' : '新增'
-	const handleOk = () => {
-		console.log('ok')
-	}
-	const [form] = Form.useForm()
+	const { modalProps, show, close } = useModal()
+	const { label, isSingleEdit } = getInfo(selectedRowKeys)
+	const theSingleRecord = isSingleEdit
+		? tableProps?.dataSource?.find(
+				(record) => record.id === selectedRowKeys?.[0],
+			)
+		: undefined
 
 	return (
 		<>
@@ -118,43 +129,12 @@ const index = () => {
 				{...tableProps}
 				rowSelection={rowSelection}
 			/>
-			<Modal title={`批量${label}授權碼`} {...modalProps} onOk={handleOk}>
-				<Form form={form} layout="vertical">
-					<Item label="數量" name="amount">
-						<InputNumber className="w-full" min={0} max={30} />
-					</Item>
-					<Item
-						label="網域"
-						name="domain"
-						rules={[
-							{
-								pattern:
-									/^([a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.)?[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/,
-								message: '請輸入有效的網域或子網域',
-							},
-						]}
-					>
-						<Input />
-					</Item>
-					<Item label="連接訂閱" name="subscription_id">
-						<Input />
-					</Item>
-					<Item label="連接商品" name="product_id">
-						<Input />
-					</Item>
-					<Item label="修改狀態" name="status">
-						<Select>
-							<Select.Option value="available">可用</Select.Option>
-							<Select.Option value="activated">已啟用</Select.Option>
-							<Select.Option value="deactivated">已停用</Select.Option>
-							<Select.Option value="expired">已過期</Select.Option>
-						</Select>
-					</Item>
-					<Item label="使用期限" name="expire_date">
-						<Input />
-					</Item>
-				</Form>
-			</Modal>
+			<ModalForm
+				selectedRowKeys={selectedRowKeys}
+				modalProps={modalProps}
+				close={close}
+				theSingleRecord={theSingleRecord}
+			/>
 		</>
 	)
 }

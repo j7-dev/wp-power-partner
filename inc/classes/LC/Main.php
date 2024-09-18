@@ -12,6 +12,7 @@ use J7\Powerhouse\Api\Base as Api;
 use J7\WpUtils\Classes\General;
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\ShopSubscription;
+use J7\PowerPartner\Api\Connect;
 
 /**
  * Class ShopSubscription
@@ -50,22 +51,40 @@ final class Main {
 		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
 			return;
 		}
-		$lc_ids = $subscription->get_meta('lc_id', false);
 
-		// 如果不是 power partner 網站訂閱 就不處理
-		if ( ! $lc_ids ) {
-			return;
-		}
-
+		// 從成功變成失敗
 		// 從 [已啟用] 變成 [已取消] 或 [保留] 等等  就算失敗， [已過期] 不算
 		$is_subscription_failed = ( ! in_array( $new_status, ShopSubscription::$not_failed_statuses, true ) ) && in_array( $old_status, ShopSubscription::$success_statuses, true );
 
-		// 如果訂閱沒失敗 就不處理，並且刪除 上次失敗的時間 紀錄
+		// 如果訂閱沒失敗 就不處理
 		if ( ! $is_subscription_failed ) {
 			return;
 		}
 
+		$lc_ids = $subscription->get_meta('lc_id', false);
+		// 如果訂閱身上沒有授權碼 就不處理
+		if ( ! $lc_ids ) {
+			return;
+		}
+
 		// 訂閱失敗，發API停用授權碼
+		$api_instance = Api::instance();
+		$response     = $api_instance->remote_post(
+			'license-codes/expire',
+			[
+				'ids' => $lc_ids,
+			]
+		);
+		$is_error     = \is_wp_error($response);
+		if ($is_error) {
+			$subscription->add_order_note("站長路可《過期》授權碼 ❌失敗: \n{$response->get_error_message()}");
+			return;
+		}
+
+		$body = \wp_remote_retrieve_body($response);
+		$data = General::json_parse($body, []);
+
+		$subscription->add_order_note("站長路可《過期》授權碼 ✅成功: \n" . \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
 	}
 
 	/**
@@ -75,6 +94,11 @@ final class Main {
 	 * @return void
 	 */
 	public function create_lcs( \WC_Subscription $subscription ) {
+		$partner_id = \get_option(Connect::PARTNER_ID_OPTION_NAME);
+		if ( ! $partner_id ) {
+			return;
+		}
+
 		$site_sync_instance = SiteSync::instance();
 		$order_ids          = $site_sync_instance->get_related_order_ids( $subscription );
 
@@ -135,14 +159,17 @@ final class Main {
 		$api_instance = Api::instance();
 
 		foreach ($all_linked_lc_products as $linked_lc_product) {
-			$response = $api_instance->remote_post(
+			$params                    = $linked_lc_product;
+			$params['post_author']     = $partner_id;
+			$params['subscription_id'] = $subscription->get_id();
+			$response                  = $api_instance->remote_post(
 				'license-codes',
-				$linked_lc_product
+				$params
 			);
 
 			$is_error = \is_wp_error($response);
 			if ($is_error) {
-				$subscription->add_order_note("站長路可新增授權碼 ❌失敗: \n{$response->get_error_message()}");
+				$subscription->add_order_note("站長路可《新增》授權碼 ❌失敗: \n{$response->get_error_message()}");
 				continue;
 			}
 
@@ -159,7 +186,7 @@ final class Main {
 				}
 			}
 
-			$subscription->add_order_note("站長路可新增授權碼 ✅成功: \n" . \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
+			$subscription->add_order_note("站長路可《新增》授權碼 ✅成功: \n" . \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
 		}
 
 		// 把資訊紀錄在 subscription

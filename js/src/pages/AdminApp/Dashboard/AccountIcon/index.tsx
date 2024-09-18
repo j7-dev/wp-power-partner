@@ -106,11 +106,10 @@ const index = () => {
 	})
 
 	const handleRefetch = () => {
-		queryClient.invalidateQueries({
-			queryKey: ['apps'],
-		})
-		queryClient.invalidateQueries({
-			queryKey: ['logs'],
+		;['apps', 'logs', 'license-codes'].forEach((key) => {
+			queryClient.invalidateQueries({
+				queryKey: [key],
+			})
 		})
 	}
 
