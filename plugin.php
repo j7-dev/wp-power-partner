@@ -38,7 +38,7 @@ final class Plugin {
 	 *
 	 * @var bool
 	 */
-	public static $is_local = false;
+	public static $is_local = true;
 
 	/**
 	 * Constructor

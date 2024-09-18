@@ -1,4 +1,4 @@
-import { Avatar, Dropdown, MenuProps, Tooltip, Button, message } from 'antd'
+import { Avatar, Dropdown, MenuProps, Tooltip } from 'antd'
 import {
 	identityAtom,
 	globalLoadingAtom,
@@ -16,10 +16,6 @@ import { LOCALSTORAGE_ACCOUNT_KEY, windowWidth } from '@/utils'
 import { LoadingText } from '@/components'
 import { axios } from '@/api'
 import { useQueryClient } from '@tanstack/react-query'
-import useFormInstance from 'antd/es/form/hooks/useFormInstance'
-import useSave, {
-	TFormValues,
-} from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
 
 const DEPOSIT_LINK = 'https://cloud.luke.cafe/product/power-partner/'
 
@@ -118,32 +114,8 @@ const index = () => {
 		})
 	}
 
-	const form = useFormInstance()
-	const { mutation, contextHolder } = useSave(form)
-	const { mutate: saveSettings, isPending } = mutation
-
-	const handleSave = () => {
-		form
-			.validateFields()
-			.then((settings: TFormValues) => {
-				saveSettings(settings)
-			})
-			.catch((error) => {
-				console.log(error)
-			})
-	}
-
 	return (
 		<div className={'ml-4 xl:mr-4 flex items-center gap-4 xl:gap-8'}>
-			{contextHolder}
-			<Button
-				size="small"
-				type="primary"
-				onClick={handleSave}
-				loading={isPending}
-			>
-				儲存
-			</Button>
 			<Tooltip title="刷新資料">
 				<SyncOutlined spin={globalLoading?.isLoading} onClick={handleRefetch} />
 			</Tooltip>

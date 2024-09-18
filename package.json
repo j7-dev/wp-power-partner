@@ -27,7 +27,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.28.9",
     "antd": "^5.16.2",
-    "antd-toolkit": "^0.1.26",
+    "antd-toolkit": "^1.1.16",
     "axios": "^1.6.8",
     "crypto-js": "^4.2.0",
     "jotai": "^2.8.0",

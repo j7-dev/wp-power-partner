@@ -15,7 +15,8 @@ use J7\PowerPartner\Utils\Base;
 abstract class Fetch {
 
 	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = 'power_partner_allowed_template_options';
-	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME    = 30 * 24 * HOUR_IN_SECONDS;
+	// phpstan:ignore
+	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME = 30 * 24 * HOUR_IN_SECONDS;
 	/**
 	 * 發 API 開站
 	 *
@@ -32,9 +33,9 @@ abstract class Fetch {
 	 *       @type string $email      顧客 Email
 	 *       @type string $phone      顧客電話
 	 *   }
-	 * }
+	 * } $props 開站所需的參數
 	 *
-	 * @return array|\WP_Error — The response or WP_Error on failure.
+	 * @return array<string, mixed>|\WP_Error — The response or WP_Error on failure.
 	 */
 	public static function site_sync( array $props ) {
 		$args     = [
@@ -110,8 +111,10 @@ abstract class Fetch {
 	/**
 	 * 取得經銷商允許的模板站
 	 * 會先判斷 transient 是否有資料，如果沒有則發 API 取得
+	 *
+	 * @return array<string, string>
 	 */
-	public static function get_allowed_template_options() {
+	public static function get_allowed_template_options(): array {
 		$allowed_template_options = \get_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
 
 		if ( false === $allowed_template_options ) {
