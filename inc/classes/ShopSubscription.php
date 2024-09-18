@@ -5,11 +5,11 @@
 
 declare(strict_types=1);
 
-namespace J7\PowerPartner\ShopSubscription;
+namespace J7\PowerPartner;
 
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
-use J7\PowerPartner\Product\Product;
+use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\Utils\Base;
 
 
@@ -24,10 +24,10 @@ use J7\PowerPartner\Utils\Base;
  * pending-cancel 待取消
  */
 final class ShopSubscription {
+	use \J7\WpUtils\Traits\SingletonTrait;
 
-
-	const IS_POWER_PARTNER_SUBSCRIPTION  = 'is_' . Plugin::SNAKE;
-	const LAST_FAILED_TIMESTAMP_META_KEY = Plugin::SNAKE . '_last_failed_timestamp';
+	const IS_POWER_PARTNER_SUBSCRIPTION  = 'is_power_partner';
+	const LAST_FAILED_TIMESTAMP_META_KEY = 'power_partner_last_failed_timestamp';
 	const POST_TYPE                      = 'shop_subscription';
 
 	/**
@@ -35,42 +35,43 @@ final class ShopSubscription {
 	 *
 	 * @var array
 	 */
-	public static $success_statuses = array( 'active' );
+	public static $success_statuses = [ 'active' ];
 
 	/**
 	 * Failed statuses
 	 * 'pending-cancel' [待取消] = 用戶不續訂，不應該停用網站
+	 *
 	 * @see https://github.com/j7-dev/wp-power-partner/issues/11
 	 *
 	 * @var array
 	 */
-	public static $failed_statuses = array( 'cancelled', 'on-hold' );
+	public static $failed_statuses = [ 'cancelled', 'on-hold' ];
 
 	/**
 	 * Not failed statuses
 	 *
 	 * @var array
 	 */
-	public static $not_failed_statuses = array( 'active', 'expired' );
+	public static $not_failed_statuses = [ 'active', 'expired' ];
 
 	/**
 	 * All statuses
 	 *
 	 * @var array
 	 */
-	public static $all_statuses = array( 'active', 'cancelled', 'expired', 'on-hold', 'pending-cancel' );
+	public static $all_statuses = [ 'active', 'cancelled', 'expired', 'on-hold', 'pending-cancel' ];
 
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		\add_action( 'woocommerce_subscription_pre_update_status', array( $this, 'subscription_failed' ), 10, 3 );
-		\add_action( 'wcs_create_subscription', array( $this, 'add_meta' ), 10, 1 );
-		\add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
-		\add_action( 'save_post', array( $this, 'save' ) );
-		\add_filter( 'manage_edit-' . self::POST_TYPE . '_columns', array( $this, 'add_order_column' ), 99, 1 );
-		\add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( $this, 'render_order_column' ) );
+		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_failed' ], 10, 3 );
+		\add_action( 'wcs_create_subscription', [ $this, 'add_meta' ], 10, 1 );
+		\add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
+		\add_action( 'save_post', [ $this, 'save' ] );
+		\add_filter( 'manage_edit-' . self::POST_TYPE . '_columns', [ $this, 'add_order_column' ], 99, 1 );
+		\add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', [ $this, 'render_order_column' ] );
 	}
 
 	/**
@@ -139,12 +140,12 @@ final class ShopSubscription {
 		$major_ver = Plugin::$version[0];
 		if ( $major_ver <= 2 ) {
 			$subscription_ids = \get_posts(
-				array(
+				[
 					'post_type'   => self::POST_TYPE,
 					'post_status' => 'any',
 					'numberposts' => -1,
 					'fields'      => 'ids',
-				)
+				]
 			);
 			foreach ( $subscription_ids as $subscription_id ) {
 				$subscription = \wcs_get_subscription( $subscription_id );
@@ -158,7 +159,7 @@ final class ShopSubscription {
 					continue;
 				}
 
-				$create_site_response   = $parent_order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY, true );
+				$create_site_response   = $parent_order->get_meta( SiteSync::CREATE_SITE_RESPONSES_META_KEY, true );
 				$is_power_partner_order = ! empty( $create_site_response );
 				if ( $is_power_partner_order ) {
 					$subscription->update_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
@@ -181,17 +182,17 @@ final class ShopSubscription {
 		$subscription = \wcs_get_subscription( $subscription_id );
 
 		if ( ! $subscription ) {
-			return array();
+			return [];
 		}
-		$meta_data       = $subscription->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
-		$linked_site_ids = array();
+		$meta_data       = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, false );
+		$linked_site_ids = [];
 		foreach ( $meta_data as $meta ) {
 			$meta_id                     = $meta->__get( 'id' );
 			$value                       = $meta->__get( 'value' );
 			$linked_site_ids[ $meta_id ] = $value;
 		}
 
-		return is_array( $linked_site_ids ) ? array_unique( $linked_site_ids ) : array();
+		return is_array( $linked_site_ids ) ? array_unique( $linked_site_ids ) : [];
 	}
 
 	/**
@@ -208,16 +209,16 @@ final class ShopSubscription {
 			return;
 		}
 
-		$old_meta_data = $subscription->get_meta( Product::LINKED_SITE_IDS_META_KEY, true );
+		$old_meta_data = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, true );
 		if ( is_array( $old_meta_data ) ) {
 			foreach ( $old_meta_data as $old_site_id ) {
-				$subscription->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $old_site_id );
+				$subscription->add_meta_data( SiteSync::LINKED_SITE_IDS_META_KEY, $old_site_id );
 			}
 			$subscription->save();
 		}
-		$to_delete_mids = array();
+		$to_delete_mids = [];
 
-		$meta_data = $subscription->get_meta( Product::LINKED_SITE_IDS_META_KEY, false );
+		$meta_data = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, false );
 		foreach ( $meta_data as $meta ) {
 			$meta_id = $meta->__get( 'id' );
 			$value   = $meta->__get( 'value' );
@@ -264,7 +265,7 @@ final class ShopSubscription {
 		$to_delete_sites = array_diff( $old_linked_site_ids, $linked_site_ids );
 
 		foreach ( $to_add_sites as $to_add_site ) {
-			$subscription->add_meta_data( Product::LINKED_SITE_IDS_META_KEY, $to_add_site );
+			$subscription->add_meta_data( SiteSync::LINKED_SITE_IDS_META_KEY, $to_add_site );
 		}
 
 		foreach ( $to_delete_sites as $to_delete_site ) {
@@ -317,23 +318,23 @@ final class ShopSubscription {
 	public static function remove_linked_site_ids( $linked_site_ids ): bool {
 		try {
 			// 移除原本連結的訂閱
-			$subscription_ids_to_check = array();
+			$subscription_ids_to_check = [];
 
 			foreach ( $linked_site_ids as $site_id ) {
-				$args = array(
+				$args = [
 					'post_type'      => self::POST_TYPE,
 					'posts_per_page' => -1,
 					'post_status'    => 'any',
 					'fields'         => 'ids',
-					'meta_key'       => Product::LINKED_SITE_IDS_META_KEY,
+					'meta_key'       => SiteSync::LINKED_SITE_IDS_META_KEY,
 					'meta_value'     => $site_id,
-				);
+				];
 
 				$subscription_ids          = \get_posts( $args );
-				$subscription_ids_to_check = array(
+				$subscription_ids_to_check = [
 					...$subscription_ids_to_check,
 					...$subscription_ids,
-				);
+				];
 			}
 
 			foreach ( $subscription_ids_to_check as $subscription_id ) {
@@ -363,13 +364,13 @@ final class ShopSubscription {
 	 * @return void
 	 */
 	public function add_meta_box( $post_type ) {
-		$post_types = array( self::POST_TYPE );
+		$post_types = [ self::POST_TYPE ];
 
 		if ( in_array( $post_type, $post_types, true ) ) {
 			\add_meta_box(
-				Product::LINKED_SITE_IDS_META_KEY . '_meta_box',
+				SiteSync::LINKED_SITE_IDS_META_KEY . '_meta_box',
 				__( '此訂閱連結的網站 id', 'power_partner' ),
-				array( $this, 'render_meta_box_content' ),
+				[ $this, 'render_meta_box_content' ],
 				$post_type,
 				'advanced',
 				'high'
@@ -390,35 +391,35 @@ final class ShopSubscription {
 
 		$linked_site_ids = self::get_linked_site_ids( $post->ID );
 
-		$options = array();
+		$options = [];
 
 		foreach ( $linked_site_ids as $site_id ) {
 			$options[ $site_id ] = '#' . $site_id;
 		}
 
-		\wp_nonce_field( Product::LINKED_SITE_IDS_META_KEY . '_action', Product::LINKED_SITE_IDS_META_KEY . '_nonce' );
+		\wp_nonce_field( SiteSync::LINKED_SITE_IDS_META_KEY . '_action', SiteSync::LINKED_SITE_IDS_META_KEY . '_nonce' );
 
 		\woocommerce_wp_select(  // 使用方法 & 設定項可以看 WooCommerce 代碼
-			array(
-				'id'                => Product::LINKED_SITE_IDS_META_KEY,
-				'name'              => Product::LINKED_SITE_IDS_META_KEY . '[]',  // 🚩這邊要加上 []，不然 POST 給後端，會抓到 single string 而不是 array
+			[
+				'id'                => SiteSync::LINKED_SITE_IDS_META_KEY,
+				'name'              => SiteSync::LINKED_SITE_IDS_META_KEY . '[]',  // 🚩這邊要加上 []，不然 POST 給後端，會抓到 single string 而不是 array
 				'style'             => 'width:25rem;',
 				'class'             => '',
 				'label'             => '',
 				'value'             => $linked_site_ids, // 這邊就放你從後端拿的資料
 				'options'           => $options, // key => value 的陣列
-				'custom_attributes' => array(
+				'custom_attributes' => [
 					'multiple'         => 'multiple', // 🚩 這是要給 selectWoo 抓的
 					'data-allow-clear' => 'true', // select2 設定項，請自行查閱
-				),
-			)
+				],
+			]
 		);
 
 		// phpcs:disable
 		?>
 		<script>
 			(function($) {
-				$('#<?php echo Product::LINKED_SITE_IDS_META_KEY;?>').selectWoo();
+				$('#<?php echo SiteSync::LINKED_SITE_IDS_META_KEY;?>').selectWoo();
 			})(jQuery)
 		</script>
 		<?php
@@ -434,16 +435,16 @@ final class ShopSubscription {
 	 */
 	public function save( $post_id ) {
 
-		$nonce = $_POST[Product::LINKED_SITE_IDS_META_KEY . '_nonce'] ?? ''; // phpcs:ignore
-		$linked_site_ids = $_POST[Product::LINKED_SITE_IDS_META_KEY] ?? []; // phpcs:ignore
+		$nonce = $_POST[SiteSync::LINKED_SITE_IDS_META_KEY . '_nonce'] ?? ''; // phpcs:ignore
+		$linked_site_ids = $_POST[SiteSync::LINKED_SITE_IDS_META_KEY] ?? []; // phpcs:ignore
 
 		// Verify that the nonce is valid.
-		if ( ! \wp_verify_nonce( $nonce, Product::LINKED_SITE_IDS_META_KEY . '_action' ) ) {
+		if ( ! \wp_verify_nonce( $nonce, SiteSync::LINKED_SITE_IDS_META_KEY . '_action' ) ) {
 			return;
 		}
 
 		if ( ! is_array( $linked_site_ids ) ) {
-			$linked_site_ids = array();
+			$linked_site_ids = [];
 		}
 
 		$old_linked_site_ids = self::get_linked_site_ids( $post_id );
@@ -462,7 +463,7 @@ final class ShopSubscription {
 	 * @return array
 	 */
 	public function add_order_column( array $columns ): array {
-		$columns[ Product::LINKED_SITE_IDS_META_KEY ] = '綁定的網站 ids';
+		$columns[ SiteSync::LINKED_SITE_IDS_META_KEY ] = '綁定的網站 ids';
 		return $columns;
 	}
 
@@ -475,7 +476,7 @@ final class ShopSubscription {
 	public function render_order_column( $column ): void {
 		global $post;
 
-		if ( Product::LINKED_SITE_IDS_META_KEY === $column ) {
+		if ( SiteSync::LINKED_SITE_IDS_META_KEY === $column ) {
 			$subscription_id = $post->ID;
 			$linked_site_ids = self::get_linked_site_ids( $subscription_id );
 
@@ -483,5 +484,3 @@ final class ShopSubscription {
 		}
 	}
 }
-
-new ShopSubscription();

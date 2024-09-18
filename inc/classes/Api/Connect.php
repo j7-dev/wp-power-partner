@@ -15,15 +15,16 @@ use J7\PowerPartner\Plugin;
  * @package J7\PowerPartner
  */
 final class Connect {
+	use \J7\WpUtils\Traits\SingletonTrait;
 
 	const USERMETA_IDENTITY      = 'connect_app_identity';
-	const PARTNER_ID_OPTION_NAME = Plugin::SNAKE . '_partner_id';
+	const PARTNER_ID_OPTION_NAME = 'power_partner_partner_id';
 
 	/**
 	 * Connect constructor.
 	 */
 	public function __construct() {
-		\add_action( 'rest_api_init', array( $this, 'register_apis' ) );
+		\add_action( 'rest_api_init', [ $this, 'register_apis' ] );
 	}
 
 	/**
@@ -39,7 +40,7 @@ final class Connect {
 		\register_meta(
 			'user',
 			self::USERMETA_IDENTITY,
-			array(
+			[
 				'type'              => 'string',
 				'single'            => true,
 				'show_in_rest'      => true,
@@ -47,66 +48,66 @@ final class Connect {
 				'auth_callback'     => function () {
 					return \current_user_can( 'edit_users' );
 				},
-			)
+			]
 		);
 
 		/**
 	 * Register GET partner id API
 	 */
 		\register_rest_route(
-			Plugin::KEBAB,
+			Plugin::$kebab,
 			'partner-id',
-			array(
+			[
 				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_partner_id_callback' ),
+				'callback'            => [ $this, 'get_partner_id_callback' ],
 				'permission_callback' => '__return_true',
-			)
+			]
 		);
 
 		/**
 	 * Register SET partner id API
 	 */
 		\register_rest_route(
-			Plugin::KEBAB,
+			Plugin::$kebab,
 			'partner-id',
-			array(
+			[
 				'methods'             => 'POST',
-				'callback'            => array( $this, 'set_partner_id_callback' ),
+				'callback'            => [ $this, 'set_partner_id_callback' ],
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
-			)
+			]
 		);
 
 		/**
 * Register DELETE partner id API
 */
 		\register_rest_route(
-			Plugin::KEBAB,
+			Plugin::$kebab,
 			'partner-id',
-			array(
+			[
 				'methods'             => 'DELETE',
-				'callback'            => array( $this, 'delete_partner_id_callback' ),
+				'callback'            => [ $this, 'delete_partner_id_callback' ],
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
-			)
+			]
 		);
 
 		/**
 	 * Register account info API
 	 */
 		\register_rest_route(
-			Plugin::KEBAB,
+			Plugin::$kebab,
 			'account-info',
-			array(
+			[
 				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_account_info_callback' ),
+				'callback'            => [ $this, 'get_account_info_callback' ],
 				'permission_callback' => '__return_true',
 			// 'permission_callback' => function () {
 			// return \current_user_can( 'manage_options' );
 			// },
-			)
+			]
 		);
 	}
 
@@ -118,24 +119,24 @@ final class Connect {
 	 */
 	public function get_partner_id_callback() {
 
-		$partner_id = \get_option( Plugin::SNAKE . '_partner_id', '0' );
+		$partner_id = \get_option( Plugin::$snake . '_partner_id', '0' );
 		if ( empty( $partner_id ) ) {
 			return \rest_ensure_response(
-				array(
+				[
 					'status'  => 500,
 					'message' => 'fail, partner_id is empty',
 					'data'    => null,
-				)
+				]
 			);
 		} else {
 			return \rest_ensure_response(
-				array(
+				[
 					'status'  => 200,
 					'message' => 'success',
-					'data'    => array(
+					'data'    => [
 						'partner_id' => $partner_id,
-					),
-				)
+					],
+				]
 			);
 		}
 	}
@@ -149,29 +150,29 @@ final class Connect {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function set_partner_id_callback( $request ) {
-		$body_params              = $request->get_json_params() ?? array();
+		$body_params              = $request->get_json_params() ?? [];
 		$partner_id               = $body_params['partner_id'] ?? '';
 		$encrypted_account_info   = $body_params['encrypted_account_info'] ?? '';
-		$allowed_template_options = $body_params['allowed_template_options'] ?? array();
+		$allowed_template_options = $body_params['allowed_template_options'] ?? [];
 
 		if ( ! empty( $partner_id ) ) {
 			\update_option( self::PARTNER_ID_OPTION_NAME, $partner_id );
-			\update_option( Plugin::SNAKE . '_account_info', $encrypted_account_info );
+			\update_option( Plugin::$snake . '_account_info', $encrypted_account_info );
 			\set_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY, (array) $allowed_template_options, Fetch::ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME );
 			return \rest_ensure_response(
-				array(
+				[
 					'status'  => 200,
 					'message' => 'success',
 					'data'    => null,
-				)
+				]
 			);
 		} else {
 			return \rest_ensure_response(
-				array(
+				[
 					'status'  => 100,
 					'message' => 'partner_id is empty',
 					'data'    => null,
-				)
+				]
 			);
 		}
 	}
@@ -184,14 +185,14 @@ final class Connect {
 	 */
 	public function delete_partner_id_callback() {
 		\delete_option( self::PARTNER_ID_OPTION_NAME );
-		\delete_option( Plugin::SNAKE . '_account_info' );
+		\delete_option( Plugin::$snake . '_account_info' );
 		\delete_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
 		return \rest_ensure_response(
-			array(
+			[
 				'status'  => 200,
 				'message' => 'delete account in wp_option success',
 				'data'    => null,
-			)
+			]
 		);
 	}
 
@@ -202,16 +203,16 @@ final class Connect {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_account_info_callback() {
-		$encrypted_account_info = \get_option( Plugin::SNAKE . '_account_info' );
+		$encrypted_account_info = \get_option( Plugin::$snake . '_account_info' );
 
 		return \rest_ensure_response(
-			array(
+			[
 				'status'  => 200,
 				'message' => 'success',
-				'data'    => array(
+				'data'    => [
 					'encrypted_account_info' => $encrypted_account_info,
-				),
-			)
+				],
+			]
 		);
 	}
 }

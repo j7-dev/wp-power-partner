@@ -1,6 +1,6 @@
 <?php
 /**
- * Product 相關
+ * SiteSync 相關
  */
 
 declare (strict_types = 1);
@@ -12,11 +12,12 @@ use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Product\DataTabs;
 
 /**
- * Class Product
+ * Class SiteSync
  */
-final class Product {
+final class SiteSync {
+	use \J7\WpUtils\Traits\SingletonTrait;
 
-	const PRODUCT_TYPE_NAME = Plugin::APP_NAME . ' 產品';
+	const PRODUCT_TYPE_NAME = 'Power Partner 產品';
 
 	const CREATE_SITE_RESPONSES_META_KEY = 'pp_create_site_responses';
 
@@ -27,8 +28,8 @@ final class Product {
 	 * Constructor
 	 */
 	public function __construct() {
-		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-		\add_action( 'woocommerce_subscription_payment_complete', array( $this, 'site_sync_by_subscription' ), 20, 1 );
+		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'site_sync_by_subscription' ], 20, 1 );
 	}
 
 	/**
@@ -41,16 +42,16 @@ final class Product {
 		if ( $screen->id !== 'product' ) {
 			return;
 		}
-		\wp_enqueue_style( Plugin::KEBAB . '-product-tab-css', Plugin::$url . '/js/dist_product_tab/assets/css/index.css', array(), Plugin::$version );
+		\wp_enqueue_style( Plugin::$kebab . '-product-tab-css', Plugin::$url . '/js/dist_product_tab/assets/css/index.css', [], Plugin::$version );
 		\wp_enqueue_script(
-			Plugin::KEBAB . '-product-tab-js',
+			Plugin::$kebab . '-product-tab-js',
 			Plugin::$url . '/js/dist_product_tab/index.js',
-			array(),
+			[],
 			Plugin::$version,
-			array(
+			[
 				'strategy'  => 'async',
 				'in_footer' => true,
-			)
+			]
 		);
 	}
 
@@ -82,7 +83,7 @@ final class Product {
 		}
 
 		$items     = $order->get_items();
-		$responses = array();
+		$responses = [];
 
 		foreach ( $items as $item ) {
 			/**
@@ -115,28 +116,28 @@ final class Product {
 			$host_position = empty( $host_position ) ? DataTabs::DEFAULT_HOST_POSITION : $host_position;
 
 			$response_obj = Fetch::site_sync(
-				array(
+				[
 					'site_url'        => \site_url(),
 					'site_id'         => $linked_site_id,
 					'host_position'   => $host_position,
-					'partner_id'      => \get_option( Plugin::SNAKE . '_partner_id', '0' ),
-					'customer'        => array(
+					'partner_id'      => \get_option( Plugin::$snake . '_partner_id', '0' ),
+					'customer'        => [
 						'id'         => $order->get_customer_id(),
 						'first_name' => $order->get_billing_first_name(),
 						'last_name'  => $order->get_billing_last_name(),
 						'username'   => \get_user_by( 'id', $order->get_customer_id() )->user_login ?? 'admin',
 						'email'      => $order->get_billing_email(),
 						'phone'      => $order->get_billing_phone(),
-					),
+					],
 					'subscription_id' => $subscription->get_id(),
-				)
+				]
 			);
 
-			$responses[] = array(
+			$responses[] = [
 				'status'  => $response_obj->status,
 				'message' => $response_obj->message,
 				'data'    => $response_obj->data,
-			);
+			];
 		}
 		ob_start();
 		print_r( $responses );
@@ -147,7 +148,7 @@ final class Product {
 			$note     = '';
 			$response = $responses[0];
 			if ( $response['status'] === 200 ) {
-				$data = $response['data'] ?? array();
+				$data = $response['data'] ?? [];
 
 				foreach ( $data as $key => $value ) {
 					$note .= $key . ': ' . $value . '<br />';
@@ -178,15 +179,15 @@ final class Product {
 	 */
 	protected function get_related_order_ids( $subscription, $order_type = 'any' ) {
 
-		$related_order_ids = array();
+		$related_order_ids = [];
 
-		if ( in_array( $order_type, array( 'any', 'parent' ) ) && $subscription->get_parent_id() ) {
+		if ( in_array( $order_type, [ 'any', 'parent' ] ) && $subscription->get_parent_id() ) {
 			$related_order_ids[ $subscription->get_parent_id() ] = $subscription->get_parent_id();
 		}
 
 		if ( 'parent' !== $order_type ) {
 
-			$relation_types = ( 'any' === $order_type ) ? array( 'renewal', 'resubscribe', 'switch' ) : array( $order_type );
+			$relation_types = ( 'any' === $order_type ) ? [ 'renewal', 'resubscribe', 'switch' ] : [ $order_type ];
 
 			foreach ( $relation_types as $relation_type ) {
 				$related_order_ids = array_merge( $related_order_ids, \WCS_Related_Order_Store::instance()->get_related_order_ids( $subscription, $relation_type ) );
@@ -196,5 +197,3 @@ final class Product {
 		return $related_order_ids;
 	}
 }
-
-new Product();

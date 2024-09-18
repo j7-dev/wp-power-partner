@@ -13,13 +13,13 @@ use J7\PowerPartner\Plugin;
  * Class Api
  */
 final class User {
-
+	use \J7\WpUtils\Traits\SingletonTrait;
 
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		\add_action( 'rest_api_init', array( $this, 'register_apis' ) );
+		\add_action( 'rest_api_init', [ $this, 'register_apis' ] );
 	}
 
 	/**
@@ -29,25 +29,25 @@ final class User {
 	 */
 	public function register_apis(): void {
 		\register_rest_route(
-			Plugin::KEBAB,
+			Plugin::$kebab,
 			'customers-by-search',
-			array(
+			[
 				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_customers_by_search_callback' ),
+				'callback'            => [ $this, 'get_customers_by_search_callback' ],
 				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
-			)
+			]
 		);
 
 		\register_rest_route(
-			Plugin::KEBAB,
+			Plugin::$kebab,
 			'customers',
-			array(
+			[
 				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_customers_callback' ),
+				'callback'            => [ $this, 'get_customers_callback' ],
 				'permission_callback' => '__return_true',
-			)
+			]
 		);
 	}
 
@@ -59,59 +59,59 @@ final class User {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_customers_by_search_callback( $request ) { // phpcs:ignore
-		$params = $request->get_query_params() ?? array();
+		$params = $request->get_query_params() ?? [];
 		$id     = $params['id'] ?? '0';
 		$search = $params['search'] ?? '';
 
-		$args = array(
-			'fields'  => array( 'id', 'display_name' ),
+		$args = [
+			'fields'  => [ 'id', 'display_name' ],
 			'include' => explode( ',', $id ),
-		);
+		];
 
 		if ( ! empty( $id ) ) {
-			$args      = array(
-				'fields'  => array( 'ID', 'display_name' ),
-				'include' => array( $id ),
-			);
+			$args      = [
+				'fields'  => [ 'ID', 'display_name' ],
+				'include' => [ $id ],
+			];
 			$customers = \get_users( $args );
 			if ( empty( $customers ) ) {
 				return \rest_ensure_response(
-					array(
+					[
 						'status'  => 404,
 						'message' => 'customer not found',
-					)
+					]
 				);
 			} else {
 				return \rest_ensure_response(
-					array(
+					[
 						'status'  => 200,
 						'message' => 'get customer success',
 						'data'    => $customers,
-					)
+					]
 				);
 			}
 		}
 
 		if ( ! empty( $search ) ) {
-			$args      = array(
-				'fields' => array( 'id', 'display_name' ),
+			$args      = [
+				'fields' => [ 'id', 'display_name' ],
 				'search' => "*{$search}*",
-			);
+			];
 			$customers = \get_users( $args );
 			if ( empty( $customers ) ) {
 				return \rest_ensure_response(
-					array(
+					[
 						'status'  => 404,
 						'message' => 'customer not found',
-					)
+					]
 				);
 			} else {
 				return \rest_ensure_response(
-					array(
+					[
 						'status'  => 200,
 						'message' => 'get customer success',
 						'data'    => $customers,
-					)
+					]
 				);
 			}
 		}
@@ -125,33 +125,33 @@ final class User {
 	 */
 	public function get_customers_callback( $request ): \WP_REST_Response {
 
-		$params   = $request->get_query_params() ?? array();
-		$user_ids = $params['user_ids'] ?? array();
+		$params   = $request->get_query_params() ?? [];
+		$user_ids = $params['user_ids'] ?? [];
 
 		if ( empty( $user_ids ) ) {
 			return new \WP_REST_Response(
-				array(
+				[
 					'status'  => 500,
 					'message' => 'missing user ids',
-				),
+				],
 				500
 			);
 		}
 
 		$users = \get_users(
-			array(
+			[
 				'include' => $user_ids,
-			)
+			]
 		);
 
 		$formatted_users = array_map(
 			function ( $user ) {
-				return array(
+				return [
 					'id'           => (string) $user->ID,
 					'user_login'   => $user->user_login,
 					'user_email'   => $user->user_email,
 					'display_name' => $user->display_name,
-				);
+				];
 			},
 			$users
 		);
@@ -165,5 +165,3 @@ final class User {
 		return $response;
 	}
 }
-
-new User();

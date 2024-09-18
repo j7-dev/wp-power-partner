@@ -9,7 +9,6 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner\Product;
 
-use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Connect;
 use J7\PowerPartner\Api\Fetch;
 
@@ -17,9 +16,11 @@ use J7\PowerPartner\Api\Fetch;
  * Class DataTabs
  */
 final class DataTabs {
-	const HOST_POSITION_FIELD_NAME = Plugin::SNAKE . '_host_position';
-	const LINKED_SITE_FIELD_NAME   = Plugin::SNAKE . '_linked_site';
-	const PRODUCT_TYPE_SLUG        = Plugin::SNAKE;
+	use \J7\WpUtils\Traits\SingletonTrait;
+
+	const HOST_POSITION_FIELD_NAME = 'power_partner_host_position';
+	const LINKED_SITE_FIELD_NAME   = 'power_partner_linked_site';
+	const PRODUCT_TYPE_SLUG        = 'power_partner';
 	const DEFAULT_HOST_POSITION    = 'jp';
 
 	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME = 'clear_' . Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
@@ -30,32 +31,32 @@ final class DataTabs {
 	 *
 	 * @var array
 	 */
-	public $host_positions = array(
+	public $host_positions = [
 		'jp'        => '日本',
 		'tw'        => '台灣',
 		'us_west'   => '美西',
 		'uk_london' => '英國倫敦',
-	);
+	];
 
 	/**
 	 * Allowed template options
 	 *
 	 * @var array
 	 */
-	public static $allowed_template_options = array();
+	public static $allowed_template_options = [];
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
 		// \add_action( 'woocommerce_subscriptions_product_options_pricing', array( $this, 'custom_field' ), 20 );
-		\add_action( 'woocommerce_product_options_general_product_data', array( $this, 'custom_field_subscription' ), 20, 1 );
-		\add_action( 'woocommerce_process_product_meta', array( $this, 'save_subscription' ), 20 );
+		\add_action( 'woocommerce_product_options_general_product_data', [ $this, 'custom_field_subscription' ], 20, 1 );
+		\add_action( 'woocommerce_process_product_meta', [ $this, 'save_subscription' ], 20 );
 
-		\add_action( 'woocommerce_product_after_variable_attributes', array( $this, 'custom_field_variable_subscription' ), 20, 3 );
-		\add_action( 'woocommerce_save_product_variation', array( $this, 'save_variable_subscription' ), 20, 2 );
+		\add_action( 'woocommerce_product_after_variable_attributes', [ $this, 'custom_field_variable_subscription' ], 20, 3 );
+		\add_action( 'woocommerce_save_product_variation', [ $this, 'save_variable_subscription' ], 20, 2 );
 
-		\add_action( 'admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, array( $this, 'clear_allowed_template_options_transient_callback' ) );
+		\add_action( 'admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ] );
 
 		self::$allowed_template_options = Fetch::get_allowed_template_options();
 	}
@@ -78,7 +79,7 @@ final class DataTabs {
 
 		if ( ! empty( $partner_id ) ) {
 			\woocommerce_wp_radio(
-				array(
+				[
 					'id'            => self::HOST_POSITION_FIELD_NAME,
 					'label'         => '主機種類',
 					'wrapper_class' => 'form-field',
@@ -86,17 +87,17 @@ final class DataTabs {
 					'description'   => '不同地區的主機，預設為日本',
 					'options'       => $this->host_positions,
 					'value'         => $host_position_value,
-				)
+				]
 			);
 
 			self::render_linked_site_subscription( $product_id );
 		} else {
 			\woocommerce_wp_note(
-				array(
+				[
 					'label'         => '連結的網站 id',
 					'wrapper_class' => 'form-field',
 					'message'       => '<span style="font-size:1rem;">🚩 請先連結你在 https://cloud.luke.cafe/ 的帳號，可以前往 <a target="_blank" href="' . \admin_url( 'admin.php?page=power_plugins_settings&tab=3' ) . '">Power Partner 分頁</a> 進行連結，才可以設定開站</span>',
-				)
+				]
 			);
 		}
 
@@ -118,15 +119,15 @@ final class DataTabs {
 		$action_url = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
 
 		\woocommerce_wp_select(
-			array(
+			[
 				'id'            => self::LINKED_SITE_FIELD_NAME,
 				'label'         => '連結的網站 id',
 				'wrapper_class' => 'form-field',
 				'desc_tip'      => false,
 				'description'   => '<a href="' . $action_url . '"><button type="button" class="button">清除快取</button></a>',
 				'value'         => $linked_site_value,
-				'options'       => array( '' => '請選擇' ) + self::$allowed_template_options,
-			)
+				'options'       => [ '' => '請選擇' ] + self::$allowed_template_options,
+			]
 		);
 
 		echo '<p class="description" style="
@@ -171,7 +172,7 @@ final class DataTabs {
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
 
 		\woocommerce_wp_radio(
-			array(
+			[
 				'id'            => self::HOST_POSITION_FIELD_NAME . '[' . $loop . ']',
 				'label'         => '主機種類',
 				'wrapper_class' => 'form-row show_if_variable-subscription hidden',
@@ -179,7 +180,7 @@ final class DataTabs {
 				'description'   => '不同地區的主機，預設為日本',
 				'options'       => $this->host_positions,
 				'value'         => $host_position_value,
-			)
+			]
 		);
 
 		self::render_linked_site_variable_subscription( $variation_id, $loop );
@@ -201,24 +202,24 @@ final class DataTabs {
 		$action_url = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
 
 		\woocommerce_wp_select(
-			array(
+			[
 				'id'            => self::LINKED_SITE_FIELD_NAME . '[' . $loop . ']',
 				'label'         => '連結的網站 id',
 				'wrapper_class' => 'form-field form-row form-row-first show_if_variable-subscription hidden',
 				'desc_tip'      => false,
 				'description'   => '如果想要更多模板站，請聯繫站長路可',
 				'value'         => $linked_site_value,
-				'options'       => array( '' => '請選擇' ) + self::$allowed_template_options,
-			)
+				'options'       => [ '' => '請選擇' ] + self::$allowed_template_options,
+			]
 		);
 
 		\woocommerce_wp_note(
-			array(
+			[
 				'label'         => '只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。',
 				'wrapper_class' => 'form-field form-row form-row-last show_if_variable-subscription hidden',
 				'message'       => '<br /><a href="' . $action_url . '"><button type="button" class="button" style="height: 38px;
 				margin-top: 2px;">清除快取</button></a>',
-			)
+			]
 		);
 	}
 
@@ -256,5 +257,3 @@ final class DataTabs {
 		exit;
 	}
 }
-
-new DataTabs();

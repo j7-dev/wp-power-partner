@@ -7,31 +7,29 @@
 
 declare(strict_types=1);
 
-namespace J7\PowerPartner\Cron;
+namespace J7\PowerPartner;
 
-use J7\PowerPartner\Plugin;
-use J7\PowerPartner\Product\Product;
+use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\Utils\Base;
-use J7\PowerPartner\Email\Email;
-use Micropackage\Singleton\Singleton;
-use J7\PowerPartner\ShopSubscription\ShopSubscription;
+use J7\PowerPartner\Email\Utils as EmailUtils;
+use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Api\Fetch;
 /**
  * Class Cron
  */
-final class Cron extends Singleton {
+final class Cron {
+	use \J7\WpUtils\Traits\SingletonTrait;
 
-	const SYNC_SUBSCRIPTION_META_HOOK_NAME = Plugin::SNAKE . '_sync_subscription_post_meta';
-
-	const SEND_EMAIL_HOOK_NAME = Plugin::SNAKE . '_send_email';
+	const SYNC_SUBSCRIPTION_META_HOOK_NAME = 'power_partner_sync_subscription_post_meta';
+	const SEND_EMAIL_HOOK_NAME             = 'power_partner_send_email';
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		\add_action( 'init', array( $this, 'register_single_event' ) );
-		\add_action( self::SYNC_SUBSCRIPTION_META_HOOK_NAME, array( 'J7\PowerPartner\ShopSubscription\ShopSubscription', 'sync_post_meta' ) );
-		\add_action( self::SEND_EMAIL_HOOK_NAME, array( $this, 'send_email' ) );
-		\add_action( self::SEND_EMAIL_HOOK_NAME, array( $this, 'disable_sites' ) );
+		\add_action( 'init', [ $this, 'register_single_event' ] );
+		\add_action( self::SYNC_SUBSCRIPTION_META_HOOK_NAME, [ 'J7\PowerPartner\ShopSubscription\ShopSubscription', 'sync_post_meta' ] );
+		\add_action( self::SEND_EMAIL_HOOK_NAME, [ $this, 'send_email' ] );
+		\add_action( self::SEND_EMAIL_HOOK_NAME, [ $this, 'disable_sites' ] );
 	}
 
 	/**
@@ -43,21 +41,11 @@ final class Cron extends Singleton {
 
 		// 這邊是一個每日檢查事件
 		if ( ! \wp_next_scheduled( self::SEND_EMAIL_HOOK_NAME ) ) {
-			$result = \wp_schedule_event( strtotime( '+10 minute' ), 'daily', self::SEND_EMAIL_HOOK_NAME, array(), true );
+			$result = \wp_schedule_event( strtotime( '+10 minute' ), 'daily', self::SEND_EMAIL_HOOK_NAME, [], true );
 			if ( \is_wp_error( $result ) ) {
 				ob_start();
-				print_r( $result );
-				\J7\WpToolkit\Utils::debug_log( self::SEND_EMAIL_HOOK_NAME . ' wp_schedule_single_event Error: ' . ob_get_clean() );
-			}
-		}
-
-		// DELETE @deprecated 啟用外掛後 10 分鐘後同步一次訂閱資料就好
-		if ( ! \wp_next_scheduled( self::SYNC_SUBSCRIPTION_META_HOOK_NAME ) ) {
-			$result = \wp_schedule_single_event( strtotime( '+10 minute' ), self::SYNC_SUBSCRIPTION_META_HOOK_NAME, array(), true );
-			if ( \is_wp_error( $result ) ) {
-				ob_start();
-				print_r( $result );
-				\J7\WpToolkit\Utils::debug_log( self::SYNC_SUBSCRIPTION_META_HOOK_NAME . ' wp_schedule_single_event Error: ' . ob_get_clean() );
+				var_dump($result);
+				\J7\WpUtils\Classes\Log::info(self::SEND_EMAIL_HOOK_NAME . ' wp_schedule_single_event Error: ' . ob_get_clean());
 			}
 		}
 	}
@@ -69,11 +57,11 @@ final class Cron extends Singleton {
 	 */
 	public function send_email() {
 
-		$emails = Email::get_emails();
+		$emails = EmailUtils::get_emails();
 
-		$action_names = array( Email::SUBSCRIPTION_SUCCESS_ACTION_NAME, Email::SUBSCRIPTION_FAILED_ACTION_NAME, Email::LAST_ORDER_DATE_CREATED_ACTION_NAME, Email::DATE_CREATED_ACTION_NAME, Email::TRIAL_END_ACTION_NAME, Email::NEXT_PAYMENT_ACTION_NAME, Email::END_ACTION_NAME, Email::END_OF_PREPAID_TERM_ACTION_NAME );
+		$action_names = [ EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME, EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME, EmailUtils::LAST_ORDER_DATE_CREATED_ACTION_NAME, EmailUtils::DATE_CREATED_ACTION_NAME, EmailUtils::TRIAL_END_ACTION_NAME, EmailUtils::NEXT_PAYMENT_ACTION_NAME, EmailUtils::END_ACTION_NAME, EmailUtils::END_OF_PREPAID_TERM_ACTION_NAME ];
 
-		$next_payment_action_names = array( Email::SUBSCRIPTION_SUCCESS_ACTION_NAME, Email::SUBSCRIPTION_FAILED_ACTION_NAME );
+		$next_payment_action_names = [ EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME, EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME ];
 
 		foreach ( $action_names as $action_name ) {
 
@@ -113,7 +101,7 @@ final class Cron extends Singleton {
 							$order_date['customer_email'],
 							$subject,
 							$body,
-							array( 'Content-Type: text/html; charset=UTF-8' ),
+							[ 'Content-Type: text/html; charset=UTF-8' ],
 						);
 					}
 				}
@@ -139,12 +127,12 @@ final class Cron extends Singleton {
 		);
 
 		// ENHANCE 可以限制只抓 LAST_FAILED_TIMESTAMP_META_KEY < 指定時間(N) + 2,3天的訂閱就好
-		$args = array(
+		$args = [
 			'post_type'      => ShopSubscription::POST_TYPE,
 			'posts_per_page' => -1,
 			'post_status'    => $failed_statuses,
 			'fields'         => 'ids',
-		);
+		];
 
 		$subscription_ids = \get_posts( $args );
 
@@ -190,12 +178,12 @@ final class Cron extends Singleton {
 	 */
 	public static function get_order_date_arr_by_action( string $action ): array {
 
-		$arr = array();
+		$arr = [];
 		switch ( $action ) {
-			case Email::SUBSCRIPTION_SUCCESS_ACTION_NAME:
+			case EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME:
 				$post_status = ShopSubscription::$success_statuses;
 				break;
-			case Email::SUBSCRIPTION_FAILED_ACTION_NAME:
+			case EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME:
 				$post_status = ShopSubscription::$failed_statuses;
 				break;
 
@@ -205,23 +193,23 @@ final class Cron extends Singleton {
 		}
 
 		$subscription_ids = \get_posts(
-			array(
+			[
 				'post_type'      => ShopSubscription::POST_TYPE,
 				'posts_per_page' => -1,
 				'post_status'    => $post_status,
 				'fields'         => 'ids',
 				'meta_query'     => array( //phpcs:ignore
-					array(
+					[
 						'key'     => ShopSubscription::IS_POWER_PARTNER_SUBSCRIPTION,
 						'compare' => 'EXISTS',
-					),
+					],
 				),
-			)
+			]
 		);
 
 		foreach ( $subscription_ids as $subscription_id ) {
 			$subscription = new \WC_Subscription( $subscription_id );
-			// @param string $date_type 'date_created', 'trial_end', 'next_payment', 'last_order_date_created', 'end' or 'end_of_prepaid_term'
+			// $date_type 'date_created', 'trial_end', 'next_payment', 'last_order_date_created', 'end' or 'end_of_prepaid_term'
 			$date_created            = $subscription->get_time( 'date_created' );
 			$trial_end               = $subscription->get_time( 'trial_end' );
 			$next_payment            = $subscription->get_time( 'next_payment' );
@@ -240,7 +228,7 @@ final class Cron extends Singleton {
 
 			$tokens = array_merge( self::get_order_tokens( $last_order ), self::get_subscription_tokens( $subscription ) );
 
-			$arr[] = array(
+			$arr[] = [
 				'order_id'                => (string) $last_order_id,
 				'customer_email'          => $last_order->get_billing_email(),
 				'date_created'            => $date_created,
@@ -250,7 +238,7 @@ final class Cron extends Singleton {
 				'end'                     => $end,
 				'end_of_prepaid_term'     => $end_of_prepaid_term,
 				'tokens'                  => $tokens,
-			);
+			];
 		}
 
 		return $arr;
@@ -265,14 +253,14 @@ final class Cron extends Singleton {
 	public static function get_order_tokens( \WC_Order $order ): array {
 		$customer = $order->get_user();
 
-		$products = array();
+		$products = [];
 		foreach ( $order->get_items() as $item_id => $item ) {
 			$product_name = $item->get_name();
 			$products[]   = $product_name;
 		}
 		$products_text = implode( ', ', $products );
 
-		$tokens                         = array();
+		$tokens                         = [];
 		$tokens['FIRST_NAME']           = $customer->first_name;
 		$tokens['LAST_NAME']            = $customer->last_name;
 		$tokens['NICE_NAME']            = $customer->user_nicename;
@@ -298,23 +286,21 @@ final class Cron extends Singleton {
 		$order = $subscription->get_parent();
 
 		if ( ! $order ) {
-			return array();
+			return [];
 		}
 
-		$site_responses = $order->get_meta( Product::CREATE_SITE_RESPONSES_META_KEY, true );
-		$tokens         = array();
+		$site_responses = $order->get_meta( SiteSync::CREATE_SITE_RESPONSES_META_KEY, true );
+		$tokens         = [];
 		try {
 			$site_responses_arr = \json_decode( $site_responses, true );
 			$site_info          = $site_responses_arr['data'];
 			$tokens['URL']      = $site_info['url'];
 		} catch ( \Throwable $th ) {
 			ob_start();
-			print_r( $th );
-			\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
+			var_dump($th);
+			\J7\WpUtils\Classes\Log::info('' . ob_get_clean());
 		}
 
 		return $tokens;
 	}
 }
-
-Cron::get();

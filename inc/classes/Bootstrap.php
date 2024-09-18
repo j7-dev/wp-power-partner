@@ -7,36 +7,38 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
-use Micropackage\Singleton\Singleton;
 use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Api\Connect;
-use J7\PowerPartner\Email\Email;
+use J7\PowerPartner\Email\Utils as EmailUtils;
 use Kucrut\Vite;
 
 /**
  * Class Bootstrap
  */
-final class Bootstrap extends Singleton {
+final class Bootstrap {
+	use \J7\WpUtils\Traits\SingletonTrait;
+
 
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		require_once __DIR__ . '/utils/index.php';
-		require_once __DIR__ . '/admin/index.php';
-		require_once __DIR__ . '/api/index.php';
-		require_once __DIR__ . '/order/index.php';
-		require_once __DIR__ . '/product/index.php';
-		require_once __DIR__ . '/shortcode/index.php';
-		require_once __DIR__ . '/shop_subscription/index.php';
-		require_once __DIR__ . '/email/index.php';
-		require_once __DIR__ . '/cron/index.php';
+		Api\Main::instance();
+		Api\Connect::instance();
+		Api\User::instance();
+		Order::instance();
+		Product\DataTabs::instance();
+		Product\SiteSync::instance();
+		ShopSubscription::instance();
+		Shortcode::instance();
+		Cron::instance();
+		Admin\Menu\Setting::instance();
 
-		\add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_script' ), 99 );
-		\add_action( 'wp_enqueue_scripts', array( $this, 'frontend_enqueue_script' ), 99 );
-		Email::sync_email_content();
+		\add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 99 );
+		\add_action( 'wp_enqueue_scripts', [ $this, 'frontend_enqueue_script' ], 99 );
+		EmailUtils::sync_email_content();
 
 		Base::$api_url = Plugin::$is_local ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
 	}
@@ -50,7 +52,7 @@ final class Bootstrap extends Singleton {
 	 * @return void
 	 */
 	public function admin_enqueue_script( $hook ): void {
-		if ( 'toplevel_page_power_plugins_settings' !== $hook ) {
+		if ( 'powerhouse_page_power-partner' !== $hook ) {
 			return;
 		}
 		$this->enqueue_script();
@@ -80,10 +82,10 @@ final class Bootstrap extends Singleton {
 		Vite\enqueue_asset(
 			Plugin::$dir . '/js/dist',
 			'js/src/main.tsx',
-			array(
-				'handle'    => Plugin::KEBAB,
+			[
+				'handle'    => Plugin::$kebab,
 				'in-footer' => true,
-			)
+			]
 		);
 
 		$post_id                  = \get_the_ID();
@@ -93,37 +95,37 @@ final class Bootstrap extends Singleton {
 		global $power_plugins_settings;
 
 		\wp_localize_script(
-			Plugin::KEBAB,
-			Plugin::SNAKE . '_data',
-			array(
-				'env' => array(
+			Plugin::$kebab,
+			Plugin::$snake . '_data',
+			[
+				'env' => [
 					'siteUrl'                   => \site_url(),
 					'ajaxUrl'                   => \admin_url( 'admin-ajax.php' ),
 					'userId'                    => \wp_get_current_user()->data->ID ?? null,
 					'postId'                    => $post_id,
 					'permalink'                 => $permalink,
-					'APP_NAME'                  => Plugin::APP_NAME,
-					'KEBAB'                     => Plugin::KEBAB,
-					'SNAKE'                     => Plugin::SNAKE,
+					'APP_NAME'                  => Plugin::$app_name,
+					'KEBAB'                     => Plugin::$kebab,
+					'SNAKE'                     => Plugin::$snake,
 					'BASE_URL'                  => Base::BASE_URL,
 					'APP1_SELECTOR'             => Base::APP1_SELECTOR,
 					'APP2_SELECTOR'             => Base::APP2_SELECTOR,
 					'API_TIMEOUT'               => Base::API_TIMEOUT,
-					'nonce'                     => \wp_create_nonce( Plugin::KEBAB ),
+					'nonce'                     => \wp_create_nonce( Plugin::$kebab ),
 					'allowed_template_options'  => $allowed_template_options,
 					'partner_id'                => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
 					'disable_site_after_n_days' => (int) ( $power_plugins_settings['power_partner_disable_site_after_n_days'] ?? '7' ),
-				),
-			)
+				],
+			]
 		);
 
 		\wp_localize_script(
-			Plugin::KEBAB,
+			Plugin::$kebab,
 			'wpApiSettings',
-			array(
+			[
 				'root'  => \untrailingslashit( \esc_url_raw( rest_url() ) ),
 				'nonce' => \wp_create_nonce( 'wp_rest' ),
-			)
+			]
 		);
 	}
 }

@@ -14,12 +14,13 @@ use J7\PowerPartner\Utils\Base;
  * Class ErrorNotification
  */
 final class ErrorNotification {
+	use \J7\WpUtils\Traits\SingletonTrait;
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		\add_action( 'shutdown', array( $this, 'notify_on_fatal_error' ) );
+		\add_action( 'shutdown', [ $this, 'notify_on_fatal_error' ] );
 	}
 
 	/**
@@ -44,5 +45,3 @@ final class ErrorNotification {
 		}
 	}
 }
-
-new ErrorNotification();

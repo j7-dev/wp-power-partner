@@ -1,15 +1,18 @@
-.redux-group-tab.power-partner-connect-app {
-	input.ant-input {
-		min-height: unset;
-		line-height: 1.5;
-	}
+.powerhouse_page_power-partner {
+	// 元件調整
+	#power-partner-connect-app {
+		input.ant-input {
+			min-height: unset;
+			line-height: 1.5;
+		}
 
-	.ql-container {
-		border-bottom-right-radius: 6px;
-		border-bottom-left-radius: 6px;
-	}
-	.ql-toolbar {
-		border-top-right-radius: 6px;
-		border-top-left-radius: 6px;
+		.ql-container {
+			border-bottom-right-radius: 6px;
+			border-bottom-left-radius: 6px;
+		}
+		.ql-toolbar {
+			border-top-right-radius: 6px;
+			border-top-left-radius: 6px;
+		}
 	}
 }

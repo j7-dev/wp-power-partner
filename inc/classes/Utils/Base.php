@@ -7,15 +7,12 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner\Utils;
 
-use J7\PowerPartner\Shortcode\Shortcode;
-use J7\PowerPartner\Plugin;
-
 /**
  * Class Base
  */
 abstract class Base {
 	const BASE_URL      = '/';
-	const APP1_SELECTOR = '.redux-group-tab.power-partner-connect-app';
+	const APP1_SELECTOR = '#power-partner-connect-app';
 	// const APP2_SELECTOR = '.' . Shortcode::CURRENT_USER_SITE_LIST_SHORTCODE;
 	const APP2_SELECTOR = '.power_partner_current_user_site_list';
 
@@ -25,7 +22,7 @@ abstract class Base {
 	const USER_NAME = 'j7.dev.gg';
 	const PASSWORD  = 'YQLj xV2R js9p IWYB VWxp oL2E';
 
-	const TEMPLATE_SERVER_IDS = array( 544413 );
+	const TEMPLATE_SERVER_IDS = [ 544413 ];
 	const CACHE_TIME          = 12 * HOUR_IN_SECONDS;
 
 	/**
@@ -37,16 +34,6 @@ abstract class Base {
 	 * @return string
 	 */
 	public static $api_url = 'https://cloud.luke.cafe';
-
-	/**
-	 * Is HPOS enabled
-	 *
-	 * @return bool
-	 */
-	public static function is_hpos_enabled(): bool {
-		return class_exists( \Automattic\WooCommerce\Utilities\OrderUtil::class ) && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
-	}
-
 
 	/**
 	 * Replaces placeholder tokens in a script.
@@ -87,29 +74,29 @@ abstract class Base {
 	 * @return void
 	 */
 	public static function mail_to( string $subject, string $message, $mix = 0, $send_to_admin = true ): void {
-		$email = array();
+		$email = [];
 
 		if ( \is_email( $mix ) ) {
 			$added_email = $mix;
-			$email       = array( ...$email, $added_email );
+			$email       = [ ...$email, $added_email ];
 		}
 
 		if ( \is_array( $mix ) ) {
-			$email = array( ...$email, ...$mix );
+			$email = [ ...$email, ...$mix ];
 		}
 
 		if ( is_numeric( $mix ) && $mix > 0 ) {
 			$added_email = \get_user_by( 'id', $mix )->user_email;
-			$email       = array( ...$email, $added_email );
+			$email       = [ ...$email, $added_email ];
 		}
 
 		if ( $send_to_admin ) {
-			$added_email = array( 'j7.dev.gg@gmail.com', 'luke.cafe.team@gmail.com' );
+			$added_email = [ 'j7.dev.gg@gmail.com', 'luke.cafe.team@gmail.com' ];
 
-			$email = array( ...$email, ...$added_email );
+			$email = [ ...$email, ...$added_email ];
 		}
 
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 		\wp_mail( $email, $subject, $message, $headers );
 	}
 

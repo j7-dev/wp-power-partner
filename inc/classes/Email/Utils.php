@@ -7,13 +7,12 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner\Email;
 
-use J7\PowerPartner\Plugin;
 /**
  * Class Email
  */
-final class Email {
+abstract class Utils {
 
-	const EMAILS_OPTION_NAME = Plugin::SNAKE . '_emails';
+	const EMAILS_OPTION_NAME = 'power_partner_emails';
 	const DEFAULT_SUBJECT    = '這裡填你的信件主旨 ##FIRST_NAME##';
 	const DEFAULT_BODY       = '<p>嗨 ##FIRST_NAME##</p><p>你的網站開好囉，<a href="https://cloud.luke.cafe/docs" rel="noopener noreferrer" target="_blank">點此可以打開網站的使用說明書</a></p><p><br></p><p>另外如果要將網站換成正式的網域，請參考<a href="https://cloud.luke.cafe/docs/domain-change/" rel="noopener noreferrer" target="_blank">這篇教學</a></p><p><br></p><p>有網站的問題都可以直接回覆這封信，或是私訊 <a href="https://wpsite.pro/" rel="noopener noreferrer" target="_blank">架站小幫手網站</a> 的右下角對話框</p><p>&nbsp;</p><p>--- 以下是你的網站資訊 ---</p><p><br></p><p>網站暫時網址：</p><p>##FRONTURL##</p><p>之後可換成你自己的網址</p><p><br></p><p>網站後台：</p><p>##ADMINURL##</p><p><br></p><p>帳號：</p><p>##SITEUSERNAME##</p><p><br></p><p>密碼：</p><p>##SITEPASSWORD##</p><p><br></p><p><strong>進去後請記得改成自己的密碼喔</strong></p><p><br></p><br><p>網站主機ip：</p><p>##IPV4##</p><p>&nbsp;</p><p>這封信很重要，不要刪掉，這樣之後才找得到喔～</p><p>&nbsp;</p><p><br></p>';
 
@@ -38,7 +37,7 @@ final class Email {
 	 * @return array
 	 */
 	public static function get_emails( string $action_name = '' ): array {
-		$emails = \get_option( self::EMAILS_OPTION_NAME, array() );
+		$emails = \get_option( self::EMAILS_OPTION_NAME, [] );
 
 		// 預設只拿 enabled 的 email
 		$emails = array_filter(
@@ -74,7 +73,7 @@ final class Email {
 
 		if ( ! empty( $origin_email_subject ) || ! empty( $origin_email_body ) ) {
 			// 如果有舊的email，就同步舊有的email成新的email
-			$sync_email = array(
+			$sync_email = [
 				'enabled'     => true,
 				'key'         => 'sync_email',
 				'body'        => $origin_email_body,
@@ -82,12 +81,12 @@ final class Email {
 				'action_name' => 'site_sync',
 				'days'        => 0,
 				'operator'    => 'after',
-			);
+			];
 			\update_option(
 				self::EMAILS_OPTION_NAME,
-				array(
+				[
 					$sync_email,
-				)
+				]
 			);
 
 			// 同步完成，移除舊的email

@@ -7,15 +7,14 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner\Api;
 
-use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Utils\Base;
 
 /**
  * Class Fetch
  */
-final class Fetch {
+abstract class Fetch {
 
-	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = Plugin::SNAKE . '_allowed_template_options';
+	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = 'power_partner_allowed_template_options';
 	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME    = 30 * 24 * HOUR_IN_SECONDS;
 	/**
 	 * 發 API 開站
@@ -38,14 +37,14 @@ final class Fetch {
 	 * @return array|\WP_Error — The response or WP_Error on failure.
 	 */
 	public static function site_sync( array $props ) {
-		$args     = array(
+		$args     = [
 			'body'    => \wp_json_encode( $props ),
-			'headers' => array(
+			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
-			),
+			],
 			'timeout' => 600,
-		);
+		];
 		$response = \wp_remote_post( Base::$api_url . '/wp-json/power-partner-server/site-sync', $args );
 
 		try {
@@ -58,11 +57,11 @@ final class Fetch {
 			ob_start();
 			print_r( $response );
 			return \rest_ensure_response(
-				array(
+				[
 					'status'  => 500,
 					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
 					'data'    => null,
-				)
+				]
 			);
 		}
 	}
@@ -76,20 +75,20 @@ final class Fetch {
 	 * @return array|\WP_Error — The response or WP_Error on failure.
 	 */
 	public static function disable_site( string $site_id, string $reason = '停用網站' ) {
-		$args     = array(
+		$args     = [
 			'body'    => \wp_json_encode(
-				array(
+				[
 					'site_id'    => $site_id,
 					'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
 					'reason'     => $reason,
-				)
+				]
 			),
-			'headers' => array(
+			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
-			),
+			],
 			'timeout' => 600,
-		);
+		];
 		$response = \wp_remote_post( Base::$api_url . '/wp-json/power-partner-server/v2/disable-site', $args );
 
 		try {
@@ -99,11 +98,11 @@ final class Fetch {
 			ob_start();
 			print_r( $response );
 			return \rest_ensure_response(
-				array(
+				[
 					'status'  => 500,
 					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
 					'data'    => null,
-				)
+				]
 			);
 		}
 	}
@@ -116,23 +115,15 @@ final class Fetch {
 		$allowed_template_options = \get_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
 
 		if ( false === $allowed_template_options ) {
-			$allowed_template_options = array();
+			$allowed_template_options = [];
 			$result                   = self::fetch_template_sites_by_user();
-			// \J7\WpToolkit\Utils::debug_log( '發API了 ' );
-			try {
-				$template_sites = $result->data->list;
-				foreach ( $template_sites as $site ) {
-					$allowed_template_options[ (string) $site->ID ] = $site->post_title;
-				}
 
-				\set_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY, (array) $allowed_template_options, self::ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME );
-			} catch ( \Throwable $th ) {
-				ob_start();
-				print_r( $th );
-				\J7\WpToolkit\Utils::debug_log( '' . ob_get_clean() );
+			$template_sites = $result->data->list;
+			foreach ( $template_sites as $site ) {
+				$allowed_template_options[ (string) $site->ID ] = $site->post_title;
 			}
-		} else { // phpcs:ignore
-			// \J7\WpToolkit\Utils::debug_log( '沒發API ' );
+
+			\set_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY, (array) $allowed_template_options, self::ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME );
 		}
 
 		return (array) $allowed_template_options;
@@ -146,14 +137,14 @@ final class Fetch {
 	public static function fetch_template_sites_by_user() {
 		$partner_id = \get_option( Connect::PARTNER_ID_OPTION_NAME );
 
-		$args = array(
-			'headers' => array(
+		$args = [
+			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
 				'X-Api-Key'     => 'apikey12345',
-			),
+			],
 			'timeout' => 120,
-		);
+		];
 
 		$response = \wp_remote_get( Base::$api_url . '/wp-json/power-partner-server/template-sites?user_id=' . $partner_id, $args );
 
@@ -164,11 +155,11 @@ final class Fetch {
 			ob_start();
 			print_r( $response );
 			return \rest_ensure_response(
-				array(
+				[
 					'status'  => 500,
 					'message' => 'fetch_template_sites_by_user json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
 					'data'    => null,
-				)
+				]
 			);
 		}
 	}
