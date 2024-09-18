@@ -36,7 +36,7 @@ final class Bootstrap {
 		Cron::instance();
 		Admin\Menu\Setting::instance();
 
-		LC\ShopSubscription::instance();
+		LC\Main::instance();
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 99 );
 		\add_action( 'wp_enqueue_scripts', [ $this, 'frontend_enqueue_script' ], 99 );

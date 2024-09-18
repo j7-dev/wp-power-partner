@@ -41,26 +41,22 @@ final class SiteSync {
 	 */
 	public function site_sync_by_subscription(\WC_Subscription $subscription ): void { // phpcs:ignore
 
-		if ( ! $subscription ) {
-			return;
-		}
-
 		$order_ids = $this->get_related_order_ids( $subscription );
 
-		$order = $subscription->get_parent();
+		$parent_order = $subscription->get_parent();
 
-		if ( ! $order ) {
+		if ( ! ( $parent_order instanceof \WC_Order ) ) {
 			return;
 		}
 
-		$parent_order_id = $order->get_id();
+		$parent_order_id = $parent_order->get_id();
 
 		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
-		if ( empty( $order ) || count( $order_ids ) !== 1 || ( $order_ids[0] ?? 0 ) !== $parent_order_id ) {
+		if ( count( $order_ids ) !== 1 || ( $order_ids[0] ?? 0 ) !== $parent_order_id ) {
 			return;
 		}
 
-		$items     = $order->get_items();
+		$items     = $parent_order->get_items();
 		$responses = [];
 
 		foreach ( $items as $item ) {
@@ -100,12 +96,12 @@ final class SiteSync {
 					'host_position'   => $host_position,
 					'partner_id'      => \get_option( Plugin::$snake . '_partner_id', '0' ),
 					'customer'        => [
-						'id'         => $order->get_customer_id(),
-						'first_name' => $order->get_billing_first_name(),
-						'last_name'  => $order->get_billing_last_name(),
-						'username'   => \get_user_by( 'id', $order->get_customer_id() )->user_login ?? 'admin',
-						'email'      => $order->get_billing_email(),
-						'phone'      => $order->get_billing_phone(),
+						'id'         => $parent_order->get_customer_id(),
+						'first_name' => $parent_order->get_billing_first_name(),
+						'last_name'  => $parent_order->get_billing_last_name(),
+						'username'   => \get_user_by( 'id', $parent_order->get_customer_id() )->user_login ?? 'admin',
+						'email'      => $parent_order->get_billing_email(),
+						'phone'      => $parent_order->get_billing_phone(),
 					],
 					'subscription_id' => $subscription->get_id(),
 				]
@@ -137,14 +133,14 @@ final class SiteSync {
 				$note = ob_get_clean();
 			}
 
-			$order->add_order_note( $note );
+			$parent_order->add_order_note( $note );
 		} else {
-			$order->add_order_note( $responses_string );
+			$parent_order->add_order_note( $responses_string );
 		}
 
-		$order->update_meta_data( self::CREATE_SITE_RESPONSES_META_KEY, \wp_json_encode( $responses ) );
+		$parent_order->update_meta_data( self::CREATE_SITE_RESPONSES_META_KEY, \wp_json_encode( $responses ) );
 
-		$order->save();
+		$parent_order->save();
 	}
 
 	/**
@@ -155,7 +151,7 @@ final class SiteSync {
 	 * @return array List of related order IDs.
 	 * @since 1.0.0 - Migrated from WooCommerce Subscriptions v2.3.0
 	 */
-	protected function get_related_order_ids( $subscription, $order_type = 'any' ) {
+	public function get_related_order_ids( $subscription, $order_type = 'any' ) {
 
 		$related_order_ids = [];
 

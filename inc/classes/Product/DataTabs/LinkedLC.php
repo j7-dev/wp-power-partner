@@ -54,7 +54,7 @@ final class LinkedLC {
 		// 商品 & 授權碼數量選擇器
 		printf(
 		/*html*/"
-			<div class='flex items-center py-4'>
+			<div class='flex items-center py-4 show_if_subscription hidden'>
 				<div class='w-[150px] pl-3 mt-2 self-start'>關聯授權碼</div>
 				<div class='%1\$s'>
 					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>
@@ -107,7 +107,7 @@ final class LinkedLC {
 		// 商品 & 授權碼數量選擇器
 		printf(
 		/*html*/"
-			<div class='clear-both'>
+			<div class='clear-both show_if_variable-subscription hidden'>
 				<div class=''>關聯授權碼</div>
 				<div class='%1\$s'>
 					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>
