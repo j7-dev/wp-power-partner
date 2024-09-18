@@ -35,8 +35,8 @@ final class Bootstrap {
 		Shortcode::instance();
 		Cron::instance();
 		Admin\Menu\Setting::instance();
-
 		LC\Main::instance();
+		LC\Api::instance();
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 99 );
 		\add_action( 'wp_enqueue_scripts', [ $this, 'frontend_enqueue_script' ], 99 );

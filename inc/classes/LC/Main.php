@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace J7\PowerPartner\LC;
 
 use J7\PowerPartner\Product\DataTabs\LinkedLC;
-use J7\Powerhouse\Api\Base as Api;
+use J7\Powerhouse\Api\Base as CloudApi;
 use J7\WpUtils\Classes\General;
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\ShopSubscription;
@@ -68,7 +68,7 @@ final class Main {
 		}
 
 		// 訂閱失敗，發API停用授權碼
-		$api_instance = Api::instance();
+		$api_instance = CloudApi::instance();
 		$response     = $api_instance->remote_post(
 			'license-codes/expire',
 			[
@@ -156,12 +156,13 @@ final class Main {
 		$all_lc_ids = [];
 
 		// 打API給站長路可新增授權碼
-		$api_instance = Api::instance();
+		$api_instance = CloudApi::instance();
 
 		foreach ($all_linked_lc_products as $linked_lc_product) {
 			$params                    = $linked_lc_product;
 			$params['post_author']     = $partner_id;
 			$params['subscription_id'] = $subscription->get_id();
+			$params['customer_id']     = $subscription->get_customer_id();
 			$response                  = $api_instance->remote_post(
 				'license-codes',
 				$params
@@ -177,7 +178,7 @@ final class Main {
 			$data = General::json_parse($body, []);
 
 			/**
-			 * @var array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, expire_date: int, domain: string, product_slug: string, product_key: string, product_name: string}> $license_codes
+			 * @var array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, customer_id: int, expire_date: int, domain: string, product_slug: string, product_key: string, product_name: string}> $license_codes
 			 */
 			$license_codes = $data['data']['license_codes'] ?? [];
 			if (is_array($license_codes)) {
