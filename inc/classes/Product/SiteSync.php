@@ -28,32 +28,10 @@ final class SiteSync {
 	 * Constructor
 	 */
 	public function __construct() {
-		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'site_sync_by_subscription' ], 20, 1 );
 	}
 
-	/**
-	 * Enqueue assets
-	 *
-	 * @return void
-	 */
-	public function enqueue_assets(): void {
-		$screen = \get_current_screen();
-		if ( $screen->id !== 'product' ) {
-			return;
-		}
-		\wp_enqueue_style( Plugin::$kebab . '-product-tab-css', Plugin::$url . '/js/dist_product_tab/assets/css/index.css', [], Plugin::$version );
-		\wp_enqueue_script(
-			Plugin::$kebab . '-product-tab-js',
-			Plugin::$url . '/js/dist_product_tab/index.js',
-			[],
-			Plugin::$version,
-			[
-				'strategy'  => 'async',
-				'in_footer' => true,
-			]
-		);
-	}
+
 
 	/**
 	 * Do site sync

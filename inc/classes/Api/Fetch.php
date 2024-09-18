@@ -144,7 +144,6 @@ abstract class Fetch {
 			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
-				'X-Api-Key'     => 'apikey12345',
 			],
 			'timeout' => 120,
 		];

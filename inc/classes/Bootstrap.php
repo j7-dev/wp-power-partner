@@ -43,7 +43,7 @@ final class Bootstrap {
 		\add_action( 'admin_init', [ $this, 'compatibility_settings' ], 99 );
 		\add_action( 'admin_notices', [ $this, 'notice' ] );
 
-		Base::$api_url = Plugin::$is_local ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
+		Base::$api_url = Plugin::$is_local ? 'http://cloud.local' : 'https://cloud.luke.cafe';
 	}
 
 	/**
