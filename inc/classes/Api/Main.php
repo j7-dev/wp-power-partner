@@ -13,6 +13,7 @@ use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Email\Utils as EmailUtils;
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\ShopSubscription;
+use J7\WpUtils\Classes\WP;
 
 /**
  * Class Api
@@ -140,7 +141,7 @@ final class Main {
 			'settings',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'post_change_subscription_callback' ],
+				'callback'            => [ $this, 'post_settings_callback' ],
 				'permission_callback' => function () {
 					return \current_user_can( 'manage_options' );
 				},
@@ -440,7 +441,8 @@ final class Main {
 	 * @return \WP_REST_Response
 	 */
 	public function get_emails_callback(): \WP_REST_Response {
-		$emails = \get_option( EmailUtils::EMAILS_OPTION_NAME, [] );
+		$power_partner_settings = \get_option( 'power_partner_settings', [] );
+		$emails                 = $power_partner_settings['emails'] ?? [];
 
 		return new \WP_REST_Response(
 			$emails,
@@ -449,7 +451,7 @@ final class Main {
 	}
 
 	/**
-	 * Post emails callback
+	 * 儲存 emails callback
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
@@ -479,8 +481,32 @@ final class Main {
 		}
 	}
 
+
+	/**
+	 * 更新設定
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function post_settings_callback( $request ): \WP_REST_Response {
+		$body_params = $request->get_json_params() ?? [];
+		$body_params = WP::sanitize_text_field_deep( $body_params, false );
+
+		\update_option( 'power_partner_settings', $body_params );
+
+		return new \WP_REST_Response(
+			[
+				'status'  => 200,
+				'message' => 'update settings success',
+				'data'    => $body_params,
+			],
+			200
+		);
+	}
+
 	/**
 	 * Manual site sync callback
+	 * 手動開站
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response|\WP_Error

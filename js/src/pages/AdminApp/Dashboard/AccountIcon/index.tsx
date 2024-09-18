@@ -1,4 +1,4 @@
-import { Avatar, Dropdown, MenuProps, Tooltip, Button, Form } from 'antd'
+import { Avatar, Dropdown, MenuProps, Tooltip, Button, message } from 'antd'
 import {
 	identityAtom,
 	globalLoadingAtom,
@@ -17,21 +17,11 @@ import { LoadingText } from '@/components'
 import { axios } from '@/api'
 import { useQueryClient } from '@tanstack/react-query'
 import useFormInstance from 'antd/es/form/hooks/useFormInstance'
+import useSave, {
+	TFormValues,
+} from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
 
 const DEPOSIT_LINK = 'https://cloud.luke.cafe/product/power-partner/'
-
-type TFormValues = {
-	power_partner_disable_site_after_n_days: number
-	emails: {
-		subject: string
-		key: string
-		body: string
-		enabled: boolean
-		action_name: string
-		days: number
-		operator: string
-	}[]
-}
 
 const index = () => {
 	const [identity, setIdentity] = useAtom(identityAtom)
@@ -129,11 +119,14 @@ const index = () => {
 	}
 
 	const form = useFormInstance()
+	const { mutation, contextHolder } = useSave(form)
+	const { mutate: saveSettings, isPending } = mutation
+
 	const handleSave = () => {
 		form
 			.validateFields()
-			.then((values: TFormValues) => {
-				console.log(values)
+			.then((settings: TFormValues) => {
+				saveSettings(settings)
 			})
 			.catch((error) => {
 				console.log(error)
@@ -142,7 +135,13 @@ const index = () => {
 
 	return (
 		<div className={'ml-4 xl:mr-4 flex items-center gap-4 xl:gap-8'}>
-			<Button size="small" type="primary" onClick={handleSave}>
+			{contextHolder}
+			<Button
+				size="small"
+				type="primary"
+				onClick={handleSave}
+				loading={isPending}
+			>
 				儲存
 			</Button>
 			<Tooltip title="刷新資料">

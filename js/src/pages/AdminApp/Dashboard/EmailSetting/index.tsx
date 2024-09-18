@@ -25,7 +25,6 @@ import {
 	focusEmailIndexAtom,
 } from '@/pages/AdminApp/Dashboard/EmailSetting/atom'
 import { useAtom, useAtomValue } from 'jotai'
-import useSave from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
 import useGetEmails from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useGetEmails'
 import { PlusCircleOutlined } from '@ant-design/icons'
 
@@ -90,12 +89,10 @@ const EmailSetting = () => {
 	}
 
 	const { isPending } = useGetEmails()
-	const { contextHolder: notificationContextHolder } = useSave(form)
 
 	return (
 		<div>
 			{contextHolder}
-			{notificationContextHolder}
 			<div className="flex flex-col lg:flex-row gap-8 relative">
 				<div className="flex-1">
 					<Button

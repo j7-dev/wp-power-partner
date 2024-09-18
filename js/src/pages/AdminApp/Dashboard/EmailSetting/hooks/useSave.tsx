@@ -1,81 +1,64 @@
-import React, { useEffect } from 'react'
 import { DataType } from '@/pages/AdminApp/Dashboard/EmailSetting/types'
 import { FormInstance, notification } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { axios } from '@/api'
 import { LoadingOutlined } from '@ant-design/icons'
 
-const useSave = (form: FormInstance<DataType[]>) => {
-  const queryClient = useQueryClient()
-  const [api, contextHolder] = notification.useNotification({
-    placement: 'bottomRight',
-    stack: { threshold: 1 },
-    duration: 10,
-  })
+export type TFormValues = {
+	power_partner_disable_site_after_n_days: number
+	emails: DataType[]
+}
 
-  const { mutate: saveEmails } = useMutation({
-    mutationFn: (values: { emails: DataType[] }) =>
-      axios.post('/power-partner/emails', values),
-    onMutate: () => {
-      api.open({
-        key: 'save-emails',
-        message: '儲存 Email 中...',
-        duration: 0,
-        icon: <LoadingOutlined className="text-primary" />,
-      })
-    },
-    onError: (err) => {
-      console.log('err', err)
-      api.error({
-        key: 'save-emails',
-        message: 'OOPS! 儲存 Email 時發生問題',
-      })
-    },
-    onSuccess: (data) => {
-      const status = data?.data?.status
-      const message = data?.data?.message
+const useSave = (form: FormInstance<TFormValues>) => {
+	const queryClient = useQueryClient()
+	const [api, contextHolder] = notification.useNotification({
+		placement: 'bottomRight',
+		stack: { threshold: 1 },
+		duration: 10,
+	})
 
-      if (200 === status) {
-        api.success({
-          key: 'save-emails',
-          message: '儲存 Email 成功',
-        })
-        queryClient.invalidateQueries({ queryKey: ['emails'] })
-      } else {
-        api.error({
-          key: 'save-emails',
-          message: 'OOPS! 儲存 Email 時發生問題',
-          description: message,
-        })
-      }
-    },
-  })
+	const mutation = useMutation({
+		mutationFn: (values: TFormValues) =>
+			axios.post('/power-partner/settings', values),
+		onMutate: () => {
+			api.open({
+				key: 'save-settings',
+				message: '儲存 設定 中...',
+				duration: 0,
+				icon: <LoadingOutlined className="text-primary" />,
+			})
+		},
+		onError: (err) => {
+			console.log('err', err)
+			api.error({
+				key: 'save-settings',
+				message: 'OOPS! 儲存 設定 時發生問題',
+			})
+		},
+		onSuccess: (data) => {
+			const status = data?.data?.status
+			const message = data?.data?.message
 
-  const handleSave = () => {
-    const values = form.getFieldsValue()
-    saveEmails({
-      emails: values,
-    })
-  }
+			if (200 === status) {
+				api.success({
+					key: 'save-settings',
+					message: '儲存 設定 成功',
+				})
+				queryClient.invalidateQueries({ queryKey: ['emails'] })
+			} else {
+				api.error({
+					key: 'save-settings',
+					message: 'OOPS! 儲存 設定 時發生問題',
+					description: message,
+				})
+			}
+		},
+	})
 
-  useEffect(() => {
-    const saveBtnNode1 = document.getElementById('redux_bottom_save')
-    const saveBtnNode2 = document.getElementById('redux_top_save')
-    const nodes = [saveBtnNode1, saveBtnNode2]
-    nodes.forEach((node) => {
-      if (node) {
-        node.addEventListener('click', handleSave)
-
-        return () => {
-          node.removeEventListener('click', handleSave)
-        }
-      }
-    })
-  }, [])
-
-  return {
-    contextHolder,
-  }
+	return {
+		contextHolder,
+		mutation,
+	}
 }
 
 export default useSave

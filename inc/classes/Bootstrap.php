@@ -38,7 +38,8 @@ final class Bootstrap {
 		\add_action( 'wp_enqueue_scripts', [ $this, 'frontend_enqueue_script' ], 99 );
 
 		// v2 to v3 欄位遷移  相容設定
-		\add_action( 'init', [ $this, 'compatibility_settings' ], 99 );
+		\add_action( 'admin_init', [ $this, 'compatibility_settings' ], 99 );
+		\add_action( 'admin_notices', [ $this, 'notice' ] );
 
 		Base::$api_url = Plugin::$is_local ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
 	}
@@ -158,5 +159,17 @@ final class Bootstrap {
 		// remove v2 option
 		\delete_option( 'power_plugins_settings' );
 		\delete_option( 'power_partner_emails' );
+	}
+
+	/**
+	 * 通知
+	 * 將 v2 的設定遷移到 v3
+	 *
+	 * @deprecated v4 可以刪除
+	 *
+	 * @return void
+	 */
+	public function notice(): void {
+		echo '<div class="notice notice-info is-dismissible"><p>Power Partner v3.0.0 以上版本已經不再依賴 WP Toolkit，可以直接刪除 WP Toolkit</p></div>';
 	}
 }
