@@ -129,13 +129,7 @@ final class Cron extends Singleton {
 	public static function disable_sites() {
 		// 取得所有失敗(非啟用、非過期)的訂閱
 		$failed_statuses = ShopSubscription::$failed_statuses;
-		// 已經取消的訂閱，不進判斷
-		$failed_statuses = array_filter(
-			$failed_statuses,
-			function ( $status ) {
-				return $status !== 'cancelled';
-			}
-		);
+
 		// 加上前綴 wc- 才篩選得出來
 		$failed_statuses = array_map(
 			function ( $status ) {
@@ -144,6 +138,7 @@ final class Cron extends Singleton {
 			$failed_statuses
 		);
 
+		// ENHANCE 可以限制只抓 LAST_FAILED_TIMESTAMP_META_KEY < 指定時間(N) + 2,3天的訂閱就好
 		$args = array(
 			'post_type'      => ShopSubscription::POST_TYPE,
 			'posts_per_page' => -1,
