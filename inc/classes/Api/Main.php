@@ -156,7 +156,7 @@ final class Main {
 	public function post_customer_notification_callback( $request ) {
 		try {
 			$body_params = $request->get_json_params() ?? [];
-			$customer_id = $body_params['CUSTOMER_ID'];
+			$customer_id = $body_params['CUSTOMER_ID'] ?? '0';
 			$customer    = \get_user_by( 'id', $customer_id );
 			if ( ! $customer || empty( $customer_id ) ) {
 				return \rest_ensure_response(
@@ -166,12 +166,18 @@ final class Main {
 					]
 				);
 			}
+			$order_id       = $body_params['REF_ORDER_ID'] ?? '0';
+			$order          = \wc_get_order( $order_id );
+			$customer_email = $customer->user_email;
+			if ( $order ) {
+				$customer_email = $order->get_billing_email();
+			}
 
 			$tokens                                   = [];
 			$tokens['FIRST_NAME']                     = $customer->first_name;
 			$tokens['LAST_NAME']                      = $customer->last_name;
 			$tokens['NICE_NAME']                      = $customer->user_nicename;
-			$tokens['EMAIL']                          = $customer->user_email;
+			$tokens['EMAIL']                          = $customer_email;
 			$tokens['WORDPRESSAPPWCSITESACCOUNTPAGE'] = $body_params['WORDPRESSAPPWCSITESACCOUNTPAGE'];
 			$tokens['IPV4']                           = $body_params['IPV4'];
 			$tokens['DOMAIN']                         = $body_params['DOMAIN'];
@@ -198,7 +204,7 @@ final class Main {
 
 				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 				\wp_mail(
-					$customer->user_email,
+					$customer_email,
 					$subject,
 					$body,
 					$email_headers
