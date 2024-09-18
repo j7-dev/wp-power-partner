@@ -1,21 +1,20 @@
 import React, { FC, useEffect } from 'react'
 
-import {
-	Modal,
-	Form,
-	Input,
-	InputNumber,
-	Select,
-	DatePicker,
-	Switch,
-	Tag,
-} from 'antd'
+import { Modal, Form, InputNumber, Select, DatePicker, Switch, Tag } from 'antd'
 import { TUseModal } from '@/hooks'
 import { getInfo } from '../utils'
-import { useProducts, useCreate, TCreateParams } from '../hooks'
+import {
+	useProducts,
+	useCreate,
+	TCreateParams,
+	useUpdate,
+	TUpdateParams,
+} from '../hooks'
+// import { useCreate, TCreateParams } from '../hooks/useCreate'
 import { DataType } from '../types'
 import dayjs from 'dayjs'
 import { NotificationInstance } from 'antd/es/notification/interface'
+import SubscriptionSelector from './SubscriptionSelector'
 
 const { Item } = Form
 
@@ -23,26 +22,38 @@ const index: FC<{
 	selectedRowKeys: React.Key[]
 	useModalResult: TUseModal
 	theSingleRecord: DataType | undefined
-	notificationInsance: NotificationInstance
+	notificationInstance: NotificationInstance
 }> = ({
 	selectedRowKeys,
 	useModalResult,
 	theSingleRecord,
-	notificationInsance: api,
+	notificationInstance: api,
 }) => {
 	const { open, close, modalProps } = useModalResult
 	const { label, isEdit, isSingleEdit } = getInfo(selectedRowKeys)
 
 	const { mutate: create, isPending: isCreating } = useCreate({ api, close })
+	const { mutate: update, isPending: isUpdating } = useUpdate({ api, close })
 	const handleOk = () => {
-		const values = form.getFieldsValue()
-		const formattedValues: TCreateParams = {
-			...values,
-			is_subscription: undefined,
-			status: undefined,
-		}
+		form.validateFields().then((values) => {
+			if (isEdit) {
+				const formattedValues: TUpdateParams = {
+					...values,
+					is_subscription: undefined,
+					ids: selectedRowKeys,
+				}
 
-		// create(formattedValues)
+				update(formattedValues)
+			} else {
+				const formattedValues: TCreateParams = {
+					...values,
+					is_subscription: undefined,
+					status: undefined,
+				}
+
+				create(formattedValues)
+			}
+		})
 	}
 	const [form] = Form.useForm()
 
@@ -51,9 +62,6 @@ const index: FC<{
 	const watchLimitType = Form.useWatch(['limit_type'], form)
 
 	useEffect(() => {
-		if (isEdit) {
-			return
-		}
 		if ('unlimited' === watchLimitType) {
 			form.setFieldValue(['limit_value'], '')
 			form.setFieldValue(['limit_unit'], '')
@@ -66,7 +74,7 @@ const index: FC<{
 			form.setFieldValue(['limit_value'], dayjs().format('YYYY-MM-DD'))
 			form.setFieldValue(['limit_unit'], '')
 		}
-	}, [watchLimitType, isEdit])
+	}, [watchLimitType])
 
 	useEffect(() => {
 		if (!theSingleRecord) {
@@ -75,6 +83,8 @@ const index: FC<{
 		form.setFieldsValue({
 			...theSingleRecord,
 			status: 'available',
+			customer_id: undefined,
+			subscription_id: undefined,
 		})
 	}, [theSingleRecord])
 
@@ -89,7 +99,7 @@ const index: FC<{
 			title={`批量${label}授權碼 ${isEdit ? `(${selectedRowKeys.length}) 筆` : ''}`}
 			{...modalProps}
 			onOk={handleOk}
-			confirmLoading={isCreating}
+			confirmLoading={isCreating || isUpdating}
 		>
 			{!!isEdit && (
 				<div>
@@ -100,26 +110,53 @@ const index: FC<{
 			)}
 			<Form form={form} layout="vertical" className="mt-8">
 				<div className="flex gap-x-4">
-					{!!isEdit && (
-						<Item label="修改狀態" name={['status']} initialValue="available">
-							<Select className="!w-40">
-								<Select.Option value="available">可用</Select.Option>
-								{/* <Select.Option value="activated">已啟用</Select.Option> */}
-								<Select.Option value="deactivated">已停用</Select.Option>
-								{/* <Select.Option value="expired">已過期</Select.Option> */}
-							</Select>
-						</Item>
-					)}
+					<Item
+						label="修改狀態"
+						name={['post_status']}
+						initialValue="available"
+						rules={[
+							{
+								required: true,
+								message: '請選擇狀態',
+							},
+						]}
+					>
+						<Select className="!w-40" disabled={!isEdit}>
+							<Select.Option value="available">可用</Select.Option>
+							{/* <Select.Option value="activated">已啟用</Select.Option> */}
+							<Select.Option value="deactivated">已停用</Select.Option>
+							{/* <Select.Option value="expired">已過期</Select.Option> */}
+						</Select>
+					</Item>
+
 					<Item
 						label="連接商品"
 						name={['product_slug']}
 						initialValue={productOptions?.[0]?.value}
+						rules={[
+							{
+								required: true,
+								message: '請選擇商品',
+							},
+						]}
 					>
 						<Select className="!w-40" options={productOptions} />
 					</Item>
-					<Item label="數量" name={['quantity']} initialValue={1}>
-						<InputNumber className="w-full" min={1} max={30} />
-					</Item>
+					{!isEdit && (
+						<Item
+							label="數量"
+							name={['quantity']}
+							initialValue={1}
+							rules={[
+								{
+									required: true,
+									message: '請輸入數量',
+								},
+							]}
+						>
+							<InputNumber className="w-full" min={1} max={30} />
+						</Item>
+					)}
 				</div>
 
 				<Item
@@ -132,11 +169,7 @@ const index: FC<{
 					<Switch />
 				</Item>
 
-				{!!watchIsSubscription && (
-					<Item label="連接訂閱" name={['subscription_id']}>
-						<Input />
-					</Item>
-				)}
+				{!!watchIsSubscription && <SubscriptionSelector />}
 
 				{!watchIsSubscription && (
 					<div className="flex gap-x-4">

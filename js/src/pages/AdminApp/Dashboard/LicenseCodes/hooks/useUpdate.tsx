@@ -4,13 +4,14 @@ import { cloudAxios } from '@/api'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosResponse } from 'axios'
 
-type TUseCreateParams = {
+type TUseUpdateParams = {
 	api: NotificationInstance
 	close: () => void
 }
 
-export type TCreateParams = {
-	quantity: number
+export type TUpdateParams = {
+	ids: number[]
+	post_status: string
 	post_author?: number
 	domain?: string
 	product_slug?: string
@@ -21,41 +22,29 @@ export type TCreateParams = {
 	limit_unit?: 'days' | 'months' | 'years' | ''
 }
 
-export type TCreateResponse = {
+export type TUpdateResponse = {
 	code: string
 	message: string
 	data: {
-		license_codes: {
-			id: number
-			status: string
-			code: string
-			post_author: number
-			is_subscription: boolean
-			subscription_id: number
-			expire_date: number
-			domain: string
-			product_slug: string
-			product_name: string
-			cost: string
-		}[]
+		ids: number[]
 	}
 }
 
-export const useCreate = ({ api, close }: TUseCreateParams) => {
+export const useUpdate = ({ api, close }: TUseUpdateParams) => {
 	const queryClient = useQueryClient()
 	const mutation = useMutation<
-		AxiosResponse<TCreateResponse>,
+		AxiosResponse<TUpdateResponse>,
 		unknown,
-		TCreateParams
+		TUpdateParams
 	>({
-		mutationFn: (data: TCreateParams) =>
-			cloudAxios.post('/license-codes', data),
+		mutationFn: (data: TUpdateParams) =>
+			cloudAxios.post('/license-codes/update', data),
 		onSuccess: (data) => {
 			const message = data?.data?.message
 
 			api.success({
-				key: 'create-license-codes',
-				message: '新增授權碼成功',
+				key: 'update-license-codes',
+				message: '更新授權碼成功',
 				description: message,
 			})
 			queryClient.invalidateQueries({ queryKey: ['license-codes'] })
@@ -64,8 +53,8 @@ export const useCreate = ({ api, close }: TUseCreateParams) => {
 		onError: (err, values) => {
 			console.log('⭐  err:', err)
 			api.error({
-				key: 'create-license-codes',
-				message: '新增授權碼失敗',
+				key: 'update-license-codes',
+				message: '更新授權碼失敗',
 			})
 		},
 	})

@@ -48,7 +48,7 @@ export const useDelete = ({
 		},
 		onError: (err, values) => {
 			console.log('⭐  err:', err)
-			api.success({
+			api.error({
 				key: 'delete-license-codes',
 				message: '刪除授權碼失敗',
 			})

@@ -12,11 +12,14 @@ import {
 import { identityAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue } from 'jotai'
 import { DataType, TParams, TStatus } from './types'
-import { useRowSelection, DateTime } from 'antd-toolkit'
+import { useRowSelection } from 'antd-toolkit'
 import { siteUrl } from '@/utils'
 import ModalForm from './ModalForm'
 import { getInfo } from './utils'
 import { useDelete } from './hooks'
+import { CreateModifyTime } from '@/components'
+import { SyncOutlined, UserOutlined } from '@ant-design/icons'
+import ExpireDate from './ExpireDate'
 
 const { Text } = Typography
 
@@ -31,11 +34,11 @@ const STATUS_MAP = {
 	},
 	deactivated: {
 		label: '已停用',
-		color: 'magenta',
+		color: 'default',
 	},
 	expired: {
 		label: '已過期',
-		color: 'default',
+		color: 'magenta',
 	},
 }
 
@@ -54,7 +57,7 @@ const columns: TableProps<DataType>['columns'] = [
 	},
 	{
 		title: '狀態',
-		dataIndex: 'status',
+		dataIndex: 'post_status',
 		render: (status: TStatus) => (
 			<Tag color={STATUS_MAP?.[status]?.color || 'default'}>
 				{STATUS_MAP?.[status]?.label || '未定義狀態'}
@@ -64,8 +67,7 @@ const columns: TableProps<DataType>['columns'] = [
 	{
 		title: '期限',
 		dataIndex: 'expire_date',
-		render: (expire_date: number) =>
-			expire_date ? <DateTime date={expire_date * 1000} /> : '無期限',
+		render: (_: number, record) => <ExpireDate record={record} />,
 	},
 	{
 		title: '綁定網域',
@@ -79,15 +81,26 @@ const columns: TableProps<DataType>['columns'] = [
 	{
 		title: '連接訂閱',
 		dataIndex: 'subscription_id',
-		render: (subscription_id: number) =>
+		render: (subscription_id: number, { customer_id }: DataType) =>
 			subscription_id ? (
-				<a
-					href={`${siteUrl}/wp-admin/post.php?post=${subscription_id}&action=edit`}
-					target="_blank"
-					rel="noreferrer"
-				>
-					{subscription_id}
-				</a>
+				<>
+					<a
+						href={`${siteUrl}/wp-admin/post.php?post=${subscription_id}&action=edit`}
+						target="_blank"
+						rel="noreferrer"
+						className="block text-xs"
+					>
+						<SyncOutlined className="mr-1" />#{subscription_id}
+					</a>
+					<a
+						href={`${siteUrl}/wp-admin/user-edit.php?user_id=${customer_id}&wp_http_referer=%2Fwp-admin%2Fusers.php`}
+						target="_blank"
+						rel="noreferrer"
+						className="block text-xs"
+					>
+						<UserOutlined className="mr-1" />#{customer_id}
+					</a>
+				</>
 			) : (
 				''
 			),
@@ -100,6 +113,13 @@ const columns: TableProps<DataType>['columns'] = [
 	{
 		title: '每天消耗點數',
 		dataIndex: 'cost',
+	},
+	{
+		title: '建立/修改時間',
+		dataIndex: 'post_date',
+		render: (post_date: string, { post_modified }: DataType) => (
+			<CreateModifyTime created={post_date} modified={post_modified} />
+		),
 	},
 ]
 
@@ -121,8 +141,8 @@ const index = () => {
 		useRowSelection<DataType>()
 	const useModalResult = useModal()
 	const { show, close } = useModalResult
-	const { label, isSingleEdit, isCreate } = getInfo(selectedRowKeys)
-	const theSingleRecord = isSingleEdit
+	const { label, isEdit, isCreate } = getInfo(selectedRowKeys)
+	const theSingleRecord = isEdit
 		? tableProps?.dataSource?.find(
 				(record) => record.id === selectedRowKeys?.[0],
 			)
@@ -167,7 +187,7 @@ const index = () => {
 				selectedRowKeys={selectedRowKeys}
 				useModalResult={useModalResult}
 				theSingleRecord={theSingleRecord}
-				notificationInsance={api}
+				notificationInstance={api}
 			/>
 		</>
 	)
