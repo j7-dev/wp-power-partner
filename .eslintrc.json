@@ -3,7 +3,8 @@
 		"node": true,
 		"browser": true,
 		"es2021": true,
-		"commonjs": true
+		"commonjs": true,
+		"JQuery": true,
 	},
 	"parser": "@typescript-eslint/parser",
 	"extends": [

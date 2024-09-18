@@ -39,6 +39,9 @@
 			"path": "./tsconfig.node.json"
 		}
 	],
+	"types": [
+		"jquery"
+	],
 	"files": [
 		"js/src/types/env.d.ts",
 		"js/src/types/global.d.ts",

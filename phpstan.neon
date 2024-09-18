@@ -3,7 +3,6 @@ parameters:
 	paths:
 		- plugin.php
 		- inc/
-		- modules/
 	ignoreErrors:
 		- '#Constant .* not found#'
 		- '#Function .* not found#'
@@ -15,3 +14,4 @@ parameters:
 	bootstrapFiles:
 		- vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
 		- vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+		- ../powerhouse/plugin.php

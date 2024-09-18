@@ -25,6 +25,16 @@ declare global {
       partner_id: string
     }
   }
+  var linked_lc_product_selector_data: {
+    container_id: string
+    field_name: string
+    cloud_products: {
+      [key: string]: {
+        name: string
+        slug: string
+      }
+    }
+  }
   var wp: {
     blocks: any
     editor: any

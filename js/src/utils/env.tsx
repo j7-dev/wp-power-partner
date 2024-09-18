@@ -23,8 +23,8 @@ export const apiTimeout = '300000'
 // export const cloudUserName = 'j7.dev.gg'
 // export const cloudPassword = 'YQLj xV2R js9p IWYB VWxp oL2E'
 
-// 測試環境
-export const cloudBaseUrl = 'http://cloud.test:8080'
+// TODO 測試環境
+export const cloudBaseUrl = 'http://cloud.local'
 export const cloudUserName = 'j7.dev.gg'
 export const cloudPassword = 'pcY9 nG3f Q73h Ju5O XZwt pWpe'
 
@@ -34,8 +34,8 @@ export const LOCALSTORAGE_ACCOUNT_KEY = 'power-partner-account'
 export const nonce = window?.[APP_DOMAIN]?.env?.nonce || ''
 export const allowed_template_options = (window?.[APP_DOMAIN]?.env
 	?.allowed_template_options || []) as {
-	[key: string]: string
-}
+		[key: string]: string
+	}
 
 export const partner_id: string = window?.[APP_DOMAIN]?.env?.partner_id || ''
 export const disable_site_after_n_days: number =
