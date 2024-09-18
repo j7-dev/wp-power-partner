@@ -10,11 +10,12 @@ import {
 	useUpdate,
 	TUpdateParams,
 } from '../hooks'
-// import { useCreate, TCreateParams } from '../hooks/useCreate'
 import { DataType } from '../types'
 import dayjs from 'dayjs'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import SubscriptionSelector from './SubscriptionSelector'
+import { identityAtom } from '@/pages/AdminApp/atom'
+import { useAtomValue } from 'jotai'
 
 const { Item } = Form
 
@@ -29,6 +30,8 @@ const index: FC<{
 	theSingleRecord,
 	notificationInstance: api,
 }) => {
+	const identity = useAtomValue(identityAtom)
+	const user_id = identity.data?.user_id || ''
 	const { open, close, modalProps } = useModalResult
 	const { label, isEdit, isSingleEdit } = getInfo(selectedRowKeys)
 
@@ -39,6 +42,7 @@ const index: FC<{
 			if (isEdit) {
 				const formattedValues: TUpdateParams = {
 					...values,
+					post_author: user_id,
 					is_subscription: undefined,
 					ids: selectedRowKeys,
 				}
@@ -47,6 +51,7 @@ const index: FC<{
 			} else {
 				const formattedValues: TCreateParams = {
 					...values,
+					post_author: user_id,
 					is_subscription: undefined,
 					post_status: undefined,
 				}

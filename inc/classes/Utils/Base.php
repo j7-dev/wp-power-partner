@@ -30,11 +30,11 @@ abstract class Base {
 	/**
 	 * Set API auth
 	 *
-	 * @param string    $env 環境名稱
 	 * @param Bootstrap $bootstrap Bootstrap 實例
+	 * @param string    $env 環境名稱
 	 * @return void
 	 */
-	public static function set_api_auth( ?string $env = 'prod', Bootstrap $bootstrap ): void {
+	public static function set_api_auth( Bootstrap $bootstrap, ?string $env = 'prod' ): void {
 
 		switch ($env) { // phpcs:ignore
 			case 'local': // LOCAL

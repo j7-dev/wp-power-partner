@@ -28,7 +28,7 @@ final class Bootstrap {
 	 */
 	public function __construct() {
 		// TODO 環境變數
-		Base::set_api_auth( 'staging', $this );
+		Base::set_api_auth( $this, 'staging' );
 
 		Api\Main::instance();
 		Api\Connect::instance();
