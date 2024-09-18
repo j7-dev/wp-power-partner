@@ -78,7 +78,8 @@ final class LinkedLC {
 		// phpcs:disable
 		if ( isset( $_POST[ self::FIELD_NAME ] ) ) {
 			$linked_lc_products = $_POST[ self::FIELD_NAME ];
-			\update_post_meta( $product_id, self::FIELD_NAME, $linked_lc_products );
+			$formatted_linked_lc_products = self::format_linked_lc_products($linked_lc_products);
+			\update_post_meta( $product_id, self::FIELD_NAME, $formatted_linked_lc_products );
 		}
 		// phpcs:enable
 	}
@@ -131,7 +132,8 @@ final class LinkedLC {
 		// phpcs:disable
 		if ( isset( $_POST[ self::FIELD_NAME ][ $loop ] ) ) {
 			$linked_lc_products = $_POST[ self::FIELD_NAME ][ $loop ];
-			\update_post_meta( $variation_id, self::FIELD_NAME, $linked_lc_products );
+			$formatted_linked_lc_products = self::format_linked_lc_products($linked_lc_products);
+			\update_post_meta( $variation_id, self::FIELD_NAME, $formatted_linked_lc_products );
 		}
 		// phpcs:enable
 	}
@@ -209,5 +211,34 @@ final class LinkedLC {
 		\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, $data, self::CACHE_TIME);
 
 		return $data;
+	}
+
+
+	/**
+	 * 格式化連結的授權碼商品
+	 * 避免重複
+	 *
+	 * @param array<array{product_slug: string, quantity: string}> $linked_lc_products 原始資料
+	 * @return array<array{product_slug: string, quantity: string}> 格式化後的資料
+	 */
+	public static function format_linked_lc_products( array $linked_lc_products ): array {
+		$key_value_linked_lc_products = [];
+		foreach ($linked_lc_products as $linked_lc_product) {
+			$array_keys = array_keys($key_value_linked_lc_products);
+			if (!in_array($linked_lc_product['product_slug'], $array_keys, true)) {
+				$key_value_linked_lc_products[ $linked_lc_product['product_slug'] ] = $linked_lc_product['quantity'];
+			} else {
+				$key_value_linked_lc_products[ $linked_lc_product['product_slug'] ] += $linked_lc_product['quantity'];
+			}
+		}
+
+		$formatted_linked_lc_products = [];
+		foreach ($key_value_linked_lc_products as $product_slug => $quantity) {
+			$formatted_linked_lc_products[] = [
+				'product_slug' => $product_slug,
+				'quantity'     => $quantity,
+			];
+		}
+		return $formatted_linked_lc_products;
 	}
 }

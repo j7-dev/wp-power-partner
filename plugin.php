@@ -34,7 +34,7 @@ final class Plugin {
 
 
 	/**
-	 * Is Local Dev Local
+	 * TODO Is Local Dev Local
 	 *
 	 * @var bool
 	 */
