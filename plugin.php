@@ -82,18 +82,23 @@ final class Plugin {
 
 	/**
 	 * Deactivate
-	 * TODO 改寫
 	 *
 	 * @return void
 	 */
 	public function deactivate(): void {
+		$cron_hooks = [
+			Cron::SEND_EMAIL_HOOK_NAME,
+			Cron::SYNC_SUBSCRIPTION_META_HOOK_NAME,
+		];
 
-		if ( ! \class_exists( __NAMESPACE__ . '\Cron\Cron' ) ) {
-			return;
+		foreach ($cron_hooks as $cron_hook) {
+			$timestamp = \wp_next_scheduled($cron_hook);
+
+			if ($timestamp !== false) {
+				// 如果找到了cron任務,就清除它
+				\wp_clear_scheduled_hook($cron_hook);
+			}
 		}
-		// 註銷 CRON 事件
-		\wp_clear_scheduled_hook( Cron\Cron::SEND_EMAIL_HOOK_NAME );
-		\wp_clear_scheduled_hook( Cron\Cron::SYNC_SUBSCRIPTION_META_HOOK_NAME );
 	}
 }
 
