@@ -82,7 +82,6 @@ export class LinkedLCProductSelector {
 
 		this.$el.on('click', 'button[event="remove"]', (e) => {
 			const index = $(e.currentTarget).closest('.lc-row').data('index')
-			console.log('this._list', this._list)
 			this.list = this._list.filter((_, i) => i !== index)
 		})
 
