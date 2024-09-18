@@ -39,10 +39,12 @@ final class ShopSubscription {
 
 	/**
 	 * Failed statuses
+	 * 'pending-cancel' [待取消] = 用戶不續訂，不應該停用網站
+	 * @see https://github.com/j7-dev/wp-power-partner/issues/11
 	 *
 	 * @var array
 	 */
-	public static $failed_statuses = array( 'cancelled', 'on-hold', 'pending-cancel' );
+	public static $failed_statuses = array( 'cancelled', 'on-hold' );
 
 	/**
 	 * Not failed statuses
@@ -86,7 +88,6 @@ final class ShopSubscription {
 			return;
 		}
 
-		$subscription_id               = $subscription->get_id();
 		$is_power_partner_subscription = $subscription->get_meta( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
 
 		// 如果不是 power partner 網站訂閱 就不處理
