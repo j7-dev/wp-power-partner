@@ -1,6 +1,14 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useTable, useModal } from '@/hooks'
-import { Table, TableProps, Tag, Typography, Button } from 'antd'
+import {
+	Table,
+	TableProps,
+	Tag,
+	Typography,
+	Button,
+	Popconfirm,
+	notification,
+} from 'antd'
 import { identityAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue } from 'jotai'
 import { DataType, TParams, TStatus } from './types'
@@ -8,6 +16,7 @@ import { useRowSelection, DateTime } from 'antd-toolkit'
 import { siteUrl } from '@/utils'
 import ModalForm from './ModalForm'
 import { getInfo } from './utils'
+import { useDelete } from './hooks'
 
 const { Text } = Typography
 
@@ -108,20 +117,45 @@ const index = () => {
 		},
 	})
 
-	const { selectedRowKeys, rowSelection } = useRowSelection<DataType>()
-	const { modalProps, show, close } = useModal()
-	const { label, isSingleEdit } = getInfo(selectedRowKeys)
+	const { selectedRowKeys, rowSelection, setSelectedRowKeys } =
+		useRowSelection<DataType>()
+	const useModalResult = useModal()
+	const { show, close } = useModalResult
+	const { label, isSingleEdit, isCreate } = getInfo(selectedRowKeys)
 	const theSingleRecord = isSingleEdit
 		? tableProps?.dataSource?.find(
 				(record) => record.id === selectedRowKeys?.[0],
 			)
 		: undefined
 
+	const [api, contextHolder] = notification.useNotification()
+	const { mutate: deleteLCs } = useDelete({
+		api,
+		close,
+		setSelectedRowKeys,
+	})
+	const handleDelete = () => {
+		deleteLCs(selectedRowKeys as number[])
+	}
+
 	return (
 		<>
-			<Button type="primary" className="mb-4" onClick={show}>
-				批量{label}
-			</Button>
+			<div className="flex justify-between mb-4">
+				{contextHolder}
+				<Button type="primary" onClick={show}>
+					批量{label}
+				</Button>
+				<Popconfirm
+					title="確認刪除嗎?"
+					onConfirm={handleDelete}
+					okText="確認"
+					cancelText="取消"
+				>
+					<Button type="primary" danger disabled={isCreate}>
+						批量刪除{isCreate ? '' : ` (${selectedRowKeys.length})`}
+					</Button>
+				</Popconfirm>
+			</div>
 			<Table
 				rowKey="id"
 				tableLayout="auto"
@@ -131,9 +165,9 @@ const index = () => {
 			/>
 			<ModalForm
 				selectedRowKeys={selectedRowKeys}
-				modalProps={modalProps}
-				close={close}
+				useModalResult={useModalResult}
 				theSingleRecord={theSingleRecord}
+				notificationInsance={api}
 			/>
 		</>
 	)

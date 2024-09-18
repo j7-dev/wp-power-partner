@@ -1,7 +1,15 @@
 import React, { useState } from 'react'
 import { ModalProps } from 'antd'
 
-export const useModal = (modalProps?: ModalProps) => {
+export type TUseModal = {
+	open: boolean
+	setOpen: React.Dispatch<React.SetStateAction<boolean>>
+	show: () => void
+	close: () => void
+	modalProps: ModalProps
+}
+
+export const useModal = (modalProps?: ModalProps): TUseModal => {
 	const [open, setOpen] = useState(false)
 
 	const show = () => {

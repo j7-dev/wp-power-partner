@@ -6,27 +6,32 @@ import {
 	Input,
 	InputNumber,
 	Select,
-	ModalProps,
 	DatePicker,
 	Switch,
 	Tag,
-	notification,
 } from 'antd'
+import { TUseModal } from '@/hooks'
 import { getInfo } from '../utils'
 import { useProducts, useCreate, TCreateParams } from '../hooks'
 import { DataType } from '../types'
 import dayjs from 'dayjs'
+import { NotificationInstance } from 'antd/es/notification/interface'
 
 const { Item } = Form
 
 const index: FC<{
 	selectedRowKeys: React.Key[]
-	modalProps: ModalProps
-	close: () => void
+	useModalResult: TUseModal
 	theSingleRecord: DataType | undefined
-}> = ({ selectedRowKeys, modalProps, close, theSingleRecord }) => {
-	const [api, contextHolder] = notification.useNotification()
-	const { label, isEdit } = getInfo(selectedRowKeys)
+	notificationInsance: NotificationInstance
+}> = ({
+	selectedRowKeys,
+	useModalResult,
+	theSingleRecord,
+	notificationInsance: api,
+}) => {
+	const { open, close, modalProps } = useModalResult
+	const { label, isEdit, isSingleEdit } = getInfo(selectedRowKeys)
 
 	const { mutate: create, isPending: isCreating } = useCreate({ api, close })
 	const handleOk = () => {
@@ -36,7 +41,8 @@ const index: FC<{
 			is_subscription: undefined,
 			status: undefined,
 		}
-		create(formattedValues)
+
+		// create(formattedValues)
 	}
 	const [form] = Form.useForm()
 
@@ -66,8 +72,17 @@ const index: FC<{
 		if (!theSingleRecord) {
 			return
 		}
-		form.setFieldsValue(theSingleRecord)
+		form.setFieldsValue({
+			...theSingleRecord,
+			status: 'available',
+		})
 	}, [theSingleRecord])
+
+	useEffect(() => {
+		if (open && !isSingleEdit) {
+			form.resetFields()
+		}
+	}, [open, isSingleEdit])
 
 	return (
 		<Modal
@@ -76,7 +91,6 @@ const index: FC<{
 			onOk={handleOk}
 			confirmLoading={isCreating}
 		>
-			{contextHolder}
 			{!!isEdit && (
 				<div>
 					{selectedRowKeys.map((key) => (
@@ -137,30 +151,16 @@ const index: FC<{
 								<Select.Option value="assigned">指定到期日</Select.Option>
 							</Select>
 						</Item>
-						<Item hidden name={['limit_value']} initialValue="" />
-						<Item hidden name={['limit_unit']} initialValue="" />
+						{/* <Item hidden name={['limit_value']} initialValue="" />
+						<Item hidden name={['limit_unit']} initialValue="" /> */}
 
 						{'fixed' === watchLimitType && (
 							<>
-								<Item label="&nbsp;">
-									<InputNumber
-										className="w-full"
-										min={1}
-										max={100}
-										defaultValue={1}
-										onChange={(value) => {
-											form.setFieldValue(['limit_value'], value)
-										}}
-									/>
+								<Item label="&nbsp;" name={['limit_value']} initialValue={1}>
+									<InputNumber className="w-full" min={1} max={100} />
 								</Item>
-								<Item label="&nbsp;">
-									<Select
-										className="!w-40"
-										defaultValue="days"
-										onChange={(value) => {
-											form.setFieldValue(['limit_unit'], value)
-										}}
-									>
+								<Item label="&nbsp;" name={['limit_unit']} initialValue="days">
+									<Select className="!w-40">
 										<Select.Option value="days">天</Select.Option>
 										<Select.Option value="months">月</Select.Option>
 										<Select.Option value="years">年</Select.Option>
@@ -169,17 +169,29 @@ const index: FC<{
 							</>
 						)}
 						{'assigned' === watchLimitType && (
-							<Item label="&nbsp;">
-								<DatePicker
-									defaultValue={dayjs()}
-									onChange={(value) => {
-										form.setFieldValue(
-											['limit_value'],
-											value.format('YYYY-MM-DD'),
-										)
-										form.setFieldValue(['limit_unit'], '')
-									}}
-								/>
+							<Item
+								label="&nbsp;"
+								name={['limit_value']}
+								initialValue={dayjs()}
+								getValueProps={(value) => {
+									const regex = /^\d{4}-\d{2}-\d{2}$/
+									if (regex.test(value)) {
+										return {
+											value: dayjs(value),
+										}
+									}
+									return {
+										value: dayjs(),
+									}
+								}}
+								normalize={(value) => {
+									if (value) {
+										return dayjs(value).format('YYYY-MM-DD')
+									}
+									return value
+								}}
+							>
+								<DatePicker />
 							</Item>
 						)}
 					</div>
