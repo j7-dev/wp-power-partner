@@ -127,47 +127,6 @@ final class ShopSubscription {
 		$subscription->save();
 	}
 
-	/**
-	 * Sync post meta
-	 * 因為 v1 沒有對 subscription 加上 IS_POWER_PARTNER_SUBSCRIPTION 的 meta
-	 * 所以要做一次同步
-	 *
-	 * @deprecated version 2.0.0
-	 *
-	 * @return void
-	 */
-	public static function sync_post_meta() {
-		$major_ver = Plugin::$version[0];
-		if ( $major_ver <= 2 ) {
-			$subscription_ids = \get_posts(
-				[
-					'post_type'   => self::POST_TYPE,
-					'post_status' => 'any',
-					'numberposts' => -1,
-					'fields'      => 'ids',
-				]
-			);
-			foreach ( $subscription_ids as $subscription_id ) {
-				$subscription = \wcs_get_subscription( $subscription_id );
-
-				if ( ! ( $subscription instanceof \WC_Subscription ) ) {
-					continue;
-				}
-				$parent_order = $subscription->get_parent();
-
-				if ( ! ( $parent_order instanceof \WC_Order ) ) {
-					continue;
-				}
-
-				$create_site_response   = $parent_order->get_meta( SiteSync::CREATE_SITE_RESPONSES_META_KEY, true );
-				$is_power_partner_order = ! empty( $create_site_response );
-				if ( $is_power_partner_order ) {
-					$subscription->update_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
-					$subscription->save();
-				}
-			}
-		}
-	}
 
 	/**
 	 * Get linked site ids

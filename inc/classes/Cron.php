@@ -27,7 +27,6 @@ final class Cron {
 	 */
 	public function __construct() {
 		\add_action( 'init', [ $this, 'register_single_event' ] );
-		\add_action( self::SYNC_SUBSCRIPTION_META_HOOK_NAME, [ 'J7\PowerPartner\ShopSubscription\ShopSubscription', 'sync_post_meta' ] );
 		\add_action( self::SEND_EMAIL_HOOK_NAME, [ $this, 'send_email' ] );
 		\add_action( self::SEND_EMAIL_HOOK_NAME, [ $this, 'disable_sites' ] );
 	}
