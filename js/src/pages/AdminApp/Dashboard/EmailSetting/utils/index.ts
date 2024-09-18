@@ -16,18 +16,6 @@ export const getEmailTemplate = () =>
 		operator: 'after',
 	}) as DataType
 
-export enum REDUX {
-	OPT_NAME = 'power_plugins_settings',
-	OBJECT_KEY = 'power_partner_emails',
-	KEY_FIELD_NAME = 'key',
-	SUBJECT_FIELD_NAME = 'subject',
-	ENABLED_FIELD_NAME = 'enabled',
-	BODY_FIELD_NAME = 'body',
-	ACTION_NAME_FIELD_NAME = 'action_name',
-	DAYS_FIELD_NAME = 'days',
-	OPERATOR_FIELD_NAME = 'operator',
-}
-
 export const baseTokens: TBase[] = [
 	{
 		label: '姓',
