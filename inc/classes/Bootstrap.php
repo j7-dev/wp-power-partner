@@ -10,7 +10,7 @@ namespace J7\PowerPartner;
 use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Api\Connect;
-use J7\PowerPartner\Email\Utils as EmailUtils;
+
 use Kucrut\Vite;
 
 /**
@@ -18,8 +18,6 @@ use Kucrut\Vite;
  */
 final class Bootstrap {
 	use \J7\WpUtils\Traits\SingletonTrait;
-
-
 
 	/**
 	 * Constructor
@@ -38,6 +36,9 @@ final class Bootstrap {
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 99 );
 		\add_action( 'wp_enqueue_scripts', [ $this, 'frontend_enqueue_script' ], 99 );
+
+		// v2 to v3 欄位遷移  相容設定
+		\add_action( 'init', [ $this, 'compatibility_settings' ], 99 );
 
 		Base::$api_url = Plugin::$is_local ? 'http://cloud.test:8080' : 'https://cloud.luke.cafe';
 	}
@@ -91,7 +92,7 @@ final class Bootstrap {
 		$permalink                = \get_permalink( $post_id );
 		$allowed_template_options = Fetch::get_allowed_template_options();
 
-		$power_partner_settings = \get_option( 'power_partner_settings' ) ?: [];
+		$power_partner_settings = \get_option( 'power_partner_settings', [] );
 
 		\wp_localize_script(
 			Plugin::$kebab,
@@ -126,5 +127,36 @@ final class Bootstrap {
 				'nonce' => \wp_create_nonce( 'wp_rest' ),
 			]
 		);
+	}
+
+	/**
+	 * 相容設定
+	 * 將 v2 的設定遷移到 v3
+	 *
+	 * @deprecated v4 可以刪除
+	 *
+	 * @return void
+	 */
+	public function compatibility_settings(): void {
+		$v2_settings                                = \get_option( 'power_plugins_settings', [] );
+		$v2_power_partner_disable_site_after_n_days = $v2_settings['power_partner_disable_site_after_n_days'] ?? '';
+		$v2_emails                                  = \get_option( 'power_partner_emails', [] );
+
+		if ( !$v2_power_partner_disable_site_after_n_days && !$v2_emails ) {
+			return;
+		}
+
+		// update to v3
+		\update_option(
+			'power_partner_settings',
+			[
+				'power_partner_disable_site_after_n_days' => $v2_power_partner_disable_site_after_n_days,
+				'emails'                                  => $v2_emails,
+			]
+			);
+
+		// remove v2 option
+		\delete_option( 'power_plugins_settings' );
+		\delete_option( 'power_partner_emails' );
 	}
 }
