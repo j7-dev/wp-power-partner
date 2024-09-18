@@ -33,8 +33,8 @@ final class Order {
 	/**
 	 * Add order column.
 	 *
-	 * @param array $columns Columns.
-	 * @return array
+	 * @param array<string, string> $columns Columns.
+	 * @return array<string, string>
 	 */
 	public function add_order_column( array $columns ): array {
 		$columns[ SiteSync::CREATE_SITE_RESPONSES_META_KEY ] = '開站狀態';

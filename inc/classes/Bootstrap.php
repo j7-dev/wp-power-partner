@@ -27,7 +27,9 @@ final class Bootstrap {
 		Api\Connect::instance();
 		Api\User::instance();
 		Order::instance();
-		Product\DataTabs::instance();
+		Product\DataTabs\LinkedSites::instance();
+		Product\DataTabs\LinkedLC::instance();
+
 		Product\SiteSync::instance();
 		ShopSubscription::instance();
 		Shortcode::instance();
@@ -90,10 +92,10 @@ final class Bootstrap {
 		);
 
 		$post_id                  = \get_the_ID();
-		$permalink                = \get_permalink( $post_id );
+		$permalink                = $post_id ? \get_permalink( $post_id ) : '';
 		$allowed_template_options = Fetch::get_allowed_template_options();
 
-		$power_partner_settings = \get_option( 'power_partner_settings', [] );
+		$power_partner_settings = (array) \get_option( 'power_partner_settings', [] );
 
 		\wp_localize_script(
 			Plugin::$kebab,
@@ -139,7 +141,7 @@ final class Bootstrap {
 	 * @return void
 	 */
 	public function compatibility_settings(): void {
-		$v2_settings                                = \get_option( 'power_plugins_settings', [] );
+		$v2_settings                                = (array) \get_option( 'power_plugins_settings', [] );
 		$v2_power_partner_disable_site_after_n_days = $v2_settings['power_partner_disable_site_after_n_days'] ?? '';
 		$v2_emails                                  = \get_option( 'power_partner_emails', [] );
 
@@ -170,6 +172,8 @@ final class Bootstrap {
 	 * @return void
 	 */
 	public function notice(): void {
-		echo '<div class="notice notice-info is-dismissible"><p>Power Partner v3.0.0 以上版本已經不再依賴 WP Toolkit，可以直接刪除 WP Toolkit</p></div>';
+		if (class_exists('J7\WpToolkit\Plugin')) {
+			echo '<div class="notice notice-info is-dismissible"><p>Power Partner v3.0.0 以上版本已經不再依賴 WP Toolkit，可以直接刪除 WP Toolkit</p></div>';
+		}
 	}
 }

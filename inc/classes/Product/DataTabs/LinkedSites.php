@@ -3,19 +3,20 @@
  * 在 wp-admin 商品編輯頁
  * 對 wc-tabs 新增欄位
  * 只對 簡單訂閱商品 & 可變訂閱商品 新增
+ * 連結的開站網站
  */
 
 declare (strict_types = 1);
 
-namespace J7\PowerPartner\Product;
+namespace J7\PowerPartner\Product\DataTabs;
 
 use J7\PowerPartner\Api\Connect;
 use J7\PowerPartner\Api\Fetch;
 
 /**
- * Class DataTabs
+ * Class LinkedSites
  */
-final class DataTabs {
+final class LinkedSites {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
 	const HOST_POSITION_FIELD_NAME = 'power_partner_host_position';
@@ -27,9 +28,7 @@ final class DataTabs {
 
 
 	/**
-	 * Host positions
-	 *
-	 * @var array
+	 * @var array<string, string> slug, name
 	 */
 	public $host_positions = [
 		'jp'        => '日本',
@@ -41,7 +40,7 @@ final class DataTabs {
 	/**
 	 * Allowed template options
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	public static $allowed_template_options = [];
 
@@ -82,7 +81,7 @@ final class DataTabs {
 				[
 					'id'            => self::HOST_POSITION_FIELD_NAME,
 					'label'         => '主機種類',
-					'wrapper_class' => 'form-field',
+					'wrapper_class' => 'form-field [&_ul]:!flex [&_ul]:gap-x-4',
 					'desc_tip'      => true,
 					'description'   => '不同地區的主機，預設為日本',
 					'options'       => $this->host_positions,
@@ -165,6 +164,7 @@ final class DataTabs {
 	 * @param \WP_Post $variation variation post object
 	 *
 	 * @return void
+	 * @phpstan-ignore-next-line
 	 */
 	public function custom_field_variable_subscription( $loop, $variation_data, $variation ): void { // phpcs:ignore
 		$variation_id        = $variation->ID;
@@ -175,7 +175,7 @@ final class DataTabs {
 			[
 				'id'            => self::HOST_POSITION_FIELD_NAME . '[' . $loop . ']',
 				'label'         => '主機種類',
-				'wrapper_class' => 'form-row show_if_variable-subscription hidden',
+				'wrapper_class' => 'form-row show_if_variable-subscription hidden [&_ul]:!flex [&_ul]:gap-x-4',
 				'desc_tip'      => true,
 				'description'   => '不同地區的主機，預設為日本',
 				'options'       => $this->host_positions,

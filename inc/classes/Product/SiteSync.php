@@ -9,7 +9,7 @@ namespace J7\PowerPartner\Product;
 
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
-use J7\PowerPartner\Product\DataTabs;
+use J7\PowerPartner\Product\DataTabs\LinkedSites;
 
 /**
  * Class SiteSync
@@ -97,13 +97,13 @@ final class SiteSync {
 			// 如果不是可變訂閱商品，就不處理
 			if ( 'variable-subscription' === $product->get_type() ) {
 				$variation_id   = $item->get_variation_id();
-				$host_position  = \get_post_meta( $variation_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id = \get_post_meta( $variation_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 				$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
 				$linked_site_ids[] = $linked_site_id;
 			} elseif ( 'subscription' === $product->get_type() ) {
-				$host_position  = \get_post_meta( $product_id, DataTabs::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id = \get_post_meta( $product_id, DataTabs::LINKED_SITE_FIELD_NAME, true );
+				$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
+				$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 				$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
 			} else {
 				continue;
@@ -113,7 +113,7 @@ final class SiteSync {
 				continue;
 			}
 
-			$host_position = empty( $host_position ) ? DataTabs::DEFAULT_HOST_POSITION : $host_position;
+			$host_position = empty( $host_position ) ? LinkedSites::DEFAULT_HOST_POSITION : $host_position;
 
 			$response_obj = Fetch::site_sync(
 				[
