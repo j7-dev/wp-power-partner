@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Form, Select } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { axios } from '@/api'
@@ -113,4 +113,4 @@ const SubscriptionSelector = () => {
 	)
 }
 
-export default SubscriptionSelector
+export default React.memo(SubscriptionSelector)

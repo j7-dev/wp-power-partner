@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useState } from 'react'
 import { useTable, useModal } from '@/hooks'
 import {
 	Table,
@@ -8,6 +8,7 @@ import {
 	Button,
 	Popconfirm,
 	notification,
+	Input,
 } from 'antd'
 import { identityAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue } from 'jotai'
@@ -22,6 +23,7 @@ import { SyncOutlined, UserOutlined } from '@ant-design/icons'
 import ExpireDate from './ExpireDate'
 
 const { Text } = Typography
+const { Search } = Input
 
 const STATUS_MAP = {
 	available: {
@@ -58,9 +60,9 @@ const columns: TableProps<DataType>['columns'] = [
 	{
 		title: '狀態',
 		dataIndex: 'post_status',
-		render: (status: TStatus) => (
-			<Tag color={STATUS_MAP?.[status]?.color || 'default'}>
-				{STATUS_MAP?.[status]?.label || '未定義狀態'}
+		render: (post_status: TStatus) => (
+			<Tag color={STATUS_MAP?.[post_status]?.color || 'default'}>
+				{STATUS_MAP?.[post_status]?.label || '未定義狀態'}
 			</Tag>
 		),
 	},
@@ -125,11 +127,13 @@ const columns: TableProps<DataType>['columns'] = [
 
 const index = () => {
 	const identity = useAtomValue(identityAtom)
+	const [search, setSearch] = useState('')
 	const user_id = identity.data?.user_id || ''
 	const { tableProps } = useTable<TParams, DataType>({
 		resource: 'license-codes',
 		defaultParams: {
 			author: user_id,
+			search,
 		},
 		queryOptions: {
 			staleTime: 1000 * 60 * 60 * 24,
@@ -164,6 +168,7 @@ const index = () => {
 				{contextHolder}
 				<Button type="primary" onClick={show}>
 					批量{label}
+					{isEdit ? ` (${selectedRowKeys.length})` : ''}
 				</Button>
 				<Popconfirm
 					title="確認刪除嗎?"
@@ -175,6 +180,15 @@ const index = () => {
 						批量刪除{isCreate ? '' : ` (${selectedRowKeys.length})`}
 					</Button>
 				</Popconfirm>
+			</div>
+			<div className="mb-4">
+				<Search
+					placeholder="搜尋授權碼 / ID"
+					onSearch={setSearch}
+					enterButton
+					allowClear
+					className="w-[20rem]"
+				/>
 			</div>
 			<Table
 				rowKey="id"

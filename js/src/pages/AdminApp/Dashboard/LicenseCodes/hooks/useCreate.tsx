@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { cloudAxios } from '@/api'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosResponse } from 'axios'
+import { DataType } from '../types'
 
 type TUseCreateParams = {
 	api: NotificationInstance
@@ -25,19 +26,7 @@ export type TCreateResponse = {
 	code: string
 	message: string
 	data: {
-		license_codes: {
-			id: number
-			status: string
-			code: string
-			post_author: number
-			is_subscription: boolean
-			subscription_id: number
-			expire_date: number
-			domain: string
-			product_slug: string
-			product_name: string
-			cost: string
-		}[]
+		license_codes: DataType[]
 	}
 }
 

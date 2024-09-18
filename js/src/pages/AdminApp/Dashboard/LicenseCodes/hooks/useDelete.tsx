@@ -1,8 +1,9 @@
 import React from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { cloudAxios } from '@/api'
+import { axios } from '@/api'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosResponse } from 'axios'
+import { kebab } from '@/utils'
 
 type TUseDeleteParams = {
 	api: NotificationInstance
@@ -33,7 +34,7 @@ export const useDelete = ({
 		TDeleteParams
 	>({
 		mutationFn: (data: TDeleteParams) =>
-			cloudAxios.delete('/license-codes', { data: { ids: data } }),
+			axios.delete(`${kebab}/license-codes`, { data: { ids: data } }),
 		onSuccess: (data) => {
 			const message = data?.data?.message
 

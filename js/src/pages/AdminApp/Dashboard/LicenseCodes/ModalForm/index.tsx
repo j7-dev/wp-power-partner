@@ -48,7 +48,7 @@ const index: FC<{
 				const formattedValues: TCreateParams = {
 					...values,
 					is_subscription: undefined,
-					status: undefined,
+					post_status: undefined,
 				}
 
 				create(formattedValues)
@@ -82,7 +82,7 @@ const index: FC<{
 		}
 		form.setFieldsValue({
 			...theSingleRecord,
-			status: 'available',
+			post_status: 'available',
 			customer_id: undefined,
 			subscription_id: undefined,
 		})
@@ -104,7 +104,9 @@ const index: FC<{
 			{!!isEdit && (
 				<div>
 					{selectedRowKeys.map((key) => (
-						<Tag key={key}>#{key as string}</Tag>
+						<Tag color="blue" bordered={false} key={key}>
+							#{key as string}
+						</Tag>
 					))}
 				</div>
 			)}
@@ -159,17 +161,19 @@ const index: FC<{
 					)}
 				</div>
 
-				<Item
-					label="綁訂訂閱"
-					name={['is_subscription']}
-					initialValue={false}
-					valuePropName="checked"
-					tooltip="綁訂訂閱後，授權碼狀態將跟自動隨訂閱狀態調整"
-				>
-					<Switch />
-				</Item>
+				{!!isEdit && (
+					<Item
+						label="綁訂訂閱"
+						name={['is_subscription']}
+						initialValue={false}
+						valuePropName="checked"
+						tooltip="綁訂訂閱後，授權碼狀態將跟自動隨訂閱狀態調整"
+					>
+						<Switch />
+					</Item>
+				)}
 
-				{!!watchIsSubscription && <SubscriptionSelector />}
+				{!!watchIsSubscription && !!isEdit && <SubscriptionSelector />}
 
 				{!watchIsSubscription && (
 					<div className="flex gap-x-4">
@@ -234,4 +238,4 @@ const index: FC<{
 	)
 }
 
-export default index
+export default React.memo(index)

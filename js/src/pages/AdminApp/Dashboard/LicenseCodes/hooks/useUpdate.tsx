@@ -1,8 +1,9 @@
 import React from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { cloudAxios } from '@/api'
+import { axios } from '@/api'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import { AxiosResponse } from 'axios'
+import { kebab } from '@/utils'
 
 type TUseUpdateParams = {
 	api: NotificationInstance
@@ -38,7 +39,7 @@ export const useUpdate = ({ api, close }: TUseUpdateParams) => {
 		TUpdateParams
 	>({
 		mutationFn: (data: TUpdateParams) =>
-			cloudAxios.post('/license-codes/update', data),
+			axios.post(`${kebab}/license-codes/update`, data),
 		onSuccess: (data) => {
 			const message = data?.data?.message
 
