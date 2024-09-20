@@ -21,10 +21,11 @@ use J7\PowerPartner\Bootstrap;
 final class LinkedLC {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
-	const LC_PRODUCT_SELECTOR          = 'linked_lc_product_selector';
-	const FIELD_NAME                   = 'linked_lc_products';
-	const CLOUD_PRODUCTS_TRANSIENT_KEY = 'pp_cloud_products';
-	const CACHE_TIME                   = 24 * HOUR_IN_SECONDS;
+	const LC_PRODUCT_SELECTOR                        = 'linked_lc_product_selector';
+	const FIELD_NAME                                 = 'linked_lc_products';
+	const CLOUD_PRODUCTS_TRANSIENT_KEY               = 'pp_cloud_products';
+	const CLEAR_CLOUD_PRODUCTS_TRANSIENT_ACTION_NAME = 'clear_' . self::CLOUD_PRODUCTS_TRANSIENT_KEY;
+	const CACHE_TIME                                 = 24 * HOUR_IN_SECONDS;
 
 	/**
 	 * Constructor
@@ -37,6 +38,9 @@ final class LinkedLC {
 
 		\add_action( 'woocommerce_product_after_variable_attributes', [ __CLASS__, 'custom_field_variable_subscription' ], 20, 3 );
 		\add_action( 'woocommerce_save_product_variation', [ __CLASS__, 'save_variable_subscription' ], 20, 2 );
+
+		// 清除 transient callback
+		\add_action( 'admin_post_' . self::CLEAR_CLOUD_PRODUCTS_TRANSIENT_ACTION_NAME, [ __CLASS__, 'clear_cloud_products_transient_callback' ] );
 	}
 
 	/**
@@ -52,7 +56,11 @@ final class LinkedLC {
 			$default_linked_lc_products = [];
 		}
 		$default_linked_lc_products_json_encode = htmlspecialchars(\json_encode($default_linked_lc_products), ENT_QUOTES, 'UTF-8'); // @phpstan-ignore-line
-		// 商品 & 授權碼數量選擇器
+
+		// 清除快取的連結授權碼商品
+		$action_url = \add_query_arg( 'action', self::CLEAR_CLOUD_PRODUCTS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+
+		// render 商品 & 授權碼數量選擇器
 		printf(
 		/*html*/"
 			<div class='flex items-center py-4 show_if_subscription hidden'>
@@ -60,12 +68,14 @@ final class LinkedLC {
 				<div class='%1\$s'>
 					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>
 				</div>
+				<a href='%5\$s' class='button'>清除快取</a>
 			</div>
 			",
 		'w-[calc((100%-180px)/2)]',
 		self::LC_PRODUCT_SELECTOR,
 		self::FIELD_NAME,
-		$default_linked_lc_products_json_encode
+		$default_linked_lc_products_json_encode,
+		$action_url
 		);
 	}
 
@@ -191,12 +201,20 @@ final class LinkedLC {
 		$args = [
 			'headers' => [
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
+				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
 			],
 			'timeout' => 120,
 		];
 
-		$response = \wp_remote_get( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/license-codes/products', $args );
+		$api_url = Bootstrap::instance()->base_url . '/wp-json/power-partner-server/license-codes/products';
+		$api_url = \add_query_arg(
+			[
+				'user_id' => \get_current_user_id(),
+			],
+			$api_url
+			);
+
+		$response = \wp_remote_get( $api_url, $args );
 
 		if (\is_wp_error($response)) {
 			\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, [], self::CACHE_TIME);
@@ -204,6 +222,10 @@ final class LinkedLC {
 		}
 
 		$body = \wp_remote_retrieve_body($response);
+
+		ob_start();
+		var_dump($body);
+		\J7\WpUtils\Classes\Log::info('body' . ob_get_clean());
 
 		/**
 		 * @var array<array{slug: string, label: string, rate: float}> $data
@@ -241,5 +263,17 @@ final class LinkedLC {
 			];
 		}
 		return $formatted_linked_lc_products;
+	}
+
+	/**
+	 * 清除快取的授權碼商品
+	 *
+	 * @return void
+	 */
+	public static function clear_cloud_products_transient_callback(): void {
+		\delete_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY);
+		$current_url = \wp_get_referer();
+		\wp_safe_redirect( $current_url );
+		exit;
 	}
 }

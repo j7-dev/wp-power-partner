@@ -21,9 +21,6 @@ abstract class Base {
 	const API_TIMEOUT   = '30000';
 	const DEFAULT_IMAGE = 'http://1.gravatar.com/avatar/1c39955b5fe5ae1bf51a77642f052848?s=96&d=mm&r=g';
 
-	const USER_NAME = 'powerpartner';
-	const PASSWORD  = 'uJsk Gu3S pwUG r6ia P9zy Xjrj';
-
 	const TEMPLATE_SERVER_IDS = [ 544413 ];
 	const CACHE_TIME          = 24 * HOUR_IN_SECONDS;
 

@@ -43,7 +43,7 @@ abstract class Fetch {
 			'body'    => \wp_json_encode( $props ),
 			'headers' => [
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
+				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
 			],
 			'timeout' => 600,
 		];
@@ -87,7 +87,7 @@ abstract class Fetch {
 			),
 			'headers' => [
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
+				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
 			],
 			'timeout' => 600,
 		];
@@ -144,7 +144,7 @@ abstract class Fetch {
 		$args = [
 			'headers' => [
 				'Content-Type'  => 'application/json',
-				'Authorization' => 'Basic ' . \base64_encode( Base::USER_NAME . ':' . Base::PASSWORD ), // phpcs:ignore
+				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
 			],
 			'timeout' => 120,
 		];
