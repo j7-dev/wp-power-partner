@@ -223,10 +223,18 @@ final class LinkedLC {
 
 		$body = \wp_remote_retrieve_body($response);
 
+		$default_data_value = [
+			[
+				'slug'  => '',
+				'label' => '請選擇',
+				'rate'  => null,
+			],
+		];
 		/**
 		 * @var array<array{slug: string, label: string, rate: float}> $data
 		 */
-		$data = General::json_parse($body, []);
+		$data = General::json_parse($body, $default_data_value);
+
 		\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, $data, self::CACHE_TIME);
 
 		return $data;
