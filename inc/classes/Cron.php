@@ -114,7 +114,7 @@ final class Cron {
 	 * @return void
 	 */
 	public static function disable_sites() {
-		// 取得所有失敗(非啟用、非過期)的訂閱
+		// 取得所有失敗(非啟用)的訂閱
 		$failed_statuses = ShopSubscription::$failed_statuses;
 
 		// 加上前綴 wc- 才篩選得出來

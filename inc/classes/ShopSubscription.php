@@ -45,14 +45,14 @@ final class ShopSubscription {
 	 *
 	 * @var array
 	 */
-	public static $failed_statuses = [ 'cancelled', 'on-hold' ];
+	public static $failed_statuses = [ 'cancelled', 'on-hold', 'expired' ];
 
 	/**
 	 * Not failed statuses
 	 *
 	 * @var array
 	 */
-	public static $not_failed_statuses = [ 'active', 'expired' ];
+	public static $not_failed_statuses = [ 'active' ];
 
 	/**
 	 * All statuses
@@ -96,7 +96,7 @@ final class ShopSubscription {
 			return;
 		}
 
-		// 從 [已啟用] 變成 [已取消] 或 [保留] 等等  就算失敗， [已過期] 不算
+		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等  就算失敗
 		$is_subscription_failed = ( ! in_array( $new_status, self::$not_failed_statuses, true ) ) && in_array( $old_status, self::$success_statuses, true );
 
 		// 如果訂閱沒失敗 就不處理，並且刪除 上次失敗的時間 紀錄
