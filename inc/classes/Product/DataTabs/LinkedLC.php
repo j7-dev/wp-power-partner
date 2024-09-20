@@ -68,7 +68,7 @@ final class LinkedLC {
 				<div class='%1\$s'>
 					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>
 				</div>
-				<a href='%5\$s' class='button'>清除快取</a>
+				<a href='%5\$s' class='button self-start ml-2'>清除快取</a>
 			</div>
 			",
 		'w-[calc((100%-180px)/2)]',
@@ -222,10 +222,6 @@ final class LinkedLC {
 		}
 
 		$body = \wp_remote_retrieve_body($response);
-
-		ob_start();
-		var_dump($body);
-		\J7\WpUtils\Classes\Log::info('body' . ob_get_clean());
 
 		/**
 		 * @var array<array{slug: string, label: string, rate: float}> $data

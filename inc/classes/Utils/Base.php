@@ -25,13 +25,19 @@ abstract class Base {
 	const CACHE_TIME          = 24 * HOUR_IN_SECONDS;
 
 	/**
-	 * Set API auth
+	 * Set API auth 調整環境變數
 	 *
-	 * @param Bootstrap $bootstrap Bootstrap 實例
-	 * @param string    $env 環境名稱
+	 * @param Bootstrap   $bootstrap Bootstrap 實例
+	 * @param string|null $env 環境名稱
 	 * @return void
 	 */
-	public static function set_api_auth( Bootstrap $bootstrap, ?string $env = 'prod' ): void {
+	public static function set_api_auth( Bootstrap $bootstrap, ?string $env = null ): void {
+
+		if (!defined('WP_ENVIRONMENT_TYPE')) {
+			define('WP_ENVIRONMENT_TYPE', 'production');
+		}
+
+		$env = $env ?? WP_ENVIRONMENT_TYPE;
 
 		switch ($env) { // phpcs:ignore
 			case 'local': // LOCAL

@@ -28,10 +28,7 @@ final class Bootstrap {
 	 */
 	public function __construct() {
 		// 環境變數，調整 api auth
-		if (!defined('WP_ENVIRONMENT_TYPE')) {
-			define('WP_ENVIRONMENT_TYPE', 'production');
-		}
-		Base::set_api_auth( $this, WP_ENVIRONMENT_TYPE );
+		Base::set_api_auth( $this );
 
 		Api\Main::instance();
 		Api\Connect::instance();
