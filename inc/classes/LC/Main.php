@@ -61,7 +61,8 @@ final class Main {
 			return;
 		}
 
-		$lc_ids = $subscription->get_meta('lc_id', false);
+		$lc_ids = \get_post_meta($subscription->get_id(), 'lc_id', false);
+
 		// 如果訂閱身上沒有授權碼 就不處理
 		if ( ! $lc_ids ) {
 			return;
