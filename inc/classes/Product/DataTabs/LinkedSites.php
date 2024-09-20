@@ -48,6 +48,7 @@ final class LinkedSites {
 	 * Constructor
 	 */
 	public function __construct() {
+
 		// \add_action( 'woocommerce_subscriptions_product_options_pricing', array( $this, 'custom_field' ), 20 );
 		\add_action( 'woocommerce_product_options_general_product_data', [ $this, 'custom_field_subscription' ], 20, 1 );
 		\add_action( 'woocommerce_process_product_meta', [ $this, 'save_subscription' ], 20 );

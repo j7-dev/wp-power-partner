@@ -121,8 +121,16 @@ abstract class Fetch {
 		if ( false === $allowed_template_options ) {
 			$allowed_template_options = [];
 			$result                   = self::fetch_template_sites_by_user();
+			if (\is_wp_error($result)) {
+				return [];
+			}
 
-			$template_sites = $result->data->list;
+			$template_sites = $result?->data?->list;
+
+			if (!$template_sites) {
+				return [];
+			}
+
 			foreach ( $template_sites as $site ) {
 				$allowed_template_options[ (string) $site->ID ] = $site->post_title;
 			}
@@ -136,10 +144,13 @@ abstract class Fetch {
 	/**
 	 * 取得合作夥伴的模板站
 	 *
-	 * @return array|\WP_Error — The response or WP_Error on failure.
+	 * @return array|null|\WP_Error — The response or WP_Error on failure.
 	 */
 	public static function fetch_template_sites_by_user() {
 		$partner_id = \get_option( Connect::PARTNER_ID_OPTION_NAME );
+		if ( ! $partner_id ) {
+			return null;
+		}
 
 		$args = [
 			'headers' => [
@@ -155,13 +166,12 @@ abstract class Fetch {
 			$response_obj = json_decode( $response['body'] );
 			return $response_obj;
 		} catch ( \Throwable $th ) {
-			ob_start();
-			print_r( $response );
-			return \rest_ensure_response(
+
+			return new \WP_Error(
+				'fetch_template_sites_by_user_error',
+				$th->getMessage(),
 				[
-					'status'  => 500,
-					'message' => 'fetch_template_sites_by_user json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
-					'data'    => null,
+					'status' => 500,
 				]
 			);
 		}

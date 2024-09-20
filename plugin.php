@@ -44,6 +44,7 @@ final class Plugin {
 	 * Constructor
 	 */
 	public function __construct() {
+
 		$this->required_plugins = [
 			[
 				'name'     => 'Powerhouse',
