@@ -3,8 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { app1Selector, app2Selector } from '@/utils'
-import { StyleProvider } from '@ant-design/cssinjs'
-import { ConfigProvider } from 'antd'
+import styles from '@/assets/scss/index.scss?inline'
 
 const App1 = React.lazy(() => import('./App1'))
 const App2 = React.lazy(() => import('./App2'))
@@ -38,19 +37,7 @@ mapping.forEach(({ els, App }) => {
 			createRoot(el).render(
 				<React.StrictMode>
 					<QueryClientProvider client={queryClient}>
-						<StyleProvider hashPriority="high">
-							<ConfigProvider
-								theme={{
-									components: {
-										Table: {
-											rowExpandedBg: '#ffffff',
-										},
-									},
-								}}
-							>
-								<App />
-							</ConfigProvider>
-						</StyleProvider>
+						<App />
 						<ReactQueryDevtools initialIsOpen={true} />
 					</QueryClientProvider>
 				</React.StrictMode>,

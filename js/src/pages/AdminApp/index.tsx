@@ -13,7 +13,7 @@ function AdminApp() {
 	const status = identity?.status
 
 	return (
-		<div className="flex min-h-[24rem]">
+		<div className="flex min-h-[24rem] tailwind">
 			<Spin
 				size="large"
 				wrapperClassName="w-full"

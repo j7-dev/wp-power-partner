@@ -37,7 +37,7 @@ const index = () => {
 	const status = identity?.status
 
 	return (
-		<div className="flex min-h-[12rem]">
+		<div className="flex min-h-[12rem] tailwind">
 			<Spin
 				size="large"
 				wrapperClassName="w-full"

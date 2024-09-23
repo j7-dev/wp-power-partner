@@ -23,6 +23,7 @@
 		"sync:version": "wp-update-project-version -s package.json -p plugin.php"
 	},
 	"dependencies": {
+		"@ant-design/static-style-extract": "^1.0.3",
 		"@tanstack/react-query": "^5.28.9",
 		"antd": "^5.16.2",
 		"antd-toolkit": "^1.1.16",
@@ -32,7 +33,8 @@
 		"jquery": "^3.7.1",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"react-quill": "^2.0.0"
+		"react-quill": "^2.0.0",
+		"react-shadow": "^20.5.0"
 	},
 	"devDependencies": {
 		"@ant-design/cssinjs": "^1.19.1",
