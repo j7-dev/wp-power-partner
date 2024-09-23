@@ -75,7 +75,7 @@ const items: TabsProps['items'] = [
 	},
 ]
 
-const index: React.FC = () => {
+const index = () => {
 	const [form] = Form.useForm()
 	const { mutation, contextHolder } = useSave(form)
 	const { mutate: saveSettings, isPending } = mutation

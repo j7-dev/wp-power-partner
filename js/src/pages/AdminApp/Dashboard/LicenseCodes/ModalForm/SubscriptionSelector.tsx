@@ -17,7 +17,11 @@ type TGetCustomersResponse = AxiosResponse<{
 	data: TCustomer[]
 }>
 
-const SubscriptionSelector = () => {
+const SubscriptionSelector = ({
+	containerRef,
+}: {
+	containerRef?: React.RefObject<HTMLElement>
+}) => {
 	const form = Form.useFormInstance()
 	const [search, setSearch] = useState<string>('')
 
@@ -81,6 +85,9 @@ const SubscriptionSelector = () => {
 				help={getHelp()}
 			>
 				<Select
+					getPopupContainer={() =>
+						(containerRef?.current || document.body) as HTMLElement
+					}
 					showSearch
 					allowClear
 					loading={isLoadingSearched}
@@ -97,6 +104,7 @@ const SubscriptionSelector = () => {
 				/>
 			</Form.Item>
 			<SubscriptionSelect
+				containerRef={containerRef}
 				formItemProps={{
 					name: ['subscription_id'],
 					label: <span className="inline">將此授權碼綁定到新客戶的訂閱上</span>,

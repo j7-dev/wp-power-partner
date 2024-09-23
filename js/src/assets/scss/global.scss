@@ -2,14 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* .container {
-  max-width: 1280px;
-  margin: 0 auto;
-} */
+@import "./normalize.css";
 
-body {
-	margin: 0 !important;
+p {
+	margin-top: 0;
 }
+
 input[class*="ant-select"] {
 	box-shadow: none !important;
 	border: none !important;

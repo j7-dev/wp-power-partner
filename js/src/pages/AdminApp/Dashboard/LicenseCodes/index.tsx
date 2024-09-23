@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useTable, useModal } from '@/hooks'
 import {
 	Table,
@@ -127,6 +127,7 @@ const columns: TableProps<DataType>['columns'] = [
 
 const index = () => {
 	const identity = useAtomValue(identityAtom)
+	const containerRef = useRef<HTMLDivElement | null>(null)
 	const [search, setSearch] = useState('')
 	const user_id = identity.data?.user_id || ''
 	const { tableProps } = useTable<TParams, DataType>({
@@ -153,7 +154,7 @@ const index = () => {
 		: undefined
 
 	const [api, contextHolder] = notification.useNotification()
-	const { mutate: deleteLCs } = useDelete({
+	const { mutate: deleteLCs, isPending: isDeleting } = useDelete({
 		api,
 		close,
 		setSelectedRowKeys,
@@ -163,23 +164,47 @@ const index = () => {
 	}
 
 	return (
-		<>
+		<div ref={containerRef}>
+			{contextHolder}
 			<div className="flex justify-between mb-4">
-				{contextHolder}
 				<Button type="primary" onClick={show}>
 					批量{label}
 					{isEdit ? ` (${selectedRowKeys.length})` : ''}
 				</Button>
-				<Popconfirm
-					title="確認刪除嗎?"
-					onConfirm={handleDelete}
-					okText="確認"
-					cancelText="取消"
-				>
-					<Button type="primary" danger disabled={isCreate}>
-						批量刪除{isCreate ? '' : ` (${selectedRowKeys.length})`}
-					</Button>
-				</Popconfirm>
+				<div className="flex gap-x-4">
+					<Popconfirm
+						title="確認解除網域榜定嗎?"
+						description="只有 [已啟用] 的授權碼可以解除網域榜定"
+						onConfirm={handleDelete}
+						okText="確認"
+						cancelText="取消"
+						getPopupContainer={() =>
+							(containerRef?.current || document.body) as HTMLElement
+						}
+					>
+						<Button type="primary" disabled={isCreate} loading={isDeleting}>
+							批量解除網域榜定{isCreate ? '' : ` (${selectedRowKeys.length})`}
+						</Button>
+					</Popconfirm>
+					<Popconfirm
+						title="確認刪除嗎?"
+						onConfirm={handleDelete}
+						okText="確認"
+						cancelText="取消"
+						getPopupContainer={() =>
+							(containerRef?.current || document.body) as HTMLElement
+						}
+					>
+						<Button
+							type="primary"
+							danger
+							disabled={isCreate}
+							loading={isDeleting}
+						>
+							批量刪除{isCreate ? '' : ` (${selectedRowKeys.length})`}
+						</Button>
+					</Popconfirm>
+				</div>
 			</div>
 			<div className="mb-4">
 				<Search
@@ -198,12 +223,13 @@ const index = () => {
 				rowSelection={rowSelection}
 			/>
 			<ModalForm
+				containerRef={containerRef}
 				selectedRowKeys={selectedRowKeys}
 				useModalResult={useModalResult}
 				theSingleRecord={theSingleRecord}
 				notificationInstance={api}
 			/>
-		</>
+		</div>
 	)
 }
 

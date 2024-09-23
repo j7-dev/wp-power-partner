@@ -52,9 +52,7 @@ const index = () => {
 					/>
 				)}
 
-				{(status === 500 || !identityData) && (
-					<p>OOPS! something went wrong! </p>
-				)}
+				{status === 500 && <p>OOPS! something went wrong! </p>}
 			</Spin>
 		</div>
 	)

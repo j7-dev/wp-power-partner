@@ -1,5 +1,4 @@
 import React, { FC, useEffect } from 'react'
-
 import { Modal, Form, InputNumber, Select, DatePicker, Switch, Tag } from 'antd'
 import { TUseModal } from '@/hooks'
 import { getInfo } from '../utils'
@@ -20,11 +19,13 @@ import { useAtomValue } from 'jotai'
 const { Item } = Form
 
 const index: FC<{
+	containerRef: React.RefObject<HTMLDivElement>
 	selectedRowKeys: React.Key[]
 	useModalResult: TUseModal
 	theSingleRecord: DataType | undefined
 	notificationInstance: NotificationInstance
 }> = ({
+	containerRef,
 	selectedRowKeys,
 	useModalResult,
 	theSingleRecord,
@@ -37,6 +38,7 @@ const index: FC<{
 
 	const { mutate: create, isPending: isCreating } = useCreate({ api, close })
 	const { mutate: update, isPending: isUpdating } = useUpdate({ api, close })
+
 	const handleOk = () => {
 		form.validateFields().then((values) => {
 			if (isEdit) {
@@ -101,6 +103,8 @@ const index: FC<{
 
 	return (
 		<Modal
+			forceRender
+			getContainer={containerRef?.current as HTMLElement}
 			title={`批量${label}授權碼 ${isEdit ? `(${selectedRowKeys.length}) 筆` : ''}`}
 			{...modalProps}
 			onOk={handleOk}
@@ -128,7 +132,11 @@ const index: FC<{
 							},
 						]}
 					>
-						<Select className="!w-40" disabled={!isEdit}>
+						<Select
+							className="!w-40"
+							disabled={!isEdit}
+							getPopupContainer={() => containerRef?.current as HTMLElement}
+						>
 							<Select.Option value="available">可用</Select.Option>
 							{/* <Select.Option value="activated">已啟用</Select.Option> */}
 							<Select.Option value="deactivated">已停用</Select.Option>
@@ -147,7 +155,11 @@ const index: FC<{
 							},
 						]}
 					>
-						<Select className="!w-40" options={productOptions} />
+						<Select
+							className="!w-40"
+							options={productOptions}
+							getPopupContainer={() => containerRef?.current as HTMLElement}
+						/>
 					</Item>
 					{!isEdit && (
 						<Item
@@ -178,7 +190,9 @@ const index: FC<{
 					</Item>
 				)}
 
-				{!!watchIsSubscription && !!isEdit && <SubscriptionSelector />}
+				{!!watchIsSubscription && !!isEdit && (
+					<SubscriptionSelector containerRef={containerRef} />
+				)}
 
 				{!watchIsSubscription && (
 					<div className="flex gap-x-4">
@@ -187,7 +201,10 @@ const index: FC<{
 							name={['limit_type']}
 							initialValue="unlimited"
 						>
-							<Select className="!w-40">
+							<Select
+								className="!w-40"
+								getPopupContainer={() => containerRef?.current as HTMLElement}
+							>
 								<Select.Option value="unlimited">無期限</Select.Option>
 								<Select.Option value="fixed">啟用後固定時間</Select.Option>
 								<Select.Option value="assigned">指定到期日</Select.Option>
@@ -202,7 +219,12 @@ const index: FC<{
 									<InputNumber className="w-full" min={1} max={100} />
 								</Item>
 								<Item label="&nbsp;" name={['limit_unit']} initialValue="days">
-									<Select className="!w-40">
+									<Select
+										className="!w-40"
+										getPopupContainer={() =>
+											containerRef?.current as HTMLElement
+										}
+									>
 										<Select.Option value="days">天</Select.Option>
 										<Select.Option value="months">月</Select.Option>
 										<Select.Option value="years">年</Select.Option>
