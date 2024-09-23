@@ -63,7 +63,7 @@ const items: TabsProps['items'] = [
 		key: 'license-codes',
 		icon: <BarcodeOutlined />,
 		label: '授權碼管理',
-		children: <LicenseCodes />,
+		children: <LicenseCodes isAdmin />,
 		forceRender: false,
 	},
 	{

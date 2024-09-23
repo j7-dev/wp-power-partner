@@ -103,7 +103,6 @@ const index: FC<{
 
 	return (
 		<Modal
-			forceRender
 			getContainer={containerRef?.current as HTMLElement}
 			title={`批量${label}授權碼 ${isEdit ? `(${selectedRowKeys.length}) 筆` : ''}`}
 			{...modalProps}

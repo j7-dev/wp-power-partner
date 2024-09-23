@@ -21,6 +21,7 @@ import { useDelete } from './hooks'
 import { CreateModifyTime } from '@/components'
 import { SyncOutlined, UserOutlined } from '@ant-design/icons'
 import ExpireDate from './ExpireDate'
+import { useRelease } from './hooks/useRelease'
 
 const { Text } = Typography
 const { Search } = Input
@@ -125,7 +126,7 @@ const columns: TableProps<DataType>['columns'] = [
 	},
 ]
 
-const index = () => {
+const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 	const identity = useAtomValue(identityAtom)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const [search, setSearch] = useState('')
@@ -163,26 +164,39 @@ const index = () => {
 		deleteLCs(selectedRowKeys as number[])
 	}
 
+	const { mutate: release, isPending: isReleasing } = useRelease({ api, close })
+
+	const handleRelease = () => {
+		release({
+			ids: selectedRowKeys as number[],
+		})
+	}
+
 	return (
 		<div ref={containerRef}>
 			{contextHolder}
-			<div className="flex justify-between mb-4">
-				<Button type="primary" onClick={show}>
-					批量{label}
-					{isEdit ? ` (${selectedRowKeys.length})` : ''}
-				</Button>
+			<div
+				className={`flex mb-4  ${isAdmin ? 'justify-between' : 'justify-end'}`}
+			>
+				{isAdmin && (
+					<Button type="primary" onClick={show}>
+						批量{label}
+						{isEdit ? ` (${selectedRowKeys.length})` : ''}
+					</Button>
+				)}
+
 				<div className="flex gap-x-4">
 					<Popconfirm
 						title="確認解除網域榜定嗎?"
 						description="只有 [已啟用] 的授權碼可以解除網域榜定"
-						onConfirm={handleDelete}
+						onConfirm={handleRelease}
 						okText="確認"
 						cancelText="取消"
 						getPopupContainer={() =>
 							(containerRef?.current || document.body) as HTMLElement
 						}
 					>
-						<Button type="primary" disabled={isCreate} loading={isDeleting}>
+						<Button type="primary" disabled={isCreate} loading={isReleasing}>
 							批量解除網域榜定{isCreate ? '' : ` (${selectedRowKeys.length})`}
 						</Button>
 					</Popconfirm>
@@ -222,13 +236,15 @@ const index = () => {
 				{...tableProps}
 				rowSelection={rowSelection}
 			/>
-			<ModalForm
-				containerRef={containerRef}
-				selectedRowKeys={selectedRowKeys}
-				useModalResult={useModalResult}
-				theSingleRecord={theSingleRecord}
-				notificationInstance={api}
-			/>
+			{isAdmin && (
+				<ModalForm
+					containerRef={containerRef}
+					selectedRowKeys={selectedRowKeys}
+					useModalResult={useModalResult}
+					theSingleRecord={theSingleRecord}
+					notificationInstance={api}
+				/>
+			)}
 		</div>
 	)
 }
