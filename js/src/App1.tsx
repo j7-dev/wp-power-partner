@@ -1,11 +1,23 @@
 import AdminApp from './pages/AdminApp'
-import { StyleProvider } from '@ant-design/cssinjs'
+import { createCache, StyleProvider } from '@ant-design/cssinjs'
+import { ConfigProvider } from 'antd'
 import '@/assets/scss/index.scss'
 
 function App() {
+	const cache = createCache()
 	return (
-		<StyleProvider hashPriority="high">
-			<AdminApp />
+		<StyleProvider cache={cache} hashPriority="high">
+			<ConfigProvider
+				theme={{
+					components: {
+						Table: {
+							rowExpandedBg: '#ffffff',
+						},
+					},
+				}}
+			>
+				<AdminApp />
+			</ConfigProvider>
 		</StyleProvider>
 	)
 }

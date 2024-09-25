@@ -3,6 +3,7 @@ import UserApp from '@/pages/UserApp'
 import { createCache, StyleProvider } from '@ant-design/cssinjs'
 import root from 'react-shadow'
 import { useEffect, useRef, useState } from 'react'
+import { ConfigProvider } from 'antd'
 
 function App2() {
 	const cache = createCache()
@@ -21,7 +22,17 @@ function App2() {
 				container={shadowRoot as ShadowRoot}
 				hashPriority="high"
 			>
-				<UserApp />
+				<ConfigProvider
+					theme={{
+						components: {
+							Table: {
+								rowExpandedBg: '#ffffff',
+							},
+						},
+					}}
+				>
+					<UserApp />
+				</ConfigProvider>
 			</StyleProvider>
 		</root.div>
 	)

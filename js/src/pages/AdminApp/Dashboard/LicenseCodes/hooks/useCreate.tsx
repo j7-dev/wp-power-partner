@@ -50,13 +50,6 @@ export const useCreate = ({ api, close }: TUseCreateParams) => {
 			queryClient.invalidateQueries({ queryKey: ['license-codes'] })
 			close()
 		},
-		onError: (err: any, values) => {
-			console.log('⭐  err:', err)
-			api.error({
-				key: 'create-license-codes',
-				message: err?.response?.data?.message || '新增授權碼失敗',
-			})
-		},
 	})
 	return mutation
 }

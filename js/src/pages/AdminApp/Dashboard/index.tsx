@@ -92,7 +92,7 @@ const index = () => {
 			})
 	}
 	return (
-		<Form form={form}>
+		<Form form={form} layout="vertical">
 			{contextHolder}
 			<Tabs
 				activeKey={activeKey}

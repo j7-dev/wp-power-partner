@@ -43,13 +43,6 @@ export const useRelease = ({ api }: TUseReleaseParams) => {
 			})
 			queryClient.invalidateQueries({ queryKey: ['license-codes'] })
 		},
-		onError: (err: any, values) => {
-			console.log('⭐  err:', err)
-			api.error({
-				key: 'release-license-codes',
-				message: err?.response?.data?.message || '解除網域綁定授權碼失敗',
-			})
-		},
 	})
 	return mutation
 }

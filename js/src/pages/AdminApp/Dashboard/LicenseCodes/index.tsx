@@ -178,7 +178,7 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 		<div ref={containerRef}>
 			{contextHolder}
 			<div className={`flex mb-4  ${isAdmin ? 'justify-between' : ''}`}>
-				{true && (
+				{isAdmin && (
 					<Button type="primary" onClick={show}>
 						批量{label}
 						{isEdit ? ` (${selectedRowKeys.length})` : ''}
@@ -238,7 +238,7 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 				{...tableProps}
 				rowSelection={rowSelection}
 			/>
-			{true && (
+			{isAdmin && (
 				<ModalForm
 					containerRef={containerRef}
 					selectedRowKeys={selectedRowKeys}

@@ -27,13 +27,12 @@ instance.interceptors.response.use(
 		return response
 	},
 	async function (error) {
-		// Any status codes that falls outside the range of 2xx cause this function to trigger
+		const message =
+			error?.response?.data?.message || 'OOPS! 發生錯誤 請稍後再試'
 
 		notification.error({
-			message: 'Error',
-			description: error.message,
+			message: message,
 		})
-		console.log('error', error)
 
 		return Promise.reject(error)
 	},
