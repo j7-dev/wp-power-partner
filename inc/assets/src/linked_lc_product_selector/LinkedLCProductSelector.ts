@@ -54,7 +54,7 @@ export class LinkedLCProductSelector {
 				<option value="${product.slug}" ${product.slug === item.product_slug ? 'selected' : ''}>${product.label}</option>
 			`).join('')}
 		</select>
-		<input type="number" min="0" step="1" class="!w-20" placeholder="數量" value="${item.quantity}" name="${NAME}[${index}][quantity]" />
+		<input type="number" min="0" max="100" step="1" class="!w-20" placeholder="數量" value="${item.quantity}" name="${NAME}[${index}][quantity]" />
 		<button event="remove" type="button" class="button">移除</button>
 	</div>
 `}

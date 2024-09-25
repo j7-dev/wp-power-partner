@@ -192,7 +192,7 @@ const index: FC<{
 								},
 							]}
 						>
-							<InputNumber className="w-full" min={1} max={30} />
+							<InputNumber className="w-full" min={1} max={100} />
 						</Item>
 					)}
 				</div>
