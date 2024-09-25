@@ -39,7 +39,7 @@ final class ShopSubscription {
 
 	/**
 	 * Failed statuses
-	 * 'pending-cancel' [待取消] = 用戶不續訂，不應該停用網站
+	 * 'pending-cancel' [待取消] = 用戶不續訂，不應該停用網站，也不會停用授權
 	 *
 	 * @see https://github.com/j7-dev/wp-power-partner/issues/11
 	 *
@@ -52,7 +52,7 @@ final class ShopSubscription {
 	 *
 	 * @var array
 	 */
-	public static $not_failed_statuses = [ 'active' ];
+	public static $not_failed_statuses = [ 'active', 'pending-cancel' ];
 
 	/**
 	 * All statuses
@@ -96,8 +96,8 @@ final class ShopSubscription {
 			return;
 		}
 
-		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等  就算失敗
-		$is_subscription_failed = ( ! in_array( $new_status, self::$not_failed_statuses, true ) ) && in_array( $old_status, self::$success_statuses, true );
+		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等  就算失敗，[待取消]不算失敗
+		$is_subscription_failed = ( in_array( $new_status, self::$failed_statuses, true ) ) && in_array( $old_status, self::$not_failed_statuses, true );
 
 		// 如果訂閱沒失敗 就不處理，並且刪除 上次失敗的時間 紀錄
 		if ( ! $is_subscription_failed ) {

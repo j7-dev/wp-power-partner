@@ -56,8 +56,8 @@ final class Main {
 		}
 
 		// 從成功變成失敗
-		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等  就算失敗
-		$is_subscription_failed = ( ! in_array( $new_status, ShopSubscription::$not_failed_statuses, true ) ) && in_array( $old_status, ShopSubscription::$success_statuses, true );
+		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等 就算失敗 [待取消]不算失敗
+		$is_subscription_failed = ( in_array( $new_status, ShopSubscription::$failed_statuses, true ) ) && in_array( $old_status, ShopSubscription::$not_failed_statuses, true );
 
 		// 如果訂閱不是轉變為失敗 就不處理
 		if ( ! $is_subscription_failed ) {
