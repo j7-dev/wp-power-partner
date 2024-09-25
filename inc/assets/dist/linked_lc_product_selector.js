@@ -5,7 +5,7 @@ var d=Object.defineProperty;var _=(n,t,e)=>t in n?d(n,t,{enumerable:!0,configura
 				<option value="${s.slug}" ${s.slug===t.product_slug?"selected":""}>${s.label}</option>
 			`).join("")}
 		</select>
-		<input type="number" min="0" step="1" class="!w-20" placeholder="數量" value="${t.quantity}" name="${i}[${e}][quantity]" />
+		<input type="number" min="0" max="100" step="1" class="!w-20" placeholder="數量" value="${t.quantity}" name="${i}[${e}][quantity]" />
 		<button event="remove" type="button" class="button">移除</button>
 	</div>
 `}render(){this.$el.html(`

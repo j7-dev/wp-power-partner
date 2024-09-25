@@ -274,15 +274,17 @@ final class Main {
 
 		$display_name = $subscription->get_billing_last_name() . $subscription->get_billing_first_name();
 
-		$subject  = '您的授權碼已開通 - ' . \get_bloginfo('name');
-		$message  = "{$display_name} 您好:\n\n";
-		$message .= "您在 {$subscription->get_date_created()} 訂購的授權碼 #{$subscription->get_id()} 已經開通，以下是您的授權碼:\n\n";
+		$product_name = $license_codes[0]['product_name']; // 這批 license_codes 都是同樣產品
+
+		$subject  = "您的《{$product_name}》授權碼已開通 - " . \get_bloginfo('name');
+		$message  = "{$display_name} 您好:<br><br>";
+		$message .= "您在 {$subscription->get_date_created()->date('Y-m-d')} 訂購的授權碼 (訂閱編號 #{$subscription->get_id()}) 已經開通，以下是您的授權碼:<br><br>";
 
 		foreach ($license_codes as $license_code) {
-			$message .= "授權碼: {$license_code['code']}\n";
-			$message .= "到期日: {$license_code['expire_date']}\n";
-			$message .= "產品: {$license_code['product_name']}\n";
-			$message .= "\n";
+			$message .= "授權碼: {$license_code['code']}<br>";
+			$message .= '到期日: 跟隨訂閱<br>';
+			// $message .= "產品: {$product_name}<br>";
+			$message .= '<br>';
 		}
 
 		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
