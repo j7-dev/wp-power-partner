@@ -244,6 +244,8 @@ final class Main {
 			}
 
 			$subscription->add_order_note("站長路可《新增》授權碼 ✅成功: \n" . \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
+
+			self::send_email_to_subscriber($subscription, $license_codes);
 		}
 
 		// 把資訊紀錄在 subscription
@@ -253,5 +255,38 @@ final class Main {
 			$subscription->add_meta_data('lc_id', $lc_id);
 		}
 		$subscription->save();
+	}
+
+	/**
+	 * 寄信給客戶
+	 *
+	 * phpcs:disable
+	 * @param \WC_Subscription $subscription 訂閱
+	 * @param array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, customer_id: int, expire_date: int, domain: string, product_slug: string, product_key: string, product_name: string}> $license_codes 授權碼
+	 * @return void
+	 * phpcs:enable
+	 */
+	public static function send_email_to_subscriber( \WC_Subscription $subscription, array $license_codes ): void {
+		$email = $subscription->get_billing_email();
+		if ( ! $email ) {
+			return;
+		}
+
+		$display_name = $subscription->get_billing_last_name() . $subscription->get_billing_first_name();
+
+		$subject  = '您的授權碼已開通 - ' . \get_bloginfo('name');
+		$message  = "{$display_name} 您好:\n\n";
+		$message .= "您在 {$subscription->get_date_created()} 訂購的授權碼 #{$subscription->get_id()} 已經開通，以下是您的授權碼:\n\n";
+
+		foreach ($license_codes as $license_code) {
+			$message .= "授權碼: {$license_code['code']}\n";
+			$message .= "到期日: {$license_code['expire_date']}\n";
+			$message .= "產品: {$license_code['product_name']}\n";
+			$message .= "\n";
+		}
+
+		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+
+		\wp_mail($email, $subject, $message, $headers);
 	}
 }
