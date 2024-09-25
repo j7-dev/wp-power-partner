@@ -51,11 +51,11 @@ export const useUpdate = ({ api, close }: TUseUpdateParams) => {
 			queryClient.invalidateQueries({ queryKey: ['license-codes'] })
 			close()
 		},
-		onError: (err, values) => {
+		onError: (err: any, values) => {
 			console.log('⭐  err:', err)
 			api.error({
 				key: 'update-license-codes',
-				message: '更新授權碼失敗',
+				message: err?.response?.data?.message || '更新授權碼失敗',
 			})
 		},
 	})

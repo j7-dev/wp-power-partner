@@ -47,11 +47,11 @@ export const useDelete = ({
 			setSelectedRowKeys([])
 			close()
 		},
-		onError: (err, values) => {
+		onError: (err: any, values) => {
 			console.log('⭐  err:', err)
 			api.error({
 				key: 'delete-license-codes',
-				message: '刪除授權碼失敗',
+				message: err?.response?.data?.message || '刪除授權碼失敗',
 			})
 		},
 	})

@@ -16,7 +16,11 @@ function App2() {
 	return (
 		<root.div ref={shadowRootRef}>
 			<style type="text/css">{styles}</style>
-			<StyleProvider cache={cache} container={shadowRoot as ShadowRoot}>
+			<StyleProvider
+				cache={cache}
+				container={shadowRoot as ShadowRoot}
+				hashPriority="high"
+			>
 				<UserApp />
 			</StyleProvider>
 		</root.div>

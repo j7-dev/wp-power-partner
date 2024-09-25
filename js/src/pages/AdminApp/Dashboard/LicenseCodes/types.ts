@@ -26,5 +26,6 @@ export type DataType = {
 
 export type TParams = {
 	author: string | number
+	customer_id?: string | number
 	search: string
 }

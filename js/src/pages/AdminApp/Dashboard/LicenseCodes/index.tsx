@@ -14,7 +14,7 @@ import { identityAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue } from 'jotai'
 import { DataType, TParams, TStatus } from './types'
 import { useRowSelection } from 'antd-toolkit'
-import { siteUrl } from '@/utils'
+import { siteUrl, currentUserId } from '@/utils'
 import ModalForm from './ModalForm'
 import { getInfo } from './utils'
 import { useDelete } from './hooks'
@@ -135,6 +135,7 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 		resource: 'license-codes',
 		defaultParams: {
 			author: user_id,
+			customer_id: isAdmin ? undefined : currentUserId,
 			search,
 		},
 		queryOptions: {
@@ -164,21 +165,20 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 		deleteLCs(selectedRowKeys as number[])
 	}
 
-	const { mutate: release, isPending: isReleasing } = useRelease({ api, close })
+	const { mutate: release, isPending: isReleasing } = useRelease({ api })
 
 	const handleRelease = () => {
 		release({
 			ids: selectedRowKeys as number[],
+			customer_id: isAdmin ? undefined : currentUserId,
 		})
 	}
 
 	return (
 		<div ref={containerRef}>
 			{contextHolder}
-			<div
-				className={`flex mb-4  ${isAdmin ? 'justify-between' : 'justify-end'}`}
-			>
-				{isAdmin && (
+			<div className={`flex mb-4  ${isAdmin ? 'justify-between' : ''}`}>
+				{true && (
 					<Button type="primary" onClick={show}>
 						批量{label}
 						{isEdit ? ` (${selectedRowKeys.length})` : ''}
@@ -200,24 +200,26 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 							批量解除網域榜定{isCreate ? '' : ` (${selectedRowKeys.length})`}
 						</Button>
 					</Popconfirm>
-					<Popconfirm
-						title="確認刪除嗎?"
-						onConfirm={handleDelete}
-						okText="確認"
-						cancelText="取消"
-						getPopupContainer={() =>
-							(containerRef?.current || document.body) as HTMLElement
-						}
-					>
-						<Button
-							type="primary"
-							danger
-							disabled={isCreate}
-							loading={isDeleting}
+					{isAdmin && (
+						<Popconfirm
+							title="確認刪除嗎?"
+							onConfirm={handleDelete}
+							okText="確認"
+							cancelText="取消"
+							getPopupContainer={() =>
+								(containerRef?.current || document.body) as HTMLElement
+							}
 						>
-							批量刪除{isCreate ? '' : ` (${selectedRowKeys.length})`}
-						</Button>
-					</Popconfirm>
+							<Button
+								type="primary"
+								danger
+								disabled={isCreate}
+								loading={isDeleting}
+							>
+								批量刪除{isCreate ? '' : ` (${selectedRowKeys.length})`}
+							</Button>
+						</Popconfirm>
+					)}
 				</div>
 			</div>
 			<div className="mb-4">
@@ -236,7 +238,7 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 				{...tableProps}
 				rowSelection={rowSelection}
 			/>
-			{isAdmin && (
+			{true && (
 				<ModalForm
 					containerRef={containerRef}
 					selectedRowKeys={selectedRowKeys}

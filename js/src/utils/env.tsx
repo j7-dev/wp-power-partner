@@ -12,13 +12,14 @@ export const apiUrl = window?.wpApiSettings?.root || '/wp-json'
 export const ajaxUrl =
 	window?.[APP_DOMAIN]?.env?.ajaxUrl || '/wp-admin/admin-ajax.php'
 export const siteUrl = window?.[APP_DOMAIN]?.env?.siteUrl || '/'
-export const currentUserId = (window?.[APP_DOMAIN]?.env?.userId || 0) as number
+export const currentUserId = Number(window?.[APP_DOMAIN]?.env?.userId || 0)
 export const postId = window?.[APP_DOMAIN]?.env?.postId || '0'
 export const permalink = window?.[APP_DOMAIN]?.env?.permalink || '/'
 export const apiTimeout = '300000'
 
 // cloud site API
-export const cloudBaseUrl = window?.[APP_DOMAIN]?.env?.cloudBaseUrl || 'https://cloud.luke.cafe'
+export const cloudBaseUrl =
+	window?.[APP_DOMAIN]?.env?.cloudBaseUrl || 'https://cloud.luke.cafe'
 export const t = window?.[APP_DOMAIN]?.env?.t || ''
 
 export const cloudApiUrl = `${cloudBaseUrl}/wp-json/power-partner-server`
@@ -27,8 +28,8 @@ export const LOCALSTORAGE_ACCOUNT_KEY = 'power-partner-account'
 export const nonce = window?.[APP_DOMAIN]?.env?.nonce || ''
 export const allowed_template_options = (window?.[APP_DOMAIN]?.env
 	?.allowed_template_options || []) as {
-		[key: string]: string
-	}
+	[key: string]: string
+}
 
 export const partner_id: string = window?.[APP_DOMAIN]?.env?.partner_id || ''
 export const disable_site_after_n_days: number =
