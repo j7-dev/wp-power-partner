@@ -1,5 +1,13 @@
 import React, { FC, useEffect } from 'react'
-import { Modal, Form, InputNumber, Select, DatePicker, Switch, Tag } from 'antd'
+import {
+	Modal,
+	Form,
+	InputNumber,
+	Select,
+	DatePicker,
+	Switch,
+	Tag,
+} from 'antd'
 import { TUseModal } from '@/hooks'
 import { getInfo } from '../utils'
 import {
@@ -101,6 +109,13 @@ const index: FC<{
 		}
 	}, [open, isSingleEdit])
 
+	useEffect(() => {
+		form.setFieldValue(
+			['post_status'],
+			watchIsSubscription ? 'follow_subscription' : 'available',
+		)
+	}, [watchIsSubscription])
+
 	return (
 		<Modal
 			getContainer={containerRef?.current as HTMLElement}
@@ -121,7 +136,7 @@ const index: FC<{
 			<Form form={form} layout="vertical" className="mt-8">
 				<div className="flex gap-x-4">
 					<Item
-						label="修改狀態"
+						label="授權碼狀態"
 						name={['post_status']}
 						initialValue="available"
 						rules={[
@@ -133,13 +148,18 @@ const index: FC<{
 					>
 						<Select
 							className="!w-40"
-							disabled={!isEdit}
+							disabled={!isEdit || watchIsSubscription}
 							getPopupContainer={() => containerRef?.current as HTMLElement}
 						>
 							<Select.Option value="available">可用</Select.Option>
 							{/* <Select.Option value="activated">已啟用</Select.Option> */}
 							<Select.Option value="deactivated">已停用</Select.Option>
 							{/* <Select.Option value="expired">已過期</Select.Option> */}
+							{watchIsSubscription && (
+								<Select.Option value="follow_subscription">
+									跟隨訂閱狀態
+								</Select.Option>
+							)}
 						</Select>
 					</Item>
 
