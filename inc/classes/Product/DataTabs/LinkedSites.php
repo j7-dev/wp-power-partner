@@ -38,13 +38,6 @@ final class LinkedSites {
 	];
 
 	/**
-	 * Allowed template options
-	 *
-	 * @var array<string, string>
-	 */
-	public static $allowed_template_options = [];
-
-	/**
 	 * Constructor
 	 */
 	public function __construct() {
@@ -57,8 +50,6 @@ final class LinkedSites {
 		\add_action( 'woocommerce_save_product_variation', [ $this, 'save_variable_subscription' ], 20, 2 );
 
 		\add_action( 'admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ] );
-
-		self::$allowed_template_options = Fetch::get_allowed_template_options();
 	}
 
 	/**
@@ -126,7 +117,7 @@ final class LinkedSites {
 				'desc_tip'      => false,
 				'description'   => '<a href="' . $action_url . '"><button type="button" class="button">清除快取</button></a>',
 				'value'         => $linked_site_value,
-				'options'       => [ '' => '請選擇' ] + self::$allowed_template_options,
+				'options'       => [ '' => '請選擇' ] + Fetch::get_allowed_template_options(),
 			]
 		);
 
@@ -210,7 +201,7 @@ final class LinkedSites {
 				'desc_tip'      => false,
 				'description'   => '如果想要更多模板站，請聯繫站長路可',
 				'value'         => $linked_site_value,
-				'options'       => [ '' => '請選擇' ] + self::$allowed_template_options,
+				'options'       => [ '' => '請選擇' ] + Fetch::get_allowed_template_options(),
 			]
 		);
 
