@@ -34,6 +34,9 @@ final class Main {
 	 */
 	public function __construct() {
 		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_failed' ], 10, 3 );
+
+		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_success' ], 10, 3 );
+
 		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'create_lcs' ], 10, 1 );
 	}
 
@@ -56,7 +59,7 @@ final class Main {
 		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等  就算失敗
 		$is_subscription_failed = ( ! in_array( $new_status, ShopSubscription::$not_failed_statuses, true ) ) && in_array( $old_status, ShopSubscription::$success_statuses, true );
 
-		// 如果訂閱沒失敗 就不處理
+		// 如果訂閱不是轉變為失敗 就不處理
 		if ( ! $is_subscription_failed ) {
 			return;
 		}
@@ -86,6 +89,58 @@ final class Main {
 		$data = General::json_parse($body, []);
 
 		$subscription->add_order_note("站長路可《過期》授權碼 ✅成功: \n" . \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
+	}
+
+
+	/**
+	 * Subscription success
+	 * 如果手動調整訂閱成功，則讓授權碼變成可用
+	 *
+	 * @param string           $old_status old status
+	 * @param string           $new_status new status
+	 * @param \WC_Subscription $subscription post
+	 * @return void
+	 */
+	public function subscription_success( $old_status, $new_status, $subscription ): void {
+
+		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
+			return;
+		}
+
+		// 從失敗變成成功
+		// 從 [已取消] [已過期] [保留] 變成 [已啟用] 等等  就算成功
+		$is_subscription_success = ( in_array( $new_status, ShopSubscription::$success_statuses, true ) ) && in_array( $old_status, ShopSubscription::$failed_statuses, true );
+
+		// 如果訂閱不是轉變為成功 就不處理
+		if ( ! $is_subscription_success ) {
+			return;
+		}
+
+		$lc_ids = \get_post_meta($subscription->get_id(), 'lc_id', false);
+
+		// 如果訂閱身上沒有授權碼 就不處理
+		if ( ! $lc_ids ) {
+			return;
+		}
+
+		// 訂閱轉為成功，發API讓授權碼變成可用
+		$api_instance = CloudApi::instance();
+		$response     = $api_instance->remote_post(
+			'license-codes/recover',
+			[
+				'ids' => $lc_ids,
+			]
+		);
+		$is_error     = \is_wp_error($response);
+		if ($is_error) {
+			$subscription->add_order_note("站長路可《重啟》授權碼 ❌失敗: \n{$response->get_error_message()}");
+			return;
+		}
+
+		$body = \wp_remote_retrieve_body($response);
+		$data = General::json_parse($body, []);
+
+		$subscription->add_order_note("站長路可《重啟》授權碼 ✅成功: \n" . \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
 	}
 
 	/**
