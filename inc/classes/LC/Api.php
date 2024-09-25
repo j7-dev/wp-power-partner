@@ -11,6 +11,7 @@ use J7\PowerPartner\Plugin;
 use J7\WpUtils\Classes\WP;
 use J7\WpUtils\Classes\General;
 use J7\Powerhouse\Api\Base as CloudApi;
+use J7\PowerPartner\ShopSubscription;
 
 /**
  * Class Api
@@ -74,9 +75,9 @@ final class Api {
 		 */
 		$body_params = WP::sanitize_text_field_deep( $body_params );
 
-		$is_bind_success = $this->handle_bind_subscription($body_params);
+		$body_params = $this->handle_bind_subscription($body_params);
 
-		if (!$is_bind_success) {
+		if (\is_wp_error($body_params)) {
 			return new \WP_REST_Response(
 				[
 					'code'    => 'bind_subscription_failed',
@@ -177,23 +178,37 @@ final class Api {
 
 
 	/**
-	 * 連結授權碼到訂閱失敗
+	 * 處理連結授權碼到訂閱
 	 *
-	 * @param array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int} $body_params 參數
-	 * @return bool 連結成功回傳 true，否則 false
+	 * @param array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int, recover?:boolean} $body_params 參數
+	 * @return array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int, recover?:boolean}|\WP_Error 連結成功回傳 $body_params，否則 \WP_Error
 	 */
-	public function handle_bind_subscription( array $body_params ): bool {
+	public function handle_bind_subscription( array $body_params ): array|\WP_Error {
 		$lc_ids          = $body_params['ids'] ?? []; // @phpstan-ignore-line
 		$subscription_id = $body_params['subscription_id'] ?? null;
 
 		if (!$subscription_id) {
-			return true;
+			// 沒有指定綁定訂閱，那就是設定 LC 使用時間，所以要移除 LC 的訂閱綁定
+			foreach ($lc_ids as $lc_id) {
+				// 這個 lc_id 之前可能綁定再其他訂閱，所以要先找到 有沒有關聯訂閱，有就先解綁
+				$related_subscription_ids = $this->get_related_subscriptions( (int) $lc_id);
+				foreach ($related_subscription_ids as $related_subscription_id) {
+					$related_subscription = \wcs_get_subscription($related_subscription_id);
+					if ($related_subscription) {
+						// 只刪除 lc_id 相同的 meta data
+						$related_subscription->delete_meta_data_value('lc_id', $lc_id);
+						$related_subscription->save();
+					}
+				}
+			}
+			return $body_params;
 		}
 
 		$subscription = \wcs_get_subscription($subscription_id);
 		if (!$subscription) {
-			return false;
+			return new \WP_Error('subscription_not_found', " #{$subscription_id} 訂閱不存在");
 		}
+
 		foreach ($lc_ids as $lc_id) {
 			// 這個 lc_id 之前可能綁定再其他訂閱，所以要先找到 有沒有關聯訂閱，有就先解綁
 			$related_subscription_ids = $this->get_related_subscriptions( (int) $lc_id);
@@ -210,7 +225,17 @@ final class Api {
 			$subscription->add_meta_data('lc_id', $lc_id);
 			$subscription->save();
 		}
-		return true;
+
+		$subscription_status        = $subscription->get_status();
+		$is_success_status          = in_array($subscription_status, ShopSubscription::$success_statuses, true);
+		// 原本 $body_params['post_status'] 是 follow_subscription
+		$body_params['post_status'] = $is_success_status ? 'available' : 'expired';
+
+		if ($is_success_status) {
+			$body_params['recover'] = true;
+		}
+
+		return $body_params;
 	}
 
 	/**
