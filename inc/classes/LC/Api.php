@@ -35,6 +35,11 @@ final class Api {
 			'endpoint' => 'license-codes',
 			'method'   => 'delete',
 		],
+		[
+			'endpoint'            => 'subscriptions/next-payment',
+			'method'              => 'get',
+			'permission_callback' => '__return_true',
+		],
 	];
 
 	/**
@@ -226,8 +231,8 @@ final class Api {
 			$subscription->save();
 		}
 
-		$subscription_status        = $subscription->get_status();
-		$is_success_status          = in_array($subscription_status, ShopSubscription::$success_statuses, true);
+		$subscription_status = $subscription->get_status();
+		$is_success_status   = in_array($subscription_status, ShopSubscription::$success_statuses, true);
 		// 原本 $body_params['post_status'] 是 follow_subscription
 		$body_params['post_status'] = $is_success_status ? 'available' : 'expired';
 
@@ -255,5 +260,44 @@ final class Api {
 		];
 		$query = new \WP_Query($args);
 		return $query->posts;
+	}
+
+
+	/**
+	 * 取得訂閱下次付款日
+	 *
+	 * @param \WP_REST_Request $request 包含請求參數的 REST 請求對象。
+	 * @return \WP_REST_Response|\WP_Error 返回包含操作結果的 REST 響應對象。
+	 * @phpstan-ignore-next-line
+	 */
+	public function get_subscriptions_next_payment_callback( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+		$params = $request->get_params();
+
+		$include_required_params = WP::include_required_params($params, [ 'ids' ]);
+
+		if (true !== $include_required_params) {
+			return $include_required_params;
+		}
+
+		$subscription_ids = $params['ids'];
+		if (!is_array($subscription_ids)) {
+			return new \WP_Error('invalid_subscription_ids', '訂閱 id 須為陣列');
+		}
+
+		$results = [];
+		foreach ($subscription_ids as $subscription_id) {
+			$subscription = \wcs_get_subscription($subscription_id);
+			if ($subscription) {
+				$results[] = [
+					'id'   => $subscription_id,
+					'time' => $subscription->get_time( 'next_payment' ),
+				];
+			}
+		}
+
+		return new \WP_REST_Response(
+			$results,
+			200
+			);
 	}
 }
