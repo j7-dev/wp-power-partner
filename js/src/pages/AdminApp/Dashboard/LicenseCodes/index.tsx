@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useMemo } from 'react'
 import { useTable, useModal } from '@/hooks'
 import {
 	Table,
@@ -21,7 +21,7 @@ import { useDelete } from './hooks'
 import { CreateModifyTime } from '@/components'
 import { SyncOutlined, UserOutlined } from '@ant-design/icons'
 import ExpireDate from './ExpireDate'
-import { useRelease } from './hooks/useRelease'
+import { useRelease, useSubscriptionsNextPayment } from './hooks'
 
 const { Text } = Typography
 const { Search } = Input
@@ -44,87 +44,6 @@ const STATUS_MAP = {
 		color: 'magenta',
 	},
 }
-
-const columns: TableProps<DataType>['columns'] = [
-	{
-		title: '授權碼',
-		dataIndex: 'code',
-		render: (code: string, record: DataType) => (
-			<>
-				<Text className="font-mono" copyable>
-					{code}
-				</Text>
-				<p className="text-xs text-gray-500">id: #{record.id}</p>
-			</>
-		),
-	},
-	{
-		title: '狀態',
-		dataIndex: 'post_status',
-		render: (post_status: TStatus) => (
-			<Tag color={STATUS_MAP?.[post_status]?.color || 'default'}>
-				{STATUS_MAP?.[post_status]?.label || '未定義狀態'}
-			</Tag>
-		),
-	},
-	{
-		title: '期限',
-		dataIndex: 'expire_date',
-		render: (_: number, record) => <ExpireDate record={record} />,
-	},
-	{
-		title: '綁定網域',
-		dataIndex: 'domain',
-		render: (domain: string) => (
-			<a href={`https://${domain}`} target="_blank" rel="noreferrer">
-				{domain}
-			</a>
-		),
-	},
-	{
-		title: '連接訂閱',
-		dataIndex: 'subscription_id',
-		render: (subscription_id: number, { customer_id }: DataType) =>
-			subscription_id ? (
-				<>
-					<a
-						href={`${siteUrl}/wp-admin/post.php?post=${subscription_id}&action=edit`}
-						target="_blank"
-						rel="noreferrer"
-						className="block text-xs"
-					>
-						<SyncOutlined className="mr-1" />#{subscription_id}
-					</a>
-					<a
-						href={`${siteUrl}/wp-admin/user-edit.php?user_id=${customer_id}&wp_http_referer=%2Fwp-admin%2Fusers.php`}
-						target="_blank"
-						rel="noreferrer"
-						className="block text-xs"
-					>
-						<UserOutlined className="mr-1" />#{customer_id}
-					</a>
-				</>
-			) : (
-				''
-			),
-	},
-	{
-		title: '連接商品',
-		dataIndex: 'product_name',
-		render: (product_name: string) => product_name || 'N/A',
-	},
-	{
-		title: '每天消耗點數',
-		dataIndex: 'rate',
-	},
-	{
-		title: '建立/修改時間',
-		dataIndex: 'post_date',
-		render: (post_date: string, { post_modified }: DataType) => (
-			<CreateModifyTime created={post_date} modified={post_modified} />
-		),
-	},
-]
 
 const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 	const identity = useAtomValue(identityAtom)
@@ -173,6 +92,107 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 			customer_id: isAdmin ? undefined : currentUserId,
 		})
 	}
+
+	const subscription_ids =
+		tableProps?.dataSource?.map((record) => record.subscription_id) || []
+	const nextPayments = useSubscriptionsNextPayment({ subscription_ids })
+
+	const columns: TableProps<DataType>['columns'] = useMemo(() => {
+		const adminColumns: TableProps<DataType>['columns'] = [
+			{
+				title: '每天消耗點數',
+				dataIndex: 'rate',
+			},
+			{
+				title: '建立/修改時間',
+				dataIndex: 'post_date',
+				render: (post_date: string, { post_modified }: DataType) => (
+					<CreateModifyTime created={post_date} modified={post_modified} />
+				),
+			},
+		]
+
+		return [
+			{
+				title: '商品',
+				dataIndex: 'product_name',
+				render: (product_name: string) => product_name || 'N/A',
+			},
+			{
+				title: '授權碼',
+				dataIndex: 'code',
+				render: (code: string, record: DataType) => (
+					<>
+						<Text className="font-mono" copyable>
+							{code}
+						</Text>
+						{isAdmin && (
+							<p className="text-xs text-gray-500">id: #{record.id}</p>
+						)}
+					</>
+				),
+			},
+			{
+				title: '狀態',
+				dataIndex: 'post_status',
+				render: (post_status: TStatus) => (
+					<Tag color={STATUS_MAP?.[post_status]?.color || 'default'}>
+						{STATUS_MAP?.[post_status]?.label || '未定義狀態'}
+					</Tag>
+				),
+			},
+			{
+				title: '期限',
+				dataIndex: 'expire_date',
+				render: (_: number, record) => (
+					<ExpireDate record={record} nextPayments={nextPayments} />
+				),
+			},
+			{
+				title: '管理訂閱',
+				dataIndex: 'subscription_id',
+				render: (subscription_id: number, { customer_id }: DataType) =>
+					subscription_id ? (
+						<>
+							<a
+								href={
+									isAdmin
+										? `${siteUrl}/wp-admin/post.php?post=${subscription_id}&action=edit`
+										: `${siteUrl}/my-account/view-subscription/${subscription_id}`
+								}
+								target="_blank"
+								rel="noreferrer"
+								className="block text-xs"
+							>
+								<SyncOutlined className="mr-1" />#{subscription_id}
+							</a>
+							{isAdmin && (
+								<a
+									href={`${siteUrl}/wp-admin/user-edit.php?user_id=${customer_id}&wp_http_referer=%2Fwp-admin%2Fusers.php`}
+									target="_blank"
+									rel="noreferrer"
+									className="block text-xs"
+								>
+									<UserOutlined className="mr-1" />#{customer_id}
+								</a>
+							)}
+						</>
+					) : (
+						''
+					),
+			},
+			{
+				title: '綁定網域',
+				dataIndex: 'domain',
+				render: (domain: string) => (
+					<a href={`https://${domain}`} target="_blank" rel="noreferrer">
+						{domain}
+					</a>
+				),
+			},
+			...adminColumns,
+		]
+	}, [isAdmin, nextPayments])
 
 	return (
 		<div ref={containerRef}>

@@ -79,7 +79,7 @@ const index = () => {
 	const [form] = Form.useForm()
 	const { mutation, contextHolder } = useSave(form)
 	const { mutate: saveSettings, isPending } = mutation
-	const [activeKey, setActiveKey] = useState<string>('license-codes')
+	const [activeKey, setActiveKey] = useState<string>('siteList')
 
 	const handleSave = () => {
 		form

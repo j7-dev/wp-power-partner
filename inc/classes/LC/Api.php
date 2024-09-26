@@ -284,12 +284,14 @@ final class Api {
 			return new \WP_Error('invalid_subscription_ids', '訂閱 id 須為陣列');
 		}
 
+		$subscription_ids = array_map('intval', $subscription_ids);
+
 		$results = [];
 		foreach ($subscription_ids as $subscription_id) {
 			$subscription = \wcs_get_subscription($subscription_id);
 			if ($subscription) {
 				$results[] = [
-					'id'   => $subscription_id,
+					'id'   => (int) $subscription_id,
 					'time' => $subscription->get_time( 'next_payment' ),
 				];
 			}
