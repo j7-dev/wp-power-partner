@@ -216,7 +216,7 @@ const index: FC<{
 							label="使用期限"
 							name={['limit_type']}
 							initialValue="unlimited"
-							tooltip="如果有指定日期，到期時間固定為當天晚上的 23:59:59"
+							tooltip="如果有指定日期，到期時間固定為當天晚上的 23:55:00"
 						>
 							<Select
 								className="!w-40"
