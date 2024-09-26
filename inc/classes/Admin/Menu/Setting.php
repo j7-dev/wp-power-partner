@@ -7,35 +7,12 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner\Admin\Menu;
 
-use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Utils\Base;
 
 /**
  * Class Setting
  */
 final class Setting {
-	use \J7\WpUtils\Traits\SingletonTrait;
-
-	/**
-	 * Constructor
-	 */
-	public function __construct() {
-		\add_action('admin_menu', [ __CLASS__, 'add_menu' ], 99);
-	}
-
-	/**
-	 * Add menu
-	 */
-	public static function add_menu(): void {
-		\add_submenu_page(
-			'powerhouse',
-			'Power Partner',
-			'Power Partner',
-			'manage_options',
-			Plugin::$kebab,
-			[ __CLASS__, 'render_page' ],
-		);
-	}
 
 	/**
 	 * Render Page

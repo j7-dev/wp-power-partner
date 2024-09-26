@@ -41,7 +41,6 @@ final class Bootstrap {
 		ShopSubscription::instance();
 		Shortcode::instance();
 		Cron::instance();
-		Admin\Menu\Setting::instance();
 		LC\Main::instance();
 		LC\Api::instance();
 
