@@ -1,13 +1,5 @@
 import React, { FC, useEffect } from 'react'
-import {
-	Modal,
-	Form,
-	InputNumber,
-	Select,
-	DatePicker,
-	Switch,
-	Tag,
-} from 'antd'
+import { Modal, Form, InputNumber, Select, DatePicker, Switch, Tag } from 'antd'
 import { TUseModal } from '@/hooks'
 import { getInfo } from '../utils'
 import {
@@ -114,6 +106,11 @@ const index: FC<{
 			['post_status'],
 			watchIsSubscription ? 'follow_subscription' : 'available',
 		)
+
+		form.setFieldValue(
+			['limit_type'],
+			watchIsSubscription ? undefined : 'unlimited',
+		)
 	}, [watchIsSubscription])
 
 	return (
@@ -219,6 +216,7 @@ const index: FC<{
 							label="使用期限"
 							name={['limit_type']}
 							initialValue="unlimited"
+							tooltip="如果有指定日期，到期時間固定為當天晚上的 23:59:59"
 						>
 							<Select
 								className="!w-40"
