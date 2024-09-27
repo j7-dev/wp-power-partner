@@ -98,19 +98,21 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 	const nextPayments = useSubscriptionsNextPayment({ subscription_ids })
 
 	const columns: TableProps<DataType>['columns'] = useMemo(() => {
-		const adminColumns: TableProps<DataType>['columns'] = [
-			{
-				title: '每天消耗點數',
-				dataIndex: 'rate',
-			},
-			{
-				title: '建立/修改時間',
-				dataIndex: 'post_date',
-				render: (post_date: string, { post_modified }: DataType) => (
-					<CreateModifyTime created={post_date} modified={post_modified} />
-				),
-			},
-		]
+		const adminColumns: TableProps<DataType>['columns'] = isAdmin
+			? [
+					{
+						title: '每天消耗點數',
+						dataIndex: 'rate',
+					},
+					{
+						title: '建立/修改時間',
+						dataIndex: 'post_date',
+						render: (post_date: string, { post_modified }: DataType) => (
+							<CreateModifyTime created={post_date} modified={post_modified} />
+						),
+					},
+				]
+			: []
 
 		return [
 			{
