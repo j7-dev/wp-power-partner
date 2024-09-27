@@ -129,7 +129,7 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 							{code}
 						</Text>
 						{isAdmin && (
-							<p className="text-xs text-gray-500">id: #{record.id}</p>
+							<p className="text-xs text-gray-500 mb-0">id: #{record.id}</p>
 						)}
 					</>
 				),

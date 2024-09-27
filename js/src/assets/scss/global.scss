@@ -4,6 +4,10 @@
 
 @import "./normalize.css";
 
+#wpcontent #wpadminbar {
+	z-index: 99;
+}
+
 p {
 	margin-top: 0;
 }
