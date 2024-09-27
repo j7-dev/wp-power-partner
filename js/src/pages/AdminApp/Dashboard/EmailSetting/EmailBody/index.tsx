@@ -1,7 +1,7 @@
 import React from 'react'
 import { Form } from 'antd'
 import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'
+import styles from 'react-quill/dist/quill.snow.css?inline'
 import { EmailComponentProps } from '@/pages/AdminApp/Dashboard/EmailSetting/types'
 import { focusEmailIndexAtom } from '@/pages/AdminApp/Dashboard/EmailSetting/atom'
 import { useSetAtom } from 'jotai'
@@ -48,7 +48,7 @@ const modules = {
 	// toolbar: "#rq-toolbar"
 }
 
-const EmailBody = ({ index }: EmailComponentProps) => {
+const EmailBody = ({ index, containerRef }: EmailComponentProps) => {
 	const form = Form.useFormInstance()
 	const setFocusEmailIndex = useSetAtom(focusEmailIndexAtom)
 
@@ -60,7 +60,9 @@ const EmailBody = ({ index }: EmailComponentProps) => {
 	}
 	return (
 		<div className="pl-12 pb-12">
+			<style type="text/css">{styles}</style>
 			<ReactQuill
+				bounds={containerRef?.current || document.body}
 				modules={modules}
 				className="h-[360px] bg-white"
 				theme="snow"

@@ -5,7 +5,7 @@ import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 
 const { Item } = Form
 
-const DeleteButton = ({ record, index }: EmailComponentProps) => {
+const EmailSwitch = ({ record, index }: EmailComponentProps) => {
 	return (
 		<>
 			<Item
@@ -40,4 +40,4 @@ const DeleteButton = ({ record, index }: EmailComponentProps) => {
 	)
 }
 
-export default DeleteButton
+export default EmailSwitch

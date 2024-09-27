@@ -52,7 +52,11 @@ const actionNameOptions = actions.map(({ label, value }) => ({
 	value,
 }))
 
-const SendingCondition = ({ record, index }: EmailComponentProps) => {
+const SendingCondition = ({
+	record,
+	index,
+	containerRef,
+}: EmailComponentProps) => {
 	const form = Form.useFormInstance()
 	const setFocusEmailIndex = useSetAtom(focusEmailIndexAtom)
 	const actionNameName = ['emails', index, 'action_name']
@@ -93,6 +97,7 @@ const SendingCondition = ({ record, index }: EmailComponentProps) => {
 				title={
 					actions.find((action) => action.value === watchActionName)?.helper
 				}
+				getPopupContainer={() => containerRef?.current || document.body}
 			>
 				<InfoCircleFilled className="text-primary mr-2" />
 			</Tooltip>
@@ -103,7 +108,11 @@ const SendingCondition = ({ record, index }: EmailComponentProps) => {
 					className="mb-0"
 					shouldUpdate
 				>
-					<Select className="!w-[200px]" options={actionNameOptions} />
+					<Select
+						className="!w-[200px]"
+						options={actionNameOptions}
+						getPopupContainer={() => containerRef?.current || document.body}
+					/>
 				</Item>
 				<Item
 					name={daysName}
@@ -123,7 +132,11 @@ const SendingCondition = ({ record, index }: EmailComponentProps) => {
 					className="mb-0"
 					shouldUpdate
 				>
-					<Select className="w-32" options={operatorOptions} />
+					<Select
+						className="w-32"
+						options={operatorOptions}
+						getPopupContainer={() => containerRef?.current || document.body}
+					/>
 				</Item>
 			</Space.Compact>
 		</div>

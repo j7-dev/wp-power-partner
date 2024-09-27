@@ -203,6 +203,9 @@ export const ChangeCustomerModal = ({
 							value: c.id,
 							label: `${c.display_name} - #${c.id}`,
 						}))}
+						getPopupContainer={() =>
+							(modalProps.getContainer || document.body) as HTMLElement
+						}
 					/>
 				</Form.Item>
 				<SubscriptionSelect

@@ -16,10 +16,12 @@ import { LOCALSTORAGE_ACCOUNT_KEY, windowWidth } from '@/utils'
 import { LoadingText } from '@/components'
 import { axios } from '@/api'
 import { useQueryClient } from '@tanstack/react-query'
+import { useRef } from 'react'
 
 const DEPOSIT_LINK = 'https://cloud.luke.cafe/product/power-partner/'
 
 const index = () => {
+	const containerRef = useRef<HTMLDivElement>(null)
 	const [identity, setIdentity] = useAtom(identityAtom)
 	const powerMoney = identity.data?.power_money_amount || '0.00'
 	const email = identity.data?.email
@@ -114,8 +116,14 @@ const index = () => {
 	}
 
 	return (
-		<div className={'ml-4 xl:mr-4 flex items-center gap-4 xl:gap-8'}>
-			<Tooltip title="刷新資料">
+		<div
+			className={'ml-4 xl:mr-4 flex items-center gap-4 xl:gap-8'}
+			ref={containerRef}
+		>
+			<Tooltip
+				title="刷新資料"
+				getPopupContainer={() => containerRef.current as HTMLElement}
+			>
 				<SyncOutlined spin={globalLoading?.isLoading} onClick={handleRefetch} />
 			</Tooltip>
 
@@ -126,6 +134,7 @@ const index = () => {
 							? '您已是最高階經銷商'
 							: '升級為高階經銷商，享受更高主機折扣'
 					}
+					getPopupContainer={() => containerRef.current as HTMLElement}
 				>
 					<a target="_blank" rel="noopener noreferrer" href={DEPOSIT_LINK}>
 						<CrownFilled
@@ -142,7 +151,10 @@ const index = () => {
 			)}
 
 			{windowWidth >= 1280 && (
-				<Tooltip title="前往儲值">
+				<Tooltip
+					title="前往儲值"
+					getPopupContainer={() => containerRef.current as HTMLElement}
+				>
 					<a target="_blank" rel="noopener noreferrer" href={DEPOSIT_LINK}>
 						<span className="text-yellow-500 font-bold">￥</span>{' '}
 						<LoadingText
@@ -157,6 +169,7 @@ const index = () => {
 				menu={{ items: filterItems }}
 				placement="bottomRight"
 				trigger={['click']}
+				getPopupContainer={() => containerRef.current as HTMLElement}
 			>
 				<Avatar
 					className="cursor-pointer"

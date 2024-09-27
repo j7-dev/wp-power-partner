@@ -27,52 +27,12 @@ import {
 import { useAtom, useAtomValue } from 'jotai'
 import useGetEmails from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useGetEmails'
 import { PlusCircleOutlined } from '@ant-design/icons'
+import { useRef, useMemo } from 'react'
 
 const { Item } = Form
 
-const columns: TableColumnsType<DataType> = [
-	{
-		title: '啟用',
-		width: 77,
-		dataIndex: 'enabled',
-		render: (_value: boolean, record, index) => (
-			<EmailSwitch record={record} index={index} />
-		),
-	},
-	{
-		title: '主旨',
-
-		// width: '100%',
-
-		dataIndex: 'subject',
-		render: (value: string, _record, index) => (
-			<Item
-				name={['emails', index, 'subject']}
-				initialValue={value}
-				className="mb-0"
-				shouldUpdate
-			>
-				<Input />
-			</Item>
-		),
-	},
-	{
-		title: '時機',
-		width: 422,
-		dataIndex: 'condition',
-		render: (_value: string, record, index) => (
-			<SendingCondition record={record} index={index} />
-		),
-	},
-	{
-		title: '',
-		width: 46,
-		dataIndex: 'action',
-		render: (_value: string, record) => <DeleteButton record={record} />,
-	},
-]
-
 const EmailSetting = () => {
+	const containerRef = useRef<HTMLDivElement>(null)
 	const form = Form.useFormInstance()
 	const focusEmailIndex = useAtomValue(focusEmailIndexAtom)
 
@@ -90,8 +50,56 @@ const EmailSetting = () => {
 
 	const { isPending } = useGetEmails()
 
+	const columns: TableColumnsType<DataType> = useMemo(
+		() => [
+			{
+				title: '啟用',
+				width: 77,
+				dataIndex: 'enabled',
+				render: (_value: boolean, record, index) => (
+					<EmailSwitch record={record} index={index} />
+				),
+			},
+			{
+				title: '主旨',
+				dataIndex: 'subject',
+				render: (value: string, _record, index) => (
+					<Item
+						name={['emails', index, 'subject']}
+						initialValue={value}
+						className="mb-0"
+						shouldUpdate
+					>
+						<Input />
+					</Item>
+				),
+			},
+			{
+				title: '時機',
+				width: 422,
+				dataIndex: 'condition',
+				render: (_value: string, record, index) => (
+					<SendingCondition
+						record={record}
+						index={index}
+						containerRef={containerRef}
+					/>
+				),
+			},
+			{
+				title: '',
+				width: 46,
+				dataIndex: 'action',
+				render: (_value: string, record) => (
+					<DeleteButton record={record} containerRef={containerRef} />
+				),
+			},
+		],
+		[dataSource, containerRef],
+	)
+
 	return (
-		<div>
+		<div ref={containerRef}>
 			{contextHolder}
 			<div className="flex flex-col lg:flex-row gap-8 relative">
 				<div className="flex-1">
@@ -109,7 +117,11 @@ const EmailSetting = () => {
 						columns={columns}
 						expandable={{
 							expandedRowRender: (record, index) => (
-								<EmailBody record={record} index={index} />
+								<EmailBody
+									record={record}
+									index={index}
+									containerRef={containerRef}
+								/>
 							),
 						}}
 						dataSource={dataSource}
@@ -125,7 +137,11 @@ const EmailSetting = () => {
 							? siteSyncTokens
 							: orderTokens
 						).map((token) => (
-							<Tooltip key={token?.value} title={token?.label}>
+							<Tooltip
+								key={token?.value}
+								title={token?.label}
+								getPopupContainer={() => containerRef.current as HTMLElement}
+							>
 								<Tag
 									color="#eee"
 									className="rounded-xl !text-gray-600 px-3 cursor-pointer mb-2"

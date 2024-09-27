@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { allowed_template_options, host_positions, kebab } from '@/utils'
 import { Select, Form, Button, notification } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,6 +15,7 @@ type TManualSiteSyncParams = {
 }
 
 const index = () => {
+	const containerRef = useRef<HTMLDivElement>(null)
 	const [api, contextHolder] = notification.useNotification({
 		placement: 'bottomRight',
 		stack: { threshold: 1 },
@@ -131,63 +132,71 @@ const index = () => {
 	const isPending = isPendingSiteSync || isPendingClearCache
 
 	return (
-		<Form
-			className="mt-8"
-			layout="vertical"
-			labelCol={{ span: 8 }}
-			wrapperCol={{ span: 16 }}
-			style={{ maxWidth: 600 }}
-			onFinish={handleFinish}
-		>
-			{contextHolder}
-			<Item
-				label="選擇開站模板"
-				name={['site_id']}
-				rules={[
-					{
-						required: true,
-						message: '請選擇開站模板',
-					},
-				]}
+		<div ref={containerRef}>
+			<Form
+				className="mt-8"
+				layout="vertical"
+				labelCol={{ span: 8 }}
+				wrapperCol={{ span: 16 }}
+				style={{ maxWidth: 600 }}
+				onFinish={handleFinish}
 			>
-				<Select
-					options={Object.keys(allowed_template_options).map((key) => ({
-						label: allowed_template_options?.[key],
-						value: key,
-					}))}
-					allowClear
-					disabled={isPending}
-				/>
-			</Item>
-			<Item
-				label="選擇主機種類"
-				name={['host_position']}
-				initialValue="jp"
-				rules={[
-					{
-						required: true,
-						message: '請選擇主機種類',
-					},
-				]}
-			>
-				<Select options={host_positions} allowClear disabled={isPending} />
-			</Item>
-
-			<div className="flex gap-x-2 mt-12">
-				<Button type="primary" htmlType="submit" loading={isPending}>
-					開站
-				</Button>
-
-				<Button
-					type="default"
-					htmlType="button"
-					className="ml-2"
-					onClick={handleClearCache}
+				{contextHolder}
+				<Item
+					label="選擇開站模板"
+					name={['site_id']}
+					rules={[
+						{
+							required: true,
+							message: '請選擇開站模板',
+						},
+					]}
 				>
-					清除快取
-				</Button>
-			</div>
-		</Form>
+					<Select
+						options={Object.keys(allowed_template_options).map((key) => ({
+							label: allowed_template_options?.[key],
+							value: key,
+						}))}
+						allowClear
+						disabled={isPending}
+						getPopupContainer={() => containerRef.current as HTMLElement}
+					/>
+				</Item>
+				<Item
+					label="選擇主機種類"
+					name={['host_position']}
+					initialValue="jp"
+					rules={[
+						{
+							required: true,
+							message: '請選擇主機種類',
+						},
+					]}
+				>
+					<Select
+						options={host_positions}
+						allowClear
+						disabled={isPending}
+						getPopupContainer={() => containerRef.current as HTMLElement}
+					/>
+				</Item>
+
+				<div className="flex gap-x-2 mt-12">
+					<Button type="primary" htmlType="submit" loading={isPending}>
+						開站
+					</Button>
+
+					<Button
+						type="default"
+						htmlType="button"
+						className="ml-2"
+						onClick={handleClearCache}
+					>
+						清除快取
+					</Button>
+				</div>
+			</Form>
+		</div>
 	)
 }
 

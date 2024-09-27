@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useRef } from 'react'
 import { Table, TableProps, notification } from 'antd'
 import { SystemInfo } from '@/components'
 import {
@@ -33,6 +33,7 @@ export const SiteListTable: FC<{
 	customerResult: UseQueryResult<TGetCustomersResponse, Error>
 	isAdmin?: boolean
 }> = ({ tableProps, isAdmin = false, customerResult }) => {
+	const containerRef = useRef<HTMLDivElement>(null)
 	const [api, contextHolder] = notification.useNotification({
 		placement: 'bottomRight',
 		stack: { threshold: 1 },
@@ -44,6 +45,7 @@ export const SiteListTable: FC<{
 		form: formCD,
 	} = useChangeDomain({
 		api,
+		containerRef,
 	})
 
 	const {
@@ -52,6 +54,7 @@ export const SiteListTable: FC<{
 		form: formCC,
 	} = useChangeCustomer({
 		api,
+		containerRef,
 	})
 	const columns: TableProps<DataType>['columns'] = [
 		{
@@ -158,11 +161,27 @@ export const SiteListTable: FC<{
 			render: (_: string, record) => {
 				return (
 					<div className="flex gap-3">
-						<ChangeDomainButton onClick={showCD(record)} />
-						{isAdmin && <ChangeCustomerButton onClick={showCC(record)} />}
-						<ToggleSslButton record={record} notificationApi={api} />
+						<ChangeDomainButton
+							onClick={showCD(record)}
+							containerRef={containerRef}
+						/>
 						{isAdmin && (
-							<ToggleSiteButton record={record} notificationApi={api} />
+							<ChangeCustomerButton
+								onClick={showCC(record)}
+								containerRef={containerRef}
+							/>
+						)}
+						<ToggleSslButton
+							record={record}
+							notificationApi={api}
+							containerRef={containerRef}
+						/>
+						{isAdmin && (
+							<ToggleSiteButton
+								record={record}
+								notificationApi={api}
+								containerRef={containerRef}
+							/>
 						)}
 					</div>
 				)
@@ -170,13 +189,13 @@ export const SiteListTable: FC<{
 		},
 	]
 	return (
-		<>
+		<div ref={containerRef}>
 			{contextHolder}
 			<Table rowKey="ID" tableLayout="auto" columns={columns} {...tableProps} />
 			<ChangeDomainModal modalProps={modalPropsCD} form={formCD} />
 			{isAdmin && (
 				<ChangeCustomerModal modalProps={modalPropsCC} form={formCC} />
 			)}
-		</>
+		</div>
 	)
 }

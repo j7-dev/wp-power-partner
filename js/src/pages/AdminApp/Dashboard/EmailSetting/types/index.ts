@@ -11,4 +11,5 @@ export type DataType = {
 export type EmailComponentProps = {
   record: DataType
   index: number
+  containerRef?: React.RefObject<HTMLDivElement>
 }
