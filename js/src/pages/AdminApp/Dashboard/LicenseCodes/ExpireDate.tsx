@@ -14,9 +14,11 @@ const LIMIT_UNIT_MAP = {
 const ExpireDate = ({
 	record,
 	nextPayments,
+	containerRef,
 }: {
 	record: DataType
 	nextPayments: TSubscriptionsNextPayment[]
+	containerRef: React.RefObject<HTMLDivElement>
 }) => {
 	const {
 		limit_type,
@@ -33,7 +35,10 @@ const ExpireDate = ({
 
 		if (!nextPayment || !nextPayment?.time) {
 			return (
-				<Tooltip title="當訂閱不是啟用狀態時，授權碼就會過期">
+				<Tooltip
+					title="當訂閱不是啟用狀態時，授權碼就會過期"
+					getPopupContainer={() => containerRef?.current as HTMLElement}
+				>
 					跟隨訂閱狀態
 				</Tooltip>
 			)
@@ -42,6 +47,7 @@ const ExpireDate = ({
 		return (
 			<Tooltip
 				title={`當訂閱不是啟用狀態時，授權碼就會過期，於 ${dayjs(nextPayment.time * 1000).format('YYYY-MM-DD HH:mm:ss')} 自動續約`}
+				getPopupContainer={() => containerRef?.current as HTMLElement}
 			>
 				跟隨訂閱狀態
 				<DateTime date={nextPayment.time * 1000} />

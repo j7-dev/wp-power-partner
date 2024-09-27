@@ -147,7 +147,11 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 				title: '期限',
 				dataIndex: 'expire_date',
 				render: (_: number, record) => (
-					<ExpireDate record={record} nextPayments={nextPayments} />
+					<ExpireDate
+						record={record}
+						nextPayments={nextPayments}
+						containerRef={containerRef}
+					/>
 				),
 			},
 			{
@@ -194,7 +198,7 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 			},
 			...adminColumns,
 		]
-	}, [isAdmin, nextPayments])
+	}, [isAdmin, nextPayments, containerRef])
 
 	return (
 		<div ref={containerRef}>
