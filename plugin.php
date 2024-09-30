@@ -32,14 +32,6 @@ final class Plugin {
 	use \J7\WpUtils\Traits\PluginTrait;
 	use \J7\WpUtils\Traits\SingletonTrait;
 
-
-	/**
-	 * TODO Is Local Dev Local
-	 *
-	 * @var bool
-	 */
-	public static $is_local = true;
-
 	/**
 	 * Constructor
 	 */
@@ -50,7 +42,7 @@ final class Plugin {
 				'name'     => 'Powerhouse',
 				'slug'     => 'powerhouse',
 				'source'   => 'https://github.com/j7-dev/wp-powerhouse/releases/latest/download/powerhouse.zip',
-				'version'  => '1.0.24',
+				'version'  => '2.0.0',
 				'required' => true,
 			],
 			[
@@ -67,8 +59,6 @@ final class Plugin {
 				'version'  => '5.9.0',
 			],
 		];
-
-		Bootstrap::instance();
 
 		$this->init(
 			[

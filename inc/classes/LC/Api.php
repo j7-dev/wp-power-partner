@@ -15,7 +15,6 @@ use J7\PowerPartner\ShopSubscription;
 
 /**
  * Class Api
- * TODO 新增刪除時也應該要刪除 LC
  */
 final class Api {
 	use \J7\WpUtils\Traits\SingletonTrait;

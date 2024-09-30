@@ -10,7 +10,7 @@ namespace J7\PowerPartner;
 use J7\PowerPartner\Product\SiteSync;
 
 /*
-* TODO
+* PENDING
 1. List 顯示開站狀態
 2. List 顯示開站時間
 */
