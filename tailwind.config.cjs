@@ -8,6 +8,7 @@ module.exports = {
 	},
 	content: [
 		'./js/src/**/*.{js,ts,jsx,tsx}',
+		'./inc/**/*.{php,js,ts,jsx,tsx}',
 	],
 	theme: {
 		animation: {

@@ -162,6 +162,13 @@ final class LinkedLC {
 			return;
 		}
 
+		\wp_enqueue_style(
+			self::LC_PRODUCT_SELECTOR,
+			Plugin::$url . '/inc/assets/dist/css/index.css',
+			[],
+			Plugin::$version,
+		);
+
 		\wp_enqueue_script(
 		self::LC_PRODUCT_SELECTOR,
 		Plugin::$url . '/inc/assets/dist/linked_lc_product_selector.js',
