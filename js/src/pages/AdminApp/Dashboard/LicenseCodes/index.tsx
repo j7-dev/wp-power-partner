@@ -103,6 +103,7 @@ const index = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 					{
 						title: '每天消耗點數',
 						dataIndex: 'rate',
+						render: (rate: number) => rate.toFixed(2),
 					},
 					{
 						title: '建立/修改時間',
