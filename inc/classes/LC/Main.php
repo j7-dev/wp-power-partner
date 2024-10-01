@@ -234,7 +234,7 @@ final class Main {
 			$data = General::json_parse($body, []);
 
 			/**
-			 * @var array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, customer_id: int, expire_date: int, domain: string, product_slug: string, product_key: string, product_name: string}> $license_codes
+			 * @var array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, customer_id: int, expire_date: int, domain: string, product_slug: string, download_url: string, product_name: string}> $license_codes
 			 */
 			$license_codes = $data['data']['license_codes'] ?? [];
 			if (is_array($license_codes)) {
@@ -262,7 +262,7 @@ final class Main {
 	 *
 	 * phpcs:disable
 	 * @param \WC_Subscription $subscription 訂閱
-	 * @param array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, customer_id: int, expire_date: int, domain: string, product_slug: string, product_key: string, product_name: string}> $license_codes 授權碼
+	 * @param array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, customer_id: int, expire_date: int, domain: string, product_slug: string, download_url: string, product_name: string}> $license_codes 授權碼
 	 * @return void
 	 * phpcs:enable
 	 */
@@ -276,14 +276,19 @@ final class Main {
 
 		$product_name = $license_codes[0]['product_name']; // 這批 license_codes 都是同樣產品
 
+		$download_url = $license_codes[0]['download_url'];
+
 		$subject  = "您的《{$product_name}》授權碼已開通 - " . \get_bloginfo('name');
 		$message  = "{$display_name} 您好:<br><br>";
 		$message .= "您在 {$subscription->get_date_created()->date('Y-m-d')} 訂購的授權碼 (訂閱編號 #{$subscription->get_id()}) 已經開通，以下是您的授權碼:<br><br>";
 
+		$message .= "產品: {$product_name}<br><br>";
+		if ($download_url) {
+			$message .= "外掛下載連結: <a href='{$download_url}' target='_blank'>{$download_url}</a><br><br>";
+		}
 		foreach ($license_codes as $license_code) {
 			$message .= "授權碼: {$license_code['code']}<br>";
 			$message .= '到期日: 跟隨訂閱<br>';
-			// $message .= "產品: {$product_name}<br>";
 			$message .= '<br>';
 		}
 
