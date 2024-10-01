@@ -16,6 +16,7 @@ type TManualSiteSyncParams = {
 
 const index = () => {
 	const containerRef = useRef<HTMLDivElement>(null)
+	const [form] = Form.useForm()
 	const [api, contextHolder] = notification.useNotification({
 		placement: 'bottomRight',
 		stack: { threshold: 1 },
@@ -74,7 +75,8 @@ const index = () => {
 		},
 	})
 
-	const handleFinish = (values: TManualSiteSyncParams) => {
+	const handleFinish = () => {
+		const values: TManualSiteSyncParams = form.getFieldsValue()
 		siteSync(values)
 	}
 
@@ -134,12 +136,12 @@ const index = () => {
 	return (
 		<div ref={containerRef}>
 			<Form
+				form={form}
 				className="mt-8"
 				layout="vertical"
 				labelCol={{ span: 8 }}
 				wrapperCol={{ span: 16 }}
 				style={{ maxWidth: 600 }}
-				onFinish={handleFinish}
 			>
 				{contextHolder}
 				<Item
@@ -182,7 +184,7 @@ const index = () => {
 				</Item>
 
 				<div className="flex gap-x-2 mt-12">
-					<Button type="primary" htmlType="submit" loading={isPending}>
+					<Button type="primary" loading={isPending} onClick={handleFinish}>
 						開站
 					</Button>
 

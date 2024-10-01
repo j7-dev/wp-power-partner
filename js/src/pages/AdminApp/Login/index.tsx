@@ -7,6 +7,7 @@ import { TAccountInfo, TIdentity } from '@/pages/AdminApp/types'
 import { useMutation } from '@tanstack/react-query'
 
 const index = () => {
+	const [form] = Form.useForm()
 	const setIdentity = useSetAtom(identityAtom)
 	const setGlobalLoading = useSetAtom(globalLoadingAtom)
 	const { mutate: getIdentity, isPending } = useMutation({
@@ -41,7 +42,8 @@ const index = () => {
 		},
 	})
 
-	const onFinish = (values: TAccountInfo) => {
+	const onFinish = () => {
+		const values: TAccountInfo = form.getFieldsValue()
 		getIdentity(values, {
 			onSuccess: (res) => {
 				const theIdentity = res?.data as TIdentity
@@ -77,7 +79,7 @@ const index = () => {
 				showIcon
 				className="mb-8"
 			/>
-			<Form onFinish={onFinish} autoComplete="off" layout="vertical">
+			<Form form={form} autoComplete="off" layout="vertical">
 				<Form.Item<TAccountInfo>
 					label="E-mail"
 					name="email"
@@ -100,7 +102,7 @@ const index = () => {
 				<Form.Item>
 					<Button
 						type="primary"
-						htmlType="submit"
+						onClick={onFinish}
 						className="w-full"
 						size="large"
 						loading={isPending}
