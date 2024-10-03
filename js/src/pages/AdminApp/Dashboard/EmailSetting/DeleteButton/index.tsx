@@ -14,7 +14,11 @@ const DeleteButton = ({
 	const handleDelete = () => {
 		const newDataSource = dataSource.filter((item) => item.key !== record?.key)
 		setDataSource(newDataSource)
-		form.setFieldsValue(newDataSource)
+		const formValues = form.getFieldsValue()
+		form.setFieldsValue({
+			...formValues,
+			email: newDataSource,
+		})
 	}
 
 	return (
