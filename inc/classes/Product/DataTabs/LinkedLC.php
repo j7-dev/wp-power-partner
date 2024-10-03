@@ -180,6 +180,10 @@ final class LinkedLC {
 		]
 		);
 
+		if (\method_exists(Plugin::class, 'add_module_handle')) {
+			Plugin::instance()->add_module_handle(self::LC_PRODUCT_SELECTOR, 'defer');
+		}
+
 		$cloud_products = self::get_cloud_products();
 
 		\wp_localize_script(
