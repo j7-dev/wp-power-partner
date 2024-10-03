@@ -42,9 +42,7 @@ final class Cron {
 		if ( ! \wp_next_scheduled( self::SEND_EMAIL_HOOK_NAME ) ) {
 			$result = \wp_schedule_event( strtotime( '+10 minute' ), 'daily', self::SEND_EMAIL_HOOK_NAME, [], true );
 			if ( \is_wp_error( $result ) ) {
-				ob_start();
-				var_dump($result);
-				\J7\WpUtils\Classes\Log::info(self::SEND_EMAIL_HOOK_NAME . ' wp_schedule_single_event Error: ' . ob_get_clean());
+				\J7\WpUtils\Classes\ErrorLog::info(self::SEND_EMAIL_HOOK_NAME . ' wp_schedule_single_event Error: ' . $result->get_error_message());
 			}
 		}
 	}
@@ -295,9 +293,7 @@ final class Cron {
 			$site_info          = $site_responses_arr['data'];
 			$tokens['URL']      = $site_info['url'];
 		} catch ( \Throwable $th ) {
-			ob_start();
-			var_dump($th);
-			\J7\WpUtils\Classes\Log::info('' . ob_get_clean());
+			\J7\WpUtils\Classes\ErrorLog::info( $th->getMessage());
 		}
 
 		return $tokens;

@@ -32,6 +32,32 @@ final class Plugin {
 	use \J7\WpUtils\Traits\PluginTrait;
 	use \J7\WpUtils\Traits\SingletonTrait;
 
+	const DEFAULT_EMAIL_BODY = '
+	<p>嗨 ##FIRST_NAME##</p>
+	<p>你的網站開好囉，<a href="https://docs.wpsite.pro/wp" target="_blank">點此可以打開網站的使用說明書</a></p>
+	<p><br></p>
+	<p>另外如果要將網站換成正式的網域，請<a href="https://docs.wpsite.pro/wp/wordpress-kuai-su-ru-men/jiang-zan-shi-wang-yu-huan-cheng-zheng-shi-wang-yu-rang-wang-zhan-zheng-shi-shang-xian" target="_blank">參考這篇教學</a></p>
+	<p><br></p>
+	<p>有網站的問題都可以或是私訊<a href="https://wpsite.pro" target="_blank">架站小幫手網站</a> 的右下角對話框</p>
+	<p>&nbsp;</p>
+	<p>--- 以下是你的網站資訊 ---</p>
+	<p><br></p
+	<p>網站暫時網址：##FRONTURL##</p>
+	<p>之後可換成你自己的網址</p>
+	<p><br></p>
+	<p>網站後台：##ADMINURL##</p>
+	<p><br></p>
+	<p>帳號：##SITEUSERNAME##</p>
+	<p><br></p>
+	<p>密碼：##SITEPASSWORD##</p>
+	<p><br></p>
+	<p><strong>進去後請記得改成自己的密碼喔</strong></p>
+	<p><br></p>
+	<br>
+	<p>網站主機ip：##IPV4##</p>
+	<p>&nbsp;</p>
+	<p>這封信很重要，不要刪掉，這樣之後才找得到喔</p><p>&nbsp;</p><p><br></p>';
+
 	/**
 	 * Constructor
 	 */
@@ -71,7 +97,30 @@ final class Plugin {
 		);
 	}
 
-
+	/**
+	 * Activate
+	 *
+	 * @return void
+	 */
+	public function activate(): void {
+		\add_option(
+			'power_partner_settings',
+			[
+				'power_partner_disable_site_after_n_days' => 7,
+				'emails'                                  => [
+					[
+						'enabled'     => '1',
+						'key'         => 'power_partner_default_site_sync',
+						'action_name' => 'site_sync',
+						'subject'     => '這裡填你的信件主旨 ##FIRST_NAME##',
+						'body'        => self::DEFAULT_EMAIL_BODY,
+						'days'        => '0',
+						'operator'    => 'after',
+					],
+				],
+			]
+			);
+	}
 
 	/**
 	 * Deactivate

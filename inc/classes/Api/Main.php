@@ -192,6 +192,8 @@ final class Main {
 			// 取得 site_sync 的 email 模板
 			$emails = EmailUtils::get_emails( 'site_sync' );
 
+			$success_emails = [];
+			$failed_emails  = [];
 			foreach ( $emails as $email ) {
 				// 取得 subject
 				$subject = $email['subject'];
@@ -206,28 +208,36 @@ final class Main {
 				$body    = Base::replace_script_tokens( $body, $tokens );
 
 				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
-				\wp_mail(
+				$result        = \wp_mail(
 					$customer_email,
 					$subject,
-					$body,
+					\wpautop( $body ),
 					$email_headers
 				);
+
+				if ( $result ) {
+					$success_emails[] = $email['action_name'];
+				} else {
+					$failed_emails[] = $email['action_name'];
+				}
 			}
 
 			return \rest_ensure_response(
 				[
 					'status'  => 200,
 					'message' => 'post customer notification success',
+					'data'    => [
+						'to'             => $customer_email,
+						'success_emails' => $success_emails,
+						'failed_emails'  => $failed_emails,
+					],
 				]
 			);
 		} catch ( \Throwable $th ) {
-			ob_start();
-			var_dump($th);
-			\J7\WpUtils\Classes\Log::info('' . ob_get_clean());
 			return \rest_ensure_response(
 				[
 					'status'  => 500,
-					'message' => 'post customer notification fail',
+					'message' => 'post customer notification fail: ' . $th->getMessage(),
 				]
 			);
 		}
@@ -386,13 +396,11 @@ final class Main {
 				);
 			}
 		} catch ( \Throwable $th ) {
-			ob_start();
-			var_dump($th);
-			\J7\WpUtils\Classes\Log::info('' . ob_get_clean());
+
 			return \rest_ensure_response(
 				[
 					'status'  => 500,
-					'message' => 'post change subscription fail',
+					'message' => 'post change subscription fail: ' . $th->getMessage(),
 				]
 			);
 		}
@@ -453,6 +461,8 @@ final class Main {
 	/**
 	 * 儲存 emails callback
 	 *
+	 * @deprecated
+	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
@@ -460,8 +470,10 @@ final class Main {
 		$body_params = $request->get_json_params() ?? [];
 		$emails      = $body_params['emails'];
 
+		$power_partner_settings = \get_option( 'power_partner_settings', [] );
 		if ( is_array( $emails ) ) {
-			\update_option( EmailUtils::EMAILS_OPTION_NAME, $emails );
+			$power_partner_settings['emails'] = $emails;
+			\update_option( 'power_partner_settings', $power_partner_settings);
 			return new \WP_REST_Response(
 				[
 					'status'  => 200,
@@ -490,7 +502,7 @@ final class Main {
 	 */
 	public function post_settings_callback( $request ): \WP_REST_Response {
 		$body_params = $request->get_json_params() ?? [];
-		$body_params = WP::sanitize_text_field_deep( $body_params, false );
+		$body_params = WP::sanitize_text_field_deep( $body_params, true, [ 'emails' ] );
 
 		\update_option( 'power_partner_settings', $body_params );
 
