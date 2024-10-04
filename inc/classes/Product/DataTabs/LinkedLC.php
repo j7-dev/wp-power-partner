@@ -206,7 +206,7 @@ final class LinkedLC {
 		 */
 		$cloud_products = \get_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY);
 		if (false !== $cloud_products) {
-			return $cloud_products;
+			return (array) $cloud_products;
 		}
 
 		$args = [
@@ -244,7 +244,7 @@ final class LinkedLC {
 		/**
 		 * @var array<array{slug: string, label: string, rate: float}> $data
 		 */
-		$data = General::json_parse($body, $default_data_value);
+		$data = (array) General::json_parse($body, $default_data_value);
 
 		\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, $data, self::CACHE_TIME);
 
