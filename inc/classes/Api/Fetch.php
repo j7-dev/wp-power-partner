@@ -17,7 +17,7 @@ abstract class Fetch {
 
 	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = 'power_partner_allowed_template_options';
 	// phpstan:ignore
-	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME = 30 * 24 * HOUR_IN_SECONDS;
+	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME = 7 * 24 * HOUR_IN_SECONDS;
 	/**
 	 * 發 API 開站
 	 *
