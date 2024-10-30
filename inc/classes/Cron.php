@@ -60,19 +60,22 @@ final class Cron {
 
 		$next_payment_action_names = [ EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME, EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME ];
 
+		// 每個動作依序進行
 		foreach ( $action_names as $action_name ) {
 
-			// 取得指定 action name 的 email 模板
-			$filtered_emails_by_action = array_filter(
+			// 取得當前動作 的 email 模板
+			$action_emails = array_filter(
 				$emails,
 				function ( $email ) use ( $action_name ) {
 					return $email['action_name'] === $action_name;
 				}
 			);
 
-			foreach ( $filtered_emails_by_action as $email ) {
+			// 每個 email 模板依序寄送
+			foreach ( $action_emails as $email ) {
 				$order_date_arr = self::get_order_date_arr_by_action( $action_name );
 
+				// 將符合動作的訂閱資料遍歷
 				foreach ( $order_date_arr as $order_date ) {
 
 					// 發信時機轉換成 timestamp
@@ -82,15 +85,14 @@ final class Cron {
 					$body         = $email['body'];
 					$subject      = $email['subject'];
 
-					// 因為 subscription_success 和 subscription_failed 都是用 next_payment 判斷
-					$action_name = $email['action_name'];
+					// 因為 subscription_success 和 subscription_failed 都是用 next_payment 這個 key 判斷，其他動作就維持原本
 					$action_name = in_array( $action_name, $next_payment_action_names, true ) ? 'next_payment' : $action_name;
 
-					$action_time       = $order_date[ $action_name ] + $days_in_time;
-					$after_action_time = $action_time + ( 86400 * 1 ); // 一天後
-					$current_time      = time();
+					$action_time           = $order_date[ $action_name ] + $days_in_time; // 計算發信時機
+					$action_time_add_1_day = $action_time + ( 86400 * 1 ); // 一天後
+					$current_time          = time();
 
-					if ( $current_time > $action_time && $current_time < $after_action_time ) {
+					if ( $current_time > $action_time && $current_time < $action_time_add_1_day ) {
 						$subject = Base::replace_script_tokens( $subject, $order_date['tokens'] );
 						$body    = Base::replace_script_tokens( $body, $order_date['tokens'] );
 
@@ -166,6 +168,7 @@ final class Cron {
 
 	/**
 	 * Get_order_date_arr_by_action
+	 * 將符合動作條件的訂閱關鍵資料組合成陣列
 	 * 取得指定 action name 的 最新的續訂訂單創建日期
 	 * 有 'subscription_failed' | 'subscription_success' | 'site_sync' 這三種
 	 * 'site_sync' 是同步寄送，不需要排程
@@ -176,6 +179,7 @@ final class Cron {
 	public static function get_order_date_arr_by_action( string $action ): array {
 
 		$arr = [];
+		// 用 action 來決定 query 的 post_status
 		switch ( $action ) {
 			case EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME:
 				$post_status = ShopSubscription::$success_statuses;
@@ -183,12 +187,12 @@ final class Cron {
 			case EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME:
 				$post_status = ShopSubscription::$failed_statuses;
 				break;
-
 			default:
 				$post_status = ShopSubscription::$all_statuses;
 				break;
 		}
 
+		// 把對應狀態的所有的 訂閱ID 撈出來
 		$subscription_ids = \get_posts(
 			[
 				'post_type'      => ShopSubscription::POST_TYPE,
@@ -225,6 +229,7 @@ final class Cron {
 
 			$tokens = array_merge( self::get_order_tokens( $last_order ), self::get_subscription_tokens( $subscription ) );
 
+			// 把符合條件的訂閱組成這種資料
 			$arr[] = [
 				'order_id'                => (string) $last_order_id,
 				'customer_email'          => $last_order->get_billing_email(),
@@ -290,8 +295,8 @@ final class Cron {
 		$tokens         = [];
 		try {
 			$site_responses_arr = \json_decode( $site_responses, true );
-			$site_info          = $site_responses_arr['data'];
-			$tokens['URL']      = $site_info['url'];
+			$site_info          = $site_responses_arr['data'] ?? [];
+			$tokens['URL']      = $site_info['url'] ?? '';
 		} catch ( \Throwable $th ) {
 			\J7\WpUtils\Classes\ErrorLog::info( $th->getMessage());
 		}

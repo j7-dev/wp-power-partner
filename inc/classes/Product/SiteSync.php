@@ -108,9 +108,9 @@ final class SiteSync {
 			);
 
 			$responses[] = [
-				'status'  => $response_obj->status,
-				'message' => $response_obj->message,
-				'data'    => $response_obj->data,
+				'status'  => $response_obj?->status,
+				'message' => $response_obj?->message,
+				'data'    => $response_obj?->data,
 			];
 		}
 		ob_start();

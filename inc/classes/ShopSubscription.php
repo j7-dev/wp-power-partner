@@ -7,10 +7,9 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner;
 
-use J7\PowerPartner\Plugin;
-use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\Utils\Base;
+use J7\PowerPartner\Product\DataTabs\LinkedSites;
 
 
 /**
@@ -26,7 +25,7 @@ use J7\PowerPartner\Utils\Base;
 final class ShopSubscription {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
-	const IS_POWER_PARTNER_SUBSCRIPTION  = 'is_power_partner';
+	const IS_POWER_PARTNER_SUBSCRIPTION  = 'is_power_partner_site_sync';
 	const LAST_FAILED_TIMESTAMP_META_KEY = 'power_partner_last_failed_timestamp';
 	const POST_TYPE                      = 'shop_subscription';
 
@@ -67,7 +66,7 @@ final class ShopSubscription {
 	 */
 	public function __construct() {
 		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_failed' ], 10, 3 );
-		\add_action( 'wcs_create_subscription', [ $this, 'add_meta' ], 10, 1 );
+		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'add_meta' ], 10, 1 );
 		\add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
 		\add_action( 'save_post', [ $this, 'save' ] );
 		\add_filter( 'manage_edit-' . self::POST_TYPE . '_columns', [ $this, 'add_order_column' ], 99, 1 );
@@ -123,8 +122,41 @@ final class ShopSubscription {
 		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
 			return;
 		}
-		$subscription->add_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, true, true );
-		$subscription->save();
+		$parent_order = $subscription->get_parent();
+		$items        = $parent_order->get_items();
+
+		$is_site_sync = false;
+		foreach ( $items as $item ) {
+			/**
+			 * Type
+			 *
+			 * @var \WC_Order_Item_Product $item
+			 */
+			$product_id = $item->get_product_id();
+			$product    = \wc_get_product( $product_id );
+			if ( ! ( $product instanceof \WC_Product ) ) {
+				continue;
+			}
+			$product_type = $product->get_type();
+
+			$linked_site_id = null;
+			if ( 'variable-subscription' === $product_type ) {
+				$variation_id   = $item->get_variation_id();
+				$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+			} elseif ( 'subscription' === $product_type ) {
+				$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+			}
+
+			if (!!$linked_site_id) {
+				$is_site_sync = true;
+				break;
+			}
+		}
+
+		if ( $is_site_sync ) {
+			$subscription->add_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, true, true );
+			$subscription->save();
+		}
 	}
 
 
