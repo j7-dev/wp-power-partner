@@ -277,8 +277,14 @@ final class Main {
 		$product_name = $license_codes[0]['product_name']; // 這批 license_codes 都是同樣產品
 
 		$download_url = $license_codes[0]['download_url'];
+		$doc_url      = match ($license_codes[0]['product_slug']) {
+			'power-shop' => 'https://docs.wpsite.pro/powershop',
+			'power-course' => 'https://docs.wpsite.pro/powercourse',
+			default => '',
+		};
 
-		$subject  = "您的《{$product_name}》授權碼已開通 - " . \get_bloginfo('name');
+		$subject = "您的《{$product_name}》授權碼已開通 - " . \get_bloginfo('name');
+
 		$message  = "{$display_name} 您好:<br><br>";
 		$message .= "您在 {$subscription->get_date_created()->date('Y-m-d')} 訂購的授權碼 (訂閱編號 #{$subscription->get_id()}) 已經開通，以下是您的授權碼:<br><br>";
 
@@ -286,6 +292,10 @@ final class Main {
 		if ($download_url) {
 			$message .= "外掛下載連結: <a href='{$download_url}' target='_blank'>{$download_url}</a><br><br>";
 		}
+		if ($doc_url) {
+			$message .= "外掛教學連結: <a href='{$doc_url}' target='_blank'>{$doc_url}</a><br><br>";
+		}
+
 		foreach ($license_codes as $license_code) {
 			$message .= "授權碼: {$license_code['code']}<br>";
 			$message .= '到期日: 跟隨訂閱<br>';
