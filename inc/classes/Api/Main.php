@@ -587,11 +587,17 @@ final class Main {
 		$start_ip = '61.220.44.0';
 		$end_ip   = '61.220.44.10';
 
+		$fixed_ips = [ '103.153.176.121' ];
+
+		 // phpcs:disable
+		if (in_array($_SERVER['REMOTE_ADDR'], $fixed_ips, true)) {
+			return true;
+		}
+
 		// 將起始和結束 IP 轉換為長整型
 		$start_ip_long = sprintf( '%u', ip2long( $start_ip ) );
 		$end_ip_long   = sprintf( '%u', ip2long( $end_ip ) );
 
-    // phpcs:disable
     $request_ip_long = sprintf("%u", ip2long($_SERVER['REMOTE_ADDR']));
     // phpcs:enable
 
