@@ -27,6 +27,8 @@ use J7\PowerPartner\Api\Connect;
 final class Main {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
+	const EXPIRE_ACTION = 'power_partner_lc_expire';
+	const DELAY_TIME    = 8 * HOUR_IN_SECONDS; // 延遲多久才執行
 
 
 	/**
@@ -34,6 +36,7 @@ final class Main {
 	 */
 	public function __construct() {
 		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_failed' ], 10, 3 );
+		\add_action(self::EXPIRE_ACTION, [ $this, 'process_expire_lcs' ], 10, 2);
 
 		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_success' ], 10, 3 );
 
@@ -64,13 +67,46 @@ final class Main {
 			return;
 		}
 
-		$lc_ids = \get_post_meta($subscription->get_id(), 'lc_id', false);
+		$subscription_id = $subscription->get_id();
+		$lc_ids          = \get_post_meta($subscription_id, 'lc_id', false);
 
 		// 如果訂閱身上沒有授權碼 就不處理
 		if ( ! $lc_ids ) {
 			return;
 		}
 
+		$timestamp = time() + self::DELAY_TIME;
+
+		$action_id = \as_schedule_single_action(
+			$timestamp,
+			self::EXPIRE_ACTION,
+			[ $lc_ids, $subscription_id ]
+			);
+
+		$date = \wp_date('Y-m-d H:i', $timestamp);
+
+		$subscription->add_order_note("已排程動作 #{$action_id}， 於 {$date} 停用授權碼");
+		$subscription->add_meta_data('power_partner_lc_expire_action_id', $action_id);
+		$subscription->save();
+	}
+
+	/**
+	 * 處理過期授權碼
+	 *
+	 * @param array<int, int> $lc_ids 授權碼 id
+	 * @param int             $subscription_id 訂閱 id
+	 * @return void
+	 */
+	public function process_expire_lcs( array $lc_ids, int $subscription_id ): void {
+		$subscription = \wcs_get_subscription($subscription_id);
+
+		$action_id = $subscription->get_meta('power_partner_lc_expire_action_id');
+		// 如果沒有 action_id 就不處理
+		if (!$action_id) {
+			return;
+		}
+
+		// 發API停用授權碼
 		// 訂閱失敗，發API停用授權碼
 		$api_instance = CloudApi::instance();
 		$response     = $api_instance->remote_post(
@@ -123,6 +159,17 @@ final class Main {
 			return;
 		}
 
+		$action_id = $subscription->get_meta('power_partner_lc_expire_action_id');
+		// 如果有 action_id ，代表目前還是[啟用/可用]狀態，取消排程動作就可以了
+		if ($action_id) {
+			$subscription->delete_meta_data('power_partner_lc_expire_action_id');
+			$subscription->save();
+			\ActionScheduler_Store::instance()->delete_action($action_id);
+			$subscription->add_order_note("已取消排程動作 #{$action_id}");
+			return;
+		}
+
+		// 沒有 action_id ，代表目前是[過期/停用]狀態，發API讓授權碼變成可用
 		// 訂閱轉為成功，發API讓授權碼變成可用
 		$api_instance = CloudApi::instance();
 		$response     = $api_instance->remote_post(
