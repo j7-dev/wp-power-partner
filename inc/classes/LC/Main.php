@@ -28,7 +28,7 @@ final class Main {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
 	const EXPIRE_ACTION = 'power_partner_lc_expire';
-	const DELAY_TIME    = 8 * HOUR_IN_SECONDS; // 延遲多久才執行
+	const DELAY_TIME    = 4 * HOUR_IN_SECONDS; // 延遲多久才執行
 
 
 	/**

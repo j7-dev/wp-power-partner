@@ -60,6 +60,11 @@ final class Cron {
 
 		$next_payment_action_names = [ EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME, EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME ];
 
+		$admin_email = \get_option('admin_email');
+		$headers     = [];
+		$headers[]   = 'Content-Type: text/html; charset=UTF-8';
+		$headers[]   = "Bcc: {$admin_email}";
+
 		// 每個動作依序進行
 		foreach ( $action_names as $action_name ) {
 
@@ -100,7 +105,7 @@ final class Cron {
 							$order_date['customer_email'],
 							$subject,
 							$body,
-							[ 'Content-Type: text/html; charset=UTF-8' ],
+							$headers,
 						);
 					}
 				}
