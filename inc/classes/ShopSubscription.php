@@ -32,7 +32,7 @@ final class ShopSubscription {
 	/**
 	 * Success statuses
 	 *
-	 * @var array
+	 * @var array<string>
 	 */
 	public static $success_statuses = [ 'active' ];
 
@@ -42,21 +42,21 @@ final class ShopSubscription {
 	 *
 	 * @see https://github.com/j7-dev/wp-power-partner/issues/11
 	 *
-	 * @var array
+	 * @var array<string>
 	 */
 	public static $failed_statuses = [ 'cancelled', 'on-hold', 'expired' ];
 
 	/**
 	 * Not failed statuses
 	 *
-	 * @var array
+	 * @var array<string>
 	 */
 	public static $not_failed_statuses = [ 'active', 'pending-cancel' ];
 
 	/**
 	 * All statuses
 	 *
-	 * @var array
+	 * @var array<string>
 	 */
 	public static $all_statuses = [ 'active', 'cancelled', 'expired', 'on-hold', 'pending-cancel' ];
 
