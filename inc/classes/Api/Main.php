@@ -584,14 +584,12 @@ final class Main {
 	 */
 	public function check_ip_permission() {
 		// 允許的 IP 範圍起始和結束 IP
+		// 以前的版本
 		$start_ip = '61.220.44.0';
 		$end_ip   = '61.220.44.10';
 
-		$fixed_ips = [ '103.153.176.121' ];
-
-		// TEST 印出 WC Logger 記得移除 ---- //
-		\J7\WpUtils\Classes\WC::log( $_SERVER['REMOTE_ADDR'], 'check_ip_permission REMOTE_ADDR: ');
-		// ---------- END TEST ---------- //
+		// 103.153.176.121 = 黃亦主機對外  199.99.88.1 = 黃亦主機打黃亦主機
+		$fixed_ips = [ '103.153.176.121', '199.99.88.1' ];
 
 		 // phpcs:disable
 		if (in_array($_SERVER['REMOTE_ADDR'], $fixed_ips, true)) {

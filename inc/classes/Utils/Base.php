@@ -40,7 +40,12 @@ abstract class Base {
 		$env = $env ?? WP_ENVIRONMENT_TYPE;
 
 		switch ($env) { // phpcs:ignore
-			case 'local': // LOCAL
+			case 'local-home': // LOCAL 麗寶之星家裡
+				$username = 'j7.dev.gg';
+				$psw      = '5NTw cqYl uhJU pixF Myj6 rBuA';
+				$base_url = 'http://cloud.local';
+				break;
+			case 'local': // LOCAL 辦公室
 				$username = 'powerpartner';
 				$psw      = 'WDdk K7nm SSNr AwGy Dhab sipK';
 				$base_url = 'http://cloud.local';
