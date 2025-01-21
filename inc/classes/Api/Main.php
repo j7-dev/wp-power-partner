@@ -589,6 +589,10 @@ final class Main {
 
 		$fixed_ips = [ '103.153.176.121' ];
 
+		// TEST 印出 WC Logger 記得移除 ---- //
+		\J7\WpUtils\Classes\WC::log( $_SERVER['REMOTE_ADDR'], 'check_ip_permission REMOTE_ADDR: ');
+		// ---------- END TEST ---------- //
+
 		 // phpcs:disable
 		if (in_array($_SERVER['REMOTE_ADDR'], $fixed_ips, true)) {
 			return true;
@@ -598,6 +602,7 @@ final class Main {
 		$start_ip_long = sprintf( '%u', ip2long( $start_ip ) );
 		$end_ip_long   = sprintf( '%u', ip2long( $end_ip ) );
 
+		// @phpstan-ignore-next-line
     $request_ip_long = sprintf("%u", ip2long($_SERVER['REMOTE_ADDR']));
     // phpcs:enable
 
