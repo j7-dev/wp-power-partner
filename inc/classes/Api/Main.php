@@ -287,34 +287,28 @@ final class Main {
 	/**
 	 * Get subscriptions callback
 	 *
-	 *  @param \WP_REST_Request $request Request
+	 * @param \WP_REST_Request $request Request
 	 * @return \WP_REST_Response
+	 * @phpstan-ignore-next-line
 	 */
 	public function get_subscriptions_callback( $request ): \WP_REST_Response {
-		$params  = $request->get_query_params() ?? [];
-		$user_id = $params['user_id'] ?? 0;
+		$params = $request->get_query_params();
 
-		if ( empty( $user_id ) ) {
-			return new \WP_REST_Response(
-				[
-					'status'  => 500,
-					'message' => 'missing user id',
-				],
-				500
-			);
-		}
+		try {
+			WP::include_required_params( $params, [ 'user_id' ] );
+			$user_id = $params['user_id'] ?? 0;
 
-		$subscriptions = \get_posts(
+			$subscriptions = \get_posts(
 			[
 				'numberposts' => -1,
 				'post_type'   => 'shop_subscription',
-				'post_status' => [ 'wc-on-hold', 'wc-active', 'wc-pending', 'wc-expired' ], // wc-on-hold wc-active
+				'post_status' => [ 'wc-on-hold', 'wc-active', 'wc-pending', 'wc-expired', 'wc-pending-cancel' ], // wc-on-hold wc-active
 				'meta_key'    => '_customer_user',
 				'meta_value'  => $user_id,
 			]
-		);
+			);
 
-		$formatted_subscriptions = array_map(
+			$formatted_subscriptions = array_map(
 			function ( $subscription ) {
 				return [
 					'id'              => (string) $subscription->ID,
@@ -325,15 +319,24 @@ final class Main {
 				];
 			},
 			$subscriptions
-		);
+			);
 
-		$response = new \WP_REST_Response( $formatted_subscriptions );
+			$response = new \WP_REST_Response( $formatted_subscriptions );
 
-		// set pagination in header
-		$response->header( 'X-WP-Total', count( $formatted_subscriptions ) );
-		$response->header( 'X-WP-TotalPages', 1 );
+			// set pagination in header
+			$response->header( 'X-WP-Total', (string) count( $formatted_subscriptions ) );
+			$response->header( 'X-WP-TotalPages', '1' );
 
-		return $response;
+			return $response;
+		} catch (\Throwable $th) {
+			return new \WP_REST_Response(
+			[
+				'code'    => 'get_subscriptions_fail',
+				'message' => $th->getMessage(),
+			],
+			500
+			);
+		}
 	}
 
 	/**
