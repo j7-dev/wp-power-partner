@@ -42,7 +42,7 @@ final class Cron {
 		if ( ! \wp_next_scheduled( self::SEND_EMAIL_HOOK_NAME ) ) {
 			$result = \wp_schedule_event( strtotime( '+10 minute' ), 'daily', self::SEND_EMAIL_HOOK_NAME, [], true );
 			if ( \is_wp_error( $result ) ) {
-				\J7\WpUtils\Classes\ErrorLog::info(self::SEND_EMAIL_HOOK_NAME . ' wp_schedule_single_event Error: ' . $result->get_error_message());
+				\J7\WpUtils\Classes\WC::log($result->get_error_message(), 'CRON 執行 register_single_event wp_schedule_single_event Error');
 			}
 		}
 	}
@@ -76,9 +76,26 @@ final class Cron {
 				}
 			);
 
+			// TEST 印出 WC Logger 記得移除 ---- //
+			\J7\WpUtils\Classes\WC::log($action_emails, 'CRON 執行 send_email $action_emails');
+			// ---------- END TEST ---------- //
+
 			// 每個 email 模板依序寄送
 			foreach ( $action_emails as $email ) {
 				$order_date_arr = self::get_order_date_arr_by_action( $action_name );
+
+				// TEST 印出 WC Logger 記得移除 ---- //
+				if (EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME === $action_name) {
+					\J7\WpUtils\Classes\WC::log(
+					[
+						'action_name'    => $action_name,
+						'order_date_arr' => $order_date_arr,
+						'email'          => $email,
+					],
+					'CRON 執行 send_email'
+					);
+				}
+				// ---------- END TEST ---------- //
 
 				// 將符合動作的訂閱資料遍歷
 				foreach ( $order_date_arr as $order_date ) {
@@ -96,6 +113,22 @@ final class Cron {
 					$action_time           = $order_date[ $action_name ] + $days_in_time; // 計算發信時機
 					$action_time_add_1_day = $action_time + ( 86400 * 1 ); // 一天後
 					$current_time          = time();
+
+					// TEST 印出 WC Logger 記得移除 ---- //
+					if (EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME === $action_name) {
+						\J7\WpUtils\Classes\WC::log(
+						[
+							'action_name'           => $action_name,
+							'order_date'            => $order_date,
+							'current_time'          => $current_time,
+							'action_time'           => $action_time,
+							'action_time_add_1_day' => $action_time_add_1_day,
+							'滿足條件執行?'               => $current_time > $action_time && $current_time < $action_time_add_1_day,
+						],
+						'CRON 執行 send_email'
+						);
+					}
+					// ---------- END TEST ---------- //
 
 					if ( $current_time > $action_time && $current_time < $action_time_add_1_day ) {
 						$subject = Base::replace_script_tokens( $subject, $order_date['tokens'] );
@@ -303,7 +336,7 @@ final class Cron {
 			$site_info          = $site_responses_arr['data'] ?? [];
 			$tokens['URL']      = $site_info['url'] ?? '';
 		} catch ( \Throwable $th ) {
-			\J7\WpUtils\Classes\ErrorLog::info( $th->getMessage());
+			\J7\WpUtils\Classes\WC::log( $th->getMessage(), 'get_subscription_tokens json_decode failed');
 		}
 
 		return $tokens;
