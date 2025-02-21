@@ -10,7 +10,6 @@ namespace J7\PowerPartner\LC;
 use J7\PowerPartner\Product\DataTabs\LinkedLC;
 use J7\Powerhouse\Api\Base as CloudApi;
 use J7\WpUtils\Classes\General;
-use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Api\Connect;
 
@@ -202,8 +201,7 @@ final class Main {
 			return;
 		}
 
-		$site_sync_instance = SiteSync::instance();
-		$order_ids          = $site_sync_instance->get_related_order_ids( $subscription );
+		$related_order_ids = $subscription->get_related_orders();
 
 		$parent_order = $subscription->get_parent();
 
@@ -214,7 +212,12 @@ final class Main {
 		$parent_order_id = $parent_order->get_id();
 
 		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
-		if ( count( $order_ids ) !== 1 || ( $order_ids[0] ?? 0 ) !== $parent_order_id ) {
+		if ( count( $related_order_ids ) !== 1 ) {
+			return;
+		}
+
+		// 唯一一筆關聯訂單必須要 = parent order id
+		if ( ( (int) reset( $related_order_ids ) ) !== ( (int) $parent_order_id )) {
 			return;
 		}
 

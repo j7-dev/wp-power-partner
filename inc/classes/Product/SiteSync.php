@@ -150,6 +150,7 @@ final class SiteSync {
 	 * @param string           $order_type Can include 'any', 'parent', 'renewal', 'resubscribe' and/or 'switch'. Defaults to 'any'.
 	 * @return array List of related order IDs.
 	 * @since 1.0.0 - Migrated from WooCommerce Subscriptions v2.3.0
+	 * @deprecated
 	 */
 	public function get_related_order_ids( $subscription, $order_type = 'any' ) {
 
