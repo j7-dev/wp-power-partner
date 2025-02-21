@@ -76,26 +76,9 @@ final class Cron {
 				}
 			);
 
-			// TEST 印出 WC Logger 記得移除 ---- //
-			\J7\WpUtils\Classes\WC::log($action_emails, 'CRON 執行 send_email $action_emails');
-			// ---------- END TEST ---------- //
-
 			// 每個 email 模板依序寄送
 			foreach ( $action_emails as $email ) {
 				$order_date_arr = self::get_order_date_arr_by_action( $action_name );
-
-				// TEST 印出 WC Logger 記得移除 ---- //
-				if (EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME === $action_name) {
-					\J7\WpUtils\Classes\WC::log(
-					[
-						'action_name'    => $action_name,
-						'order_date_arr' => $order_date_arr,
-						'email'          => $email,
-					],
-					'CRON 執行 send_email'
-					);
-				}
-				// ---------- END TEST ---------- //
 
 				// 將符合動作的訂閱資料遍歷
 				foreach ( $order_date_arr as $order_date ) {
@@ -108,9 +91,9 @@ final class Cron {
 					$subject      = $email['subject'];
 
 					// 因為 subscription_success 和 subscription_failed 都是用 next_payment 這個 key 判斷，其他動作就維持原本
-					$action_name = in_array( $action_name, $next_payment_action_names, true ) ? 'next_payment' : $action_name;
+					$time_name = in_array( $action_name, $next_payment_action_names, true ) ? 'next_payment' : $action_name;
 
-					$action_time           = $order_date[ $action_name ] + $days_in_time; // 計算發信時機
+					$action_time           = $order_date[ $time_name ] + $days_in_time; // 計算發信時機
 					$action_time_add_1_day = $action_time + ( 86400 * 1 ); // 一天後
 					$current_time          = time();
 
@@ -119,13 +102,14 @@ final class Cron {
 						\J7\WpUtils\Classes\WC::log(
 						[
 							'action_name'           => $action_name,
+							'time_name'             => $time_name,
 							'order_date'            => $order_date,
 							'current_time'          => $current_time,
 							'action_time'           => $action_time,
 							'action_time_add_1_day' => $action_time_add_1_day,
 							'滿足條件執行?'               => $current_time > $action_time && $current_time < $action_time_add_1_day,
 						],
-						'CRON 執行 send_email'
+						'續訂 CRON 執行 send_email'
 						);
 					}
 					// ---------- END TEST ---------- //
