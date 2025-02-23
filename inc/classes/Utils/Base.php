@@ -33,24 +33,20 @@ abstract class Base {
 	 */
 	public static function set_api_auth( Bootstrap $bootstrap, ?string $env = null ): void {
 
-		if (!defined('WP_ENVIRONMENT_TYPE')) {
-			define('WP_ENVIRONMENT_TYPE', 'production');
-		}
-
-		$env = $env ?? WP_ENVIRONMENT_TYPE;
+		$env     = $env ?? \wp_get_environment_type();
+		$is_home = defined('IS_HOME');
 
 		switch ($env) { // phpcs:ignore
-			case 'local-home': // LOCAL 麗寶之星家裡
-				$username = 'j7.dev.gg';
-				$psw      = '5NTw cqYl uhJU pixF Myj6 rBuA';
-				$base_url = 'http://cloud.local';
+			// local 麗寶之星家裡
+			// $username = 'j7.dev.gg';
+			// $psw      = '5NTw cqYl uhJU pixF Myj6 rBuA';
+			// $base_url = 'https://cloud.local';
+			case 'local': // local 辦公室
+				$username = $is_home ? 'j7.dev.gg' : 'powerpartner';
+				$psw      = $is_home ? '5NTw cqYl uhJU pixF Myj6 rBuA' : 'WDdk K7nm SSNr AwGy Dhab sipK';
+				$base_url = $is_home ? 'http://cloud.local' : 'http://cloud.local';
 				break;
-			case 'local': // LOCAL 辦公室
-				$username = 'powerpartner';
-				$psw      = 'WDdk K7nm SSNr AwGy Dhab sipK';
-				$base_url = 'http://cloud.local';
-				break;
-			case 'staging': // STAGING
+			case 'staging': // staging 線上測試站
 				$username = 'powerpartner';
 				$psw      = '9Nve BO2G oe8y B19G SDNd v68Q';
 				$base_url = 'https://cloud-staging.wpsite.pro';
