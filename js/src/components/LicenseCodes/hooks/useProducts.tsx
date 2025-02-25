@@ -1,4 +1,3 @@
-import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cloudAxios } from '@/api'
 import { useAtomValue } from 'jotai'
@@ -12,7 +11,7 @@ type TProduct = {
 
 export const useProducts = () => {
 	const identity = useAtomValue(identityAtom)
-	const user_id = identity.data?.user_id || '0'
+	const user_id = identity?.data?.user_id || '0'
 
 	const result = useQuery({
 		queryKey: ['license-codes/products'],

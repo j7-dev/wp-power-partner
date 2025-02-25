@@ -1,36 +1,31 @@
-import {
-	SiteListTable,
-	useCustomers,
-	useTable,
-} from '@/components/SiteListTable'
 import { identityAtom, globalLoadingAtom } from '@/pages/UserApp/atom'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { currentUserId } from '@/utils'
+import { DataType, TParams } from '@/components/LicenseCodes/types'
+import { LicenseCodes } from '@/components'
+import { useTable } from '@/hooks'
 
 const index = () => {
 	const identity = useAtomValue(identityAtom)
 	const partner_id = identity.data?.partner_id || ''
 
 	const setGlobalLoading = useSetAtom(globalLoadingAtom)
+	const [search, setSearch] = useState('')
 
-	const { tableProps } = useTable({
-		resource: 'apps',
+	const { tableProps } = useTable<TParams, DataType>({
+		resource: 'license-codes',
 		defaultParams: {
-			user_id: partner_id,
-			customer_id: currentUserId.toString(),
+			author: partner_id,
+			customer_id: currentUserId,
+			search,
 		},
 		queryOptions: {
 			enabled: !!partner_id && !!currentUserId,
+			staleTime: 1000 * 60 * 60 * 24,
+			gcTime: 1000 * 60 * 60 * 24,
 		},
 	})
-
-	const all_customer_ids =
-		tableProps?.dataSource
-			?.map((site) => site.customer_id)
-			.filter((value, i, self) => self.indexOf(value) === i) || [] // remove duplicates
-
-	const customerResult = useCustomers({ user_ids: all_customer_ids })
 
 	useEffect(() => {
 		if (!tableProps?.loading) {
@@ -41,9 +36,7 @@ const index = () => {
 		}
 	}, [tableProps?.loading])
 
-	return (
-		<SiteListTable tableProps={tableProps} customerResult={customerResult} />
-	)
+	return <LicenseCodes tableProps={tableProps} setSearch={setSearch} />
 }
 
 export default index

@@ -5,7 +5,7 @@ import { globalLoadingAtom, identityAtom } from '@/pages/UserApp/atom'
 import { useAtomValue } from 'jotai'
 import { Spin, Tabs, TabsProps } from 'antd'
 import { ClusterOutlined, BarcodeOutlined } from '@ant-design/icons'
-import LicenseCodes from '@/pages/AdminApp/Dashboard/LicenseCodes'
+import LicenseCodes from '@/pages/UserApp/LicenseCodes'
 
 const items: TabsProps['items'] = [
 	{

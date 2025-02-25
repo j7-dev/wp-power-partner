@@ -1,4 +1,4 @@
-import { FC, useRef } from 'react'
+import { FC, useRef, memo } from 'react'
 import { Table, TableProps, notification } from 'antd'
 import { SystemInfo } from '@/components'
 import {
@@ -28,7 +28,7 @@ export * from './useCustomers'
 export * from './useApps'
 export * from './useTable'
 
-export const SiteListTable: FC<{
+const SiteListTableComponent: FC<{
 	tableProps: TableProps<DataType>
 	customerResult: UseQueryResult<TGetCustomersResponse, Error>
 	isAdmin?: boolean
@@ -199,3 +199,5 @@ export const SiteListTable: FC<{
 		</div>
 	)
 }
+
+export const SiteListTable = memo(SiteListTableComponent)
