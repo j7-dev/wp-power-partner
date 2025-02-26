@@ -17,7 +17,6 @@ const index = () => {
 		resource: 'license-codes',
 		defaultParams: {
 			author: user_id,
-			customer_id: currentUserId,
 			search,
 		},
 		queryOptions: {
