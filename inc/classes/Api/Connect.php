@@ -115,7 +115,7 @@ final class Connect {
 	/**
 	 * Callback of get_partner_id API
 	 *
-	 * @return WP_REST_Response|WP_Error
+	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_partner_id_callback() {
 

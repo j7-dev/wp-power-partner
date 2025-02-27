@@ -163,8 +163,14 @@ final class Main {
 		if ($action_id) {
 			$subscription->delete_meta_data('power_partner_lc_expire_action_id');
 			$subscription->save();
-			\ActionScheduler_Store::instance()->delete_action($action_id);
-			$subscription->add_order_note("已取消排程動作 #{$action_id}");
+			$status = \ActionScheduler_Store::instance()->get_status($action_id);
+			if ('pending' === $status) {
+				\ActionScheduler_Store::instance()->delete_action($action_id);
+				$subscription->add_order_note("已取消排程動作 #{$action_id}");
+				return;
+			}
+
+			$subscription->add_order_note("排程動作 #{$action_id}，狀態為 {$status}，無法取消");
 			return;
 		}
 
