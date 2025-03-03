@@ -97,23 +97,6 @@ final class Cron {
 					$action_time_add_1_day = $action_time + ( 86400 * 1 ); // 一天後
 					$current_time          = time();
 
-					// TEST 印出 WC Logger 記得移除 ---- //
-					if (EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME === $action_name) {
-						\J7\WpUtils\Classes\WC::log(
-						[
-							'action_name'           => $action_name,
-							'time_name'             => $time_name,
-							'order_date'            => $order_date,
-							'current_time'          => $current_time,
-							'action_time'           => $action_time,
-							'action_time_add_1_day' => $action_time_add_1_day,
-							'滿足條件執行?'               => $current_time > $action_time && $current_time < $action_time_add_1_day,
-						],
-						'續訂 CRON 執行 send_email'
-						);
-					}
-					// ---------- END TEST ---------- //
-
 					if ( $current_time > $action_time && $current_time < $action_time_add_1_day ) {
 						$subject = Base::replace_script_tokens( $subject, $order_date['tokens'] );
 						$body    = Base::replace_script_tokens( $body, $order_date['tokens'] );
