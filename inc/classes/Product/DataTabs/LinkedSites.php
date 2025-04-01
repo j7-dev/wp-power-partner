@@ -36,6 +36,7 @@ final class LinkedSites {
 		'us_west'   => '美西',
 		'uk_london' => '英國倫敦',
 		'sg'        => '新加坡',
+		'hk'        => '香港',
 	];
 
 	/**
