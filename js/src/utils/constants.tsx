@@ -19,4 +19,8 @@ export const host_positions = [
 		value: 'sg',
 		label: '新加坡',
 	},
+	{
+		value: 'hk',
+		label: '香港',
+	},
 ]
