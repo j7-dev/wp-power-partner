@@ -126,6 +126,7 @@ final class Bootstrap {
 					'disable_site_after_n_days' => (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' ),
 					't'                         => $this->t,
 					'cloudBaseUrl'              => $this->base_url,
+					'is_kiwissec'               => strpos( \site_url(), 'kiwissec.io' ) !== false,
 				],
 			]
 		);

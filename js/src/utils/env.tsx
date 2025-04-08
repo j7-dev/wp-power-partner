@@ -16,6 +16,7 @@ export const currentUserId = Number(window?.[APP_DOMAIN]?.env?.userId || 0)
 export const postId = window?.[APP_DOMAIN]?.env?.postId || '0'
 export const permalink = window?.[APP_DOMAIN]?.env?.permalink || '/'
 export const apiTimeout = '300000'
+export const is_kiwissec = window?.[APP_DOMAIN]?.env?.is_kiwissec || false
 
 // cloud site API
 export const cloudBaseUrl =

@@ -1,5 +1,10 @@
 import React, { useRef } from 'react'
-import { allowed_template_options, host_positions, kebab } from '@/utils'
+import {
+	allowed_template_options,
+	host_positions,
+	kebab,
+	is_kiwissec,
+} from '@/utils'
 import { Select, Form, Button, notification } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { axios } from '@/api'
@@ -176,7 +181,17 @@ const index = () => {
 					]}
 				>
 					<Select
-						options={host_positions}
+						options={
+							is_kiwissec
+								? [
+										...host_positions,
+										{
+											value: 'kiwissec',
+											label: '七維思',
+										},
+									]
+								: host_positions
+						}
 						allowClear
 						disabled={isPending}
 						getPopupContainer={() => containerRef.current as HTMLElement}
