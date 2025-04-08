@@ -30,17 +30,19 @@ const mapping = [
 	},
 ]
 
-mapping.forEach(({ els, App }) => {
-	if (!!els) {
-		els.forEach((el) => {
-			createRoot(el).render(
-				<React.StrictMode>
-					<QueryClientProvider client={queryClient}>
-						<App />
-						<ReactQueryDevtools initialIsOpen={true} />
-					</QueryClientProvider>
-				</React.StrictMode>,
-			)
-		})
-	}
+document.addEventListener('DOMContentLoaded', () => {
+	mapping.forEach(({ els, App }) => {
+		if (!!els) {
+			els.forEach((el) => {
+				createRoot(el).render(
+					<React.StrictMode>
+						<QueryClientProvider client={queryClient}>
+							<App />
+							<ReactQueryDevtools initialIsOpen={true} />
+						</QueryClientProvider>
+					</React.StrictMode>,
+				)
+			})
+		}
+	})
 })
