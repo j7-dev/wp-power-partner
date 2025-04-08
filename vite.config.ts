@@ -8,10 +8,16 @@ import path from 'path'
 import { v4wp } from '@kucrut/vite-for-wp'
 
 export default {
+	server: {
+		cors: {
+			origin: '*',
+		},
+	},
   plugins: [
     alias(),
     react(),
     tsconfigPaths(),
+
 
     // liveReload(__dirname + '/**/*.php'), // Optional, if you want to reload page on php changed
 
