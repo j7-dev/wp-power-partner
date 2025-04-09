@@ -64,8 +64,10 @@ const SiteListTableComponent: FC<{
 				<>
 					<p className="mb-1 mt-0 flex items-center gap-x-2">
 						<BreathLight
-							color={
-								record?.wpapp_site_status !== 'off' ? '#84cc16' : '#f43f5e'
+							className={
+								record?.wpapp_site_status !== 'off'
+									? 'bg-[#84cc16]'
+									: 'bg-[#f43f5e]'
 							}
 						/>
 

@@ -1,8 +1,3 @@
-/**
- * TODO 加入到 antd-toolkit utils
- *
- */
-
 export const ORDER_STATUSES = [
 	{
 		value: 'wc-active',
