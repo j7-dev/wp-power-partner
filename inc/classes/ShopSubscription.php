@@ -88,7 +88,7 @@ final class ShopSubscription {
 			return;
 		}
 
-		$is_power_partner_subscription = $subscription->get_meta( self::IS_POWER_PARTNER_SUBSCRIPTION, true );
+		$is_power_partner_subscription = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, true );
 
 		// 如果不是 power partner 網站訂閱 就不處理
 		if ( ! $is_power_partner_subscription ) {
@@ -147,14 +147,14 @@ final class ShopSubscription {
 				$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 			}
 
-			if (!!$linked_site_id) {
+			if ( (bool) $linked_site_id) {
 				$is_site_sync = true;
 				break;
 			}
 		}
 
 		if ( $is_site_sync ) {
-			$subscription->add_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, true, true );
+			$subscription->add_meta_data( self::IS_POWER_PARTNER_SUBSCRIPTION, '1', true );
 			$subscription->save();
 		}
 	}
