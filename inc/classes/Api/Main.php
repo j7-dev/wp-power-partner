@@ -10,7 +10,7 @@ namespace J7\PowerPartner\Api;
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Api\Fetch;
-use J7\PowerPartner\Email\Utils as EmailUtils;
+use J7\PowerPartner\Email\Core\Service as EmailService;
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\ShopSubscription;
 use J7\WpUtils\Classes\WP;
@@ -190,18 +190,19 @@ final class Main {
 			$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
 
 			// 取得 site_sync 的 email 模板
-			$emails = EmailUtils::get_emails( 'site_sync' );
+			$email_service = EmailService::instance();
+			$emails        = $email_service->get_emails( 'site_sync' );
 
 			$success_emails = [];
 			$failed_emails  = [];
 			foreach ( $emails as $email ) {
 				// 取得 subject
 				$subject = $email['subject'];
-				$subject = empty( $subject ) ? EmailUtils::DEFAULT_SUBJECT : $subject;
+				$subject = empty( $subject ) ? $email_service->default->subject : $subject;
 
 				// 取得 message
 				$body = $email['body'];
-				$body = empty( $body ) ? EmailUtils::DEFAULT_BODY : $body;
+				$body = empty( $body ) ? $email_service->default->body : $body;
 
 				// Replace tokens in email..
 				$subject = Base::replace_script_tokens( $subject, $tokens );

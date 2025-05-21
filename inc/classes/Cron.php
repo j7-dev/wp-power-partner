@@ -11,7 +11,7 @@ namespace J7\PowerPartner;
 
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\Utils\Base;
-use J7\PowerPartner\Email\Utils as EmailUtils;
+use J7\PowerPartner\Email\Core\Service as EmailService;
 use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Api\Fetch;
 /**
@@ -54,11 +54,11 @@ final class Cron {
 	 */
 	public function send_email() {
 
-		$emails = EmailUtils::get_emails();
+		$email_service = EmailService::instance();
+		$emails        = $email_service->get_emails();
+		$action_names  = $email_service->action_names;
 
-		$action_names = [ EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME, EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME, EmailUtils::LAST_ORDER_DATE_CREATED_ACTION_NAME, EmailUtils::DATE_CREATED_ACTION_NAME, EmailUtils::TRIAL_END_ACTION_NAME, EmailUtils::NEXT_PAYMENT_ACTION_NAME, EmailUtils::END_ACTION_NAME, EmailUtils::END_OF_PREPAID_TERM_ACTION_NAME ];
-
-		$next_payment_action_names = [ EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME, EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME ];
+		$next_payment_action_names = [ $action_names->subscription_success, $action_names->subscription_failed ];
 
 		$admin_email = \get_option('admin_email');
 		$headers     = [];
@@ -66,7 +66,10 @@ final class Cron {
 		$headers[]   = "Bcc: {$admin_email}";
 
 		// 每個動作依序進行
-		foreach ( $action_names as $action_name ) {
+		foreach ( $action_names as $key => $action_name ) {
+			if ('site_sync' === $key) {
+				continue;
+			}
 
 			// 取得當前動作 的 email 模板
 			$action_emails = array_filter(
@@ -182,14 +185,14 @@ final class Cron {
 	 * @return array
 	 */
 	public static function get_order_date_arr_by_action( string $action ): array {
-
-		$arr = [];
+		$email_service = EmailService::instance();
+		$arr           = [];
 		// 用 action 來決定 query 的 post_status
 		switch ( $action ) {
-			case EmailUtils::SUBSCRIPTION_SUCCESS_ACTION_NAME:
+			case $email_service->action_names->subscription_success:
 				$post_status = ShopSubscription::$success_statuses;
 				break;
-			case EmailUtils::SUBSCRIPTION_FAILED_ACTION_NAME:
+			case $email_service->action_names->subscription_failed:
 				$post_status = ShopSubscription::$failed_statuses;
 				break;
 			default:
