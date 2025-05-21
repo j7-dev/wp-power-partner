@@ -137,6 +137,25 @@ final class Plugin {
 			}
 		}
 	}
+
+	/**
+	 * 記錄 log
+	 *
+	 * @param mixed  $value 記錄值
+	 * @param string $title 記錄標題
+	 * @param string $level 記錄等級
+	 * @return void
+	 */
+	public static function log( $value, $title = '', $level = 'info' ) {
+		\J7\WpUtils\Classes\WC::log(
+			$value,
+			$title,
+			$level,
+			[
+				'source' => 'power_partner',
+			]
+			);
+	}
 }
 
 Plugin::instance();

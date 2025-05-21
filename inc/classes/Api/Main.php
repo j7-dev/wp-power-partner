@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace J7\PowerPartner\Api;
 
 use J7\PowerPartner\Plugin;
-use J7\PowerPartner\Utils\Base;
+use J7\PowerPartner\Utils\Token;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Email\Core\Service as EmailService;
 use J7\PowerPartner\Product\SiteSync;
@@ -197,16 +197,16 @@ final class Main {
 			$failed_emails  = [];
 			foreach ( $emails as $email ) {
 				// 取得 subject
-				$subject = $email['subject'];
+				$subject = $email->subject;
 				$subject = empty( $subject ) ? $email_service->default->subject : $subject;
 
 				// 取得 message
-				$body = $email['body'];
+				$body = $email->body;
 				$body = empty( $body ) ? $email_service->default->body : $body;
 
 				// Replace tokens in email..
-				$subject = Base::replace_script_tokens( $subject, $tokens );
-				$body    = Base::replace_script_tokens( $body, $tokens );
+				$subject = Token::replace( $subject, $tokens );
+				$body    = Token::replace( $body, $tokens );
 
 				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 				$result        = \wp_mail(
@@ -217,9 +217,9 @@ final class Main {
 				);
 
 				if ( $result ) {
-					$success_emails[] = $email['action_name'];
+					$success_emails[] = $email->action_name;
 				} else {
-					$failed_emails[] = $email['action_name'];
+					$failed_emails[] = $email->action_name;
 				}
 			}
 

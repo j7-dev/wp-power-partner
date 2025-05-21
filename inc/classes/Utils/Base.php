@@ -1,7 +1,4 @@
 <?php
-/**
- * Base
- */
 
 declare (strict_types = 1);
 
@@ -9,9 +6,7 @@ namespace J7\PowerPartner\Utils;
 
 use J7\PowerPartner\Bootstrap;
 
-/**
- * Class Base
- */
+/** Class Base */
 abstract class Base {
 	const BASE_URL      = '/';
 	const APP1_SELECTOR = '#power-partner-connect-app';
@@ -62,35 +57,6 @@ abstract class Base {
 		$bootstrap->psw      = $psw;
 		$bootstrap->base_url = $base_url;
 		$bootstrap->t        = base64_encode( "$username:$psw" );
-	}
-
-	/**
-	 * Replaces placeholder tokens in a script.
-	 *
-	 * A script is usually a server provisioning startup script
-	 * Tokens are of the format ##TOKEN## and it is expected that
-	 * the 'TOKEN' is uppercase.
-	 *
-	 * As of Version 4.2.5 of WPCD, this function also handles
-	 * replacing similar tokens in EMAIL templates.
-	 *
-	 * @param string $script The full text of the script contents.
-	 * @param array  $tokens Key-value array of tokens to replace.
-	 *
-	 * @return $string The updated script contents
-	 */
-	public static function replace_script_tokens( $script, $tokens ) {
-		$updated_script = $script;
-
-		foreach ( $tokens as $name => $value ) {
-			if ( is_array( $value ) || empty( $value ) ) {
-				continue;
-			}
-
-			$updated_script = str_replace( '##' . strtoupper( $name ) . '##', (string) $value, $updated_script );
-		}
-
-		return $updated_script;
 	}
 
 	/**

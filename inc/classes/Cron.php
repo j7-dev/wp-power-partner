@@ -11,6 +11,7 @@ namespace J7\PowerPartner;
 
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\Utils\Base;
+use J7\PowerPartner\Utils\Token;
 use J7\PowerPartner\Email\Core\Service as EmailService;
 use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Api\Fetch;
@@ -75,7 +76,7 @@ final class Cron {
 			$action_emails = array_filter(
 				$emails,
 				function ( $email ) use ( $action_name ) {
-					return $email['action_name'] === $action_name;
+					return $email->action_name === $action_name;
 				}
 			);
 
@@ -101,8 +102,8 @@ final class Cron {
 					$current_time          = time();
 
 					if ( $current_time > $action_time && $current_time < $action_time_add_1_day ) {
-						$subject = Base::replace_script_tokens( $subject, $order_date['tokens'] );
-						$body    = Base::replace_script_tokens( $body, $order_date['tokens'] );
+						$subject = Token::replace( $subject, $order_date['tokens'] );
+						$body    = Token::replace( $body, $order_date['tokens'] );
 
 						\wp_mail(
 							$order_date['customer_email'],
@@ -235,7 +236,7 @@ final class Cron {
 			}
 			$last_order_id = $last_order->get_id();
 
-			$tokens = array_merge( self::get_order_tokens( $last_order ), self::get_subscription_tokens( $subscription ) );
+			$tokens = array_merge( Token::get_order_tokens( $last_order ), Token::get_subscription_tokens( $subscription ) );
 
 			// 把符合條件的訂閱組成這種資料
 			$arr[] = [
@@ -252,63 +253,5 @@ final class Cron {
 		}
 
 		return $arr;
-	}
-
-	/**
-	 * Get order tokens
-	 *
-	 * @param \WC_Order $order Order
-	 * @return array
-	 */
-	public static function get_order_tokens( \WC_Order $order ): array {
-		$customer = $order->get_user();
-
-		$products = [];
-		foreach ( $order->get_items() as $item_id => $item ) {
-			$product_name = $item->get_name();
-			$products[]   = $product_name;
-		}
-		$products_text = implode( ', ', $products );
-
-		$tokens                         = [];
-		$tokens['FIRST_NAME']           = $customer->first_name;
-		$tokens['LAST_NAME']            = $customer->last_name;
-		$tokens['NICE_NAME']            = $customer->user_nicename;
-		$tokens['EMAIL']                = $customer->user_email;
-		$tokens['ORDER_ID']             = $order->get_id();
-		$tokens['ORDER_ITEMS']          = $products_text;
-		$tokens['CHECKOUT_PAYMENT_URL'] = $order->get_checkout_payment_url();
-		$tokens['VIEW_ORDER_URL']       = $order->get_view_order_url();
-		$tokens['ORDER_STATUS']         = $order->get_status();
-		$tokens['ORDER_DATE']           = $order->get_date_created()->format( 'Y-m-d' );
-
-		return $tokens;
-	}
-
-	/**
-	 * Get subscription tokens
-	 *
-	 * @param \WC_Subscription $subscription Subscription
-	 * @return array
-	 */
-	public static function get_subscription_tokens( \WC_Subscription $subscription ): array {
-
-		$order = $subscription->get_parent();
-
-		if ( ! $order ) {
-			return [];
-		}
-
-		$site_responses = $order->get_meta( SiteSync::CREATE_SITE_RESPONSES_META_KEY, true );
-		$tokens         = [];
-		try {
-			$site_responses_arr = \json_decode( $site_responses, true );
-			$site_info          = $site_responses_arr['data'] ?? [];
-			$tokens['URL']      = $site_info['url'] ?? '';
-		} catch ( \Throwable $th ) {
-			\J7\WpUtils\Classes\WC::log( $th->getMessage(), 'get_subscription_tokens json_decode failed');
-		}
-
-		return $tokens;
 	}
 }

@@ -6,6 +6,8 @@ namespace J7\PowerPartner\Email\Model;
 
 use J7\WpUtils\Classes\DTO;
 use J7\PowerPartner\Email\Core\Service;
+use J7\PowerPartner\Utils\Token;
+use J7\PowerPartner\Plugin;
 
 /**
  * Class Email
@@ -55,5 +57,40 @@ final class Email extends DTO {
 	/** @return int timestamp 多久後，或多久前寄信 */
 	public function get_timestamp(): int {
 		return ( (int) $this->days ) * 86400 * ( $this->operator === 'before' ? -1 : 1 );
+	}
+
+	/**
+	 * 發送信件
+	 *
+	 * @param \WC_Subscription $subscription 訂閱
+	 * @return void
+	 */
+	public function send( \WC_Subscription $subscription ) {
+		/** @var numeric-string|false $last_order_id */
+		$last_order_id = $subscription->get_last_order('ids');
+		if ( !$last_order_id ) {
+			Plugin::log( "找不到 訂閱 #{$subscription->get_id()} 最近的 order_id " );
+			return;
+		}
+
+		$last_order = \wc_get_order( $last_order_id );
+		if ( ! $last_order instanceof \WC_Order ) {
+			Plugin::log( $last_order, "訂閱 #{$subscription->get_id()} 最近的 order 不是 WC_Order 實例" );
+			return;
+		}
+
+		$tokens = array_merge( Token::get_order_tokens( $last_order ), Token::get_subscription_tokens( $subscription ) );
+
+		$admin_email = \get_option('admin_email');
+		$headers     = [];
+		$headers[]   = 'Content-Type: text/html; charset=UTF-8';
+		$headers[]   = "Bcc: {$admin_email}";
+
+		\wp_mail(
+			$last_order->get_billing_email(),
+			Token::replace( $this->subject, $tokens ),
+			Token::replace( $this->body, $tokens ),
+			$headers,
+		);
 	}
 }
