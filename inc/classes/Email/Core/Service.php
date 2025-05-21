@@ -45,13 +45,13 @@ final class Service {
 		];
 
 		$this->action_names = (object) [
-			'site_sync'               => 'site_sync',
-			'subscription_failed'     => 'subscription_failed',
-			'subscription_success'    => 'subscription_success',
-			'last_order_date_created' => 'last_order_date_created',
-			'date_created'            => 'date_created',
-			'trial_end'               => 'trial_end',
-			'next_payment'            => 'next_payment',
+			'site_sync'               => 'site_sync', // 下單開站後
+			'subscription_failed'     => 'subscription_failed', // 續訂失敗後
+			'subscription_success'    => 'subscription_success', // 續訂成功後
+			'last_order_date_created' => 'last_order_date_created', // 上次續訂訂單日期後
+			'date_created'            => 'date_created', // 訂閱成立後
+			'trial_end'               => 'trial_end', // 試用結束前|後
+			'next_payment'            => 'next_payment', // 下次付款前|後
 			'end'                     => 'end',
 			'end_of_prepaid_term'     => 'end_of_prepaid_term',
 		];
