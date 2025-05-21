@@ -1,7 +1,4 @@
 <?php
-/**
- * SiteSync 相關
- */
 
 declare (strict_types = 1);
 
@@ -11,9 +8,7 @@ use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Product\DataTabs\LinkedSites;
 
-/**
- * Class SiteSync
- */
+/** Class SiteSync */
 final class SiteSync {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
@@ -24,9 +19,7 @@ final class SiteSync {
 	// the site id linked in cloud site
 	const LINKED_SITE_IDS_META_KEY = 'pp_linked_site_ids';
 
-	/**
-	 * Constructor
-	 */
+	/** Constructor */
 	public function __construct() {
 		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'site_sync_by_subscription' ], 20, 1 );
 	}
@@ -35,13 +28,14 @@ final class SiteSync {
 
 	/**
 	 * Do site sync
+	 * 訂閱首次創建
 	 *
 	 * @param \WC_Subscription $subscription Subscription object.
 	 * @return void
 	 */
 	public function site_sync_by_subscription(\WC_Subscription $subscription ): void { // phpcs:ignore
 
-		$order_ids = $this->get_related_order_ids( $subscription );
+		$order_ids = $subscription->get_related_orders();
 
 		$parent_order = $subscription->get_parent();
 
@@ -150,7 +144,7 @@ final class SiteSync {
 	 * @param string           $order_type Can include 'any', 'parent', 'renewal', 'resubscribe' and/or 'switch'. Defaults to 'any'.
 	 * @return array List of related order IDs.
 	 * @since 1.0.0 - Migrated from WooCommerce Subscriptions v2.3.0
-	 * @deprecated
+	 * @deprecated 應該可以刪除了
 	 */
 	public function get_related_order_ids( $subscription, $order_type = 'any' ) {
 
