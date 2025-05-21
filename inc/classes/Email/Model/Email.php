@@ -52,4 +52,9 @@ final class Email extends DTO {
 			$this->dto_error->add( 'invalid_action_name', 'Invalid action_name，只接受 ' . implode( ', ', (array) $email_service->action_names ) );
 		}
 	}
+
+	/** @return int timestamp 多久後，或多久前寄信 */
+	public function get_timestamp(): int {
+		return ( (int) $this->days ) * 86400 * ( $this->operator === 'before' ? -1 : 1 );
+	}
 }
