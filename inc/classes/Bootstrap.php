@@ -27,7 +27,7 @@ final class Bootstrap {
 	 * Constructor
 	 */
 	public function __construct() {
-		Email\Core\Service::instance();
+		Domains\Email\Core\Service::instance();
 		// 環境變數，調整 api auth
 		Base::set_api_auth( $this );
 

@@ -58,7 +58,7 @@ final class ShopSubscription {
 	 *
 	 * @var array<string>
 	 */
-	public static $all_statuses = [ 'active', 'cancelled', 'expired', 'on-hold', 'pending-cancel' ];
+	public static $all_statuses = [ 'active', 'on-hold', 'pending-cancel', 'cancelled', 'expired' ];
 
 
 	/**

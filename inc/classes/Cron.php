@@ -9,10 +9,8 @@ declare(strict_types=1);
 
 namespace J7\PowerPartner;
 
-use J7\PowerPartner\Product\SiteSync;
-use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Utils\Token;
-use J7\PowerPartner\Email\Core\Service as EmailService;
+use J7\PowerPartner\Domains\Email\Core\Service as EmailService;
 use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Api\Fetch;
 /**
@@ -28,7 +26,7 @@ final class Cron {
 	 */
 	public function __construct() {
 		\add_action( 'init', [ $this, 'register_single_event' ] );
-		\add_action( self::SEND_EMAIL_HOOK_NAME, [ $this, 'send_email' ] );
+		// \add_action( self::SEND_EMAIL_HOOK_NAME, [ $this, 'send_email' ] );
 		\add_action( self::SEND_EMAIL_HOOK_NAME, [ $this, 'disable_sites' ] );
 	}
 
@@ -51,12 +49,12 @@ final class Cron {
 	/**
 	 * Send email
 	 *
+	 * @deprecated 改用狀態改變發信
 	 * @return void
 	 */
 	public function send_email() {
 
 		$email_service = EmailService::instance();
-		$emails        = $email_service->get_emails();
 		$action_names  = $email_service->action_names;
 
 		$next_payment_action_names = [ $action_names->subscription_success, $action_names->subscription_failed ];
@@ -73,12 +71,7 @@ final class Cron {
 			}
 
 			// 取得當前動作 的 email 模板
-			$action_emails = array_filter(
-				$emails,
-				function ( $email ) use ( $action_name ) {
-					return $email->action_name === $action_name;
-				}
-			);
+			$action_emails = $email_service->get_emails( $action_name );
 
 			// 每個 email 模板依序寄送
 			foreach ( $action_emails as $email ) {
@@ -86,24 +79,16 @@ final class Cron {
 
 				// 將符合動作的訂閱資料遍歷
 				foreach ( $order_date_arr as $order_date ) {
-
-					// 發信時機轉換成 timestamp
-					$days_in_time = ( (int) $email['days'] ) * 86400;
-					// 判斷是 after 還是 before
-					$days_in_time = $email['operator'] === 'after' ? $days_in_time : -1 * $days_in_time;
-					$body         = $email['body'];
-					$subject      = $email['subject'];
-
 					// 因為 subscription_success 和 subscription_failed 都是用 next_payment 這個 key 判斷，其他動作就維持原本
 					$time_name = in_array( $action_name, $next_payment_action_names, true ) ? 'next_payment' : $action_name;
 
-					$action_time           = $order_date[ $time_name ] + $days_in_time; // 計算發信時機
+					$action_time           = $order_date[ $time_name ] + $email->get_timestamp(); // 計算發信時機
 					$action_time_add_1_day = $action_time + ( 86400 * 1 ); // 一天後
 					$current_time          = time();
 
 					if ( $current_time > $action_time && $current_time < $action_time_add_1_day ) {
-						$subject = Token::replace( $subject, $order_date['tokens'] );
-						$body    = Token::replace( $body, $order_date['tokens'] );
+						$subject = Token::replace( $email->subject, $order_date['tokens'] );
+						$body    = Token::replace( $email->body, $order_date['tokens'] );
 
 						\wp_mail(
 							$order_date['customer_email'],
@@ -182,6 +167,7 @@ final class Cron {
 	 * 有 'subscription_failed' | 'subscription_success' | 'site_sync' 這三種
 	 * 'site_sync' 是同步寄送，不需要排程
 	 *
+	 * @deprecated 改用狀態改變發信
 	 * @param string $action Action
 	 * @return array
 	 */
@@ -189,17 +175,11 @@ final class Cron {
 		$email_service = EmailService::instance();
 		$arr           = [];
 		// 用 action 來決定 query 的 post_status
-		switch ( $action ) {
-			case $email_service->action_names->subscription_success:
-				$post_status = ShopSubscription::$success_statuses;
-				break;
-			case $email_service->action_names->subscription_failed:
-				$post_status = ShopSubscription::$failed_statuses;
-				break;
-			default:
-				$post_status = ShopSubscription::$all_statuses;
-				break;
-		}
+		$post_status = match ( $action ) {
+			$email_service->action_names->subscription_success => ShopSubscription::$success_statuses,
+			$email_service->action_names->subscription_failed => ShopSubscription::$failed_statuses,
+			default => ShopSubscription::$all_statuses,
+		};
 
 		// 把對應狀態的所有的 訂閱ID 撈出來
 		$subscription_ids = \get_posts(
@@ -218,8 +198,12 @@ final class Cron {
 		);
 
 		foreach ( $subscription_ids as $subscription_id ) {
-			$subscription = new \WC_Subscription( $subscription_id );
+			$subscription = \wcs_get_subscription( $subscription_id );
+			if (!$subscription ) {
+				continue;
+			}
 			// $date_type 'date_created', 'trial_end', 'next_payment', 'last_order_date_created', 'end' or 'end_of_prepaid_term'
+			// 取得訂閱的各時間 timestamp
 			$date_created            = $subscription->get_time( 'date_created' );
 			$trial_end               = $subscription->get_time( 'trial_end' );
 			$next_payment            = $subscription->get_time( 'next_payment' );
@@ -249,6 +233,7 @@ final class Cron {
 				'end'                     => $end,
 				'end_of_prepaid_term'     => $end_of_prepaid_term,
 				'tokens'                  => $tokens,
+				'subscription_status'     => $subscription->get_status(),
 			];
 		}
 

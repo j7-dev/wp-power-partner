@@ -141,20 +141,39 @@ final class Plugin {
 	/**
 	 * 記錄 log
 	 *
-	 * @param mixed  $value 記錄值
-	 * @param string $title 記錄標題
-	 * @param string $level 記錄等級
+	 * @param string               $message 記錄訊息
+	 * @param string               $level 記錄等級
+	 * @param array<string, mixed> $args 記錄參數
 	 * @return void
 	 */
-	public static function log( $value, $title = '', $level = 'info' ) {
-		\J7\WpUtils\Classes\WC::log(
-			$value,
-			$title,
-			$level,
-			[
-				'source' => 'power_partner',
-			]
-			);
+	public static function log( $message = '', $level = 'info', $args = [] ) {
+		$logger    = new \WC_Logger();
+		$backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
+
+		$trace_array = [];
+		foreach ($backtrace as $trace) {
+			@[
+				'function' => $function,
+				'file'     => $file,
+				'line'     => $line,
+			] = $trace;
+
+			$function      = $function ?? 'N/A';
+			$file          = $file ?? 'N/A';
+			$line          = $line ?? 'N/A';
+			$trace_array[] = "{$function} at {$file} L:{$line}";
+		}
+
+		$context = [
+			'source' => 'power_partner',
+			'trace'  => $trace_array,
+		];
+
+		if ($args) {
+			$context['args'] = $args;
+		}
+
+		$logger->log( $level, $message, $context );
 	}
 }
 

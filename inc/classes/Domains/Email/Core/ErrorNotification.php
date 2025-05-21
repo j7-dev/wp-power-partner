@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace J7\PowerPartner\Email;
+namespace J7\PowerPartner\Domains\Email\Core;
 
 use J7\PowerPartner\Utils\Base;
 
