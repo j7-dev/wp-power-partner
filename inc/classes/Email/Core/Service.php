@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace J7\PowerPartner\Email\Core;
 
 use J7\PowerPartner\Plugin;
+use J7\PowerPartner\Email\Model\Email;
 /** Class Init */
 final class Service {
 	use \J7\WpUtils\Traits\SingletonTrait;
@@ -25,22 +26,18 @@ final class Service {
 	 * } $action_names Action names */
 	public object $action_names;
 
-	/** @var array{
-	 * action_name:string, // value of $this->action_names
-	 * body:string,
-	 * days:numeric-string,
-	 * enabled:numeric-string, // '1' | '0'
-	 * key:string,
-	 * operator:string, // 'after' | 'before'
-	 * subject:string,
-	 * } $emails Emails */
+	/** @var array<Email> $emails Emails */
 	public array $emails;
 
 
 	/** Constructor */
 	public function __construct() {
 		$power_partner_settings = \get_option( 'power_partner_settings', [] );
-		$this->emails           = is_array( $power_partner_settings['emails'] ) ? $power_partner_settings['emails'] : [];
+		$emails_array           = is_array( $power_partner_settings['emails'] ) ? $power_partner_settings['emails'] : [];
+
+		$strict = \wp_get_environment_type() === 'local';
+
+		$this->emails = array_map( fn ( $email ) => new Email( $email, $strict ), $emails_array );
 
 		$this->default = (object) [
 			'subject' => '這裡填你的信件主旨 ##FIRST_NAME##',
@@ -74,7 +71,7 @@ final class Service {
 
 		// 預設只拿 enabled 的 email
 		foreach ( $this->emails as $email ) {
-			if ( !\wc_string_to_bool( $email['enabled'] ) ) {
+			if ( !\wc_string_to_bool( $email->enabled ) ) {
 				continue;
 			}
 
@@ -83,7 +80,7 @@ final class Service {
 				continue;
 			}
 
-			if ( $email['action_name'] === $action_name ) {
+			if ( $email->action_name === $action_name ) {
 				$enabled_emails[] = $email;
 			}
 		}
