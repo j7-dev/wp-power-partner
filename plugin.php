@@ -25,9 +25,7 @@ if ( \class_exists( 'J7\PowerPartner\Plugin' ) ) {
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-/**
- * Class Plugin
- */
+/** Class Plugin */
 final class Plugin {
 	use \J7\WpUtils\Traits\PluginTrait;
 	use \J7\WpUtils\Traits\SingletonTrait;
@@ -58,11 +56,8 @@ final class Plugin {
 	<p>&nbsp;</p>
 	<p>這封信很重要，不要刪掉，這樣之後才找得到喔</p><p>&nbsp;</p><p><br></p>';
 
-	/**
-	 * Constructor
-	 */
+	/** Constructor */
 	public function __construct() {
-
 		$this->required_plugins = [
 			[
 				'name'     => 'Powerhouse',
