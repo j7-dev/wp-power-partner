@@ -69,7 +69,7 @@ final class Service {
 	 * 預設只拿 enabled 的 email
 	 *
 	 * @param string $action_name Action name 'subscription_failed' | 'subscription_success' | 'site_sync'
-	 * @return array
+	 * @return array<Email>
 	 */
 	public function get_emails( string $action_name = '' ): array {
 

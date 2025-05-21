@@ -44,7 +44,7 @@ final class ShopSubscription {
 	 *
 	 * @var array<string>
 	 */
-	public static $failed_statuses = [ 'cancelled', 'on-hold', 'expired' ];
+	public static $failed_statuses = [ 'cancelled', 'expired' ];
 
 	/**
 	 * Not failed statuses
