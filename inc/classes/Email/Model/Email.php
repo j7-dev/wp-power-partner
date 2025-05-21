@@ -36,7 +36,7 @@ final class Email extends DTO {
 	/** @return void Validate */
 	protected function validate(): void {
 		if ( !in_array( $this->enabled, [ '1', '0' ], true ) ) {
-			$this->enabled = wc_string_to_bool( $this->enabled ) ? '1' : '0';
+			$this->enabled = \wc_string_to_bool( $this->enabled ) ? '1' : '0';
 		}
 
 		if ( !in_array( $this->operator, [ 'after', 'before' ], true ) ) {
@@ -47,9 +47,8 @@ final class Email extends DTO {
 			$this->dto_error->add( 'invalid_days', 'Invalid days，只接受數字' );
 		}
 
-		$email_service = Service::instance();
-		if ( !in_array( $this->action_name, (array) $email_service->action_names, true ) ) {
-			$this->dto_error->add( 'invalid_action_name', 'Invalid action_name，只接受 ' . implode( ', ', (array) $email_service->action_names ) );
+		if ( !in_array( $this->action_name, Service::get_action_names(), true ) ) {
+			$this->dto_error->add( 'invalid_action_name', 'Invalid action_name，只接受 ' . implode( ', ', Service::get_action_names() ) );
 		}
 	}
 
