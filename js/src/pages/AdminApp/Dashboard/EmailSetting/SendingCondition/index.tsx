@@ -45,6 +45,11 @@ const actions = [
 		value: 'last_order_date_created',
 		helper: '上次續訂訂單日期後 N 天發送',
 	},
+	{
+		label: '訂閱結束',
+		value: 'end',
+		helper: '訂閱結束後 N 天發送',
+	},
 ]
 
 const actionNameOptions = actions.map(({ label, value }) => ({
@@ -76,6 +81,7 @@ const SendingCondition = ({
 				'subscription_success',
 				'date_created',
 				'last_order_date_created',
+				'end',
 			].includes(watchActionName),
 		},
 	]
