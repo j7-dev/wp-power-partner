@@ -40,6 +40,7 @@ final class Service {
 
 	/** Constructor */
 	public function __construct() {
+
 		$power_partner_settings = \get_option( 'power_partner_settings', [] );
 		$emails_array           = is_array( $power_partner_settings['emails'] ) ? $power_partner_settings['emails'] : [];
 
@@ -63,7 +64,7 @@ final class Service {
 		\add_action( 'woocommerce_subscription_payment_failed', [ $this, 'subscription_payment_failed' ], 10, 2 );
 
 		// 執行寄信的動作
-		\add_action( self::EXEC_SEND, [ $this, 'exec_send_email' ], 10, 1 );
+		\add_action( self::EXEC_SEND, [ $this, 'exec_send_email' ], 10, 4 );
 	}
 
 	/** @return array<string,string> Action names */
@@ -89,7 +90,7 @@ final class Service {
 	 */
 	public function get_email( string $key ): Email|null {
 		foreach ($this->emails as $email) {
-			if ($email->action_name === $key) {
+			if ($email->key === $key) {
 				return $email;
 			}
 		}
@@ -147,7 +148,13 @@ final class Service {
 				// 例如 site_sync, subscription_success, subscription_failed 這些動作  不在 times 屬性裡面，就什麼也不做
 				continue;
 			}
-			$this->handle_email( $email, $subscription);
+
+			// 如果時間戳記是 0，代表待訂閱不會發生那個動作，不寄信
+			if (!$times->{$map_time}) {
+				continue;
+			}
+
+			$this->handle_email( $email, $subscription, '', $times->{$map_time});
 		}
 	}
 
@@ -184,38 +191,72 @@ final class Service {
 	 * @param Email            $email 信件
 	 * @param \WC_Subscription $subscription 訂閱
 	 * @param string           $type 類型
+	 * @param int|null         $timestamp 時間戳記
 	 * @return void
 	 */
-	private function handle_email( Email $email, \WC_Subscription $subscription, string $type = '' ): void {
+	private function handle_email( Email $email, \WC_Subscription $subscription, string $type = '', $timestamp = null ): void {
 		$last_order = SubscriptionUtils::get_last_order( $subscription );
 		if (!$last_order) {
 			return;
 		}
 
 		$args = [
-			'email_key'       => $email->key,
-			'subscription_id' => $subscription->get_id(),
-			'last_order_id'   => $last_order->get_id(),
-			'action_name'     => $email->action_name,
+			'email_key'       => (string) $email->key,
+			'subscription_id' => (int) $subscription->get_id(),
+			'action_name'     => (string) $email->action_name,
 		];
-		if (!$email->days) {
-			\do_action( self::EXEC_SEND, $args );
-			return;
+
+		$group = "pp_{$email->action_name}_{$args['subscription_id']}";
+
+		/**
+		 * 訂閱成功、訂閱失敗、last_order_date_created 才需要比對
+		 * last_order_id 來判斷是否寄信過
+		 */
+		if (in_array(
+			$email->action_name,
+			[
+				$this->action_names->subscription_success,
+				$this->action_names->subscription_failed,
+				$this->action_names->last_order_date_created,
+			],
+			true
+			)) {
+			$group .= "_{$last_order->get_id()}";
 		}
 
-		$timestamp = time() + $email->get_timestamp();
-
-		$is_scheduled = \as_has_scheduled_action( self::EXEC_SEND, $args, 'power_partner' );
+		// $group 就類似唯一的 key 確認是否已經寄信過
+		$scheduled_actions = \as_get_scheduled_actions(
+			[
+				'hook'  => self::EXEC_SEND,
+				'group' => $group,
+			],
+			'ids'
+			);
+		$is_scheduled      = (bool) $scheduled_actions;
 		if ( $is_scheduled ) {
-			Plugin::log( "訂閱 #{$subscription->get_id()} 已經排程寄信，不重複排程", 'warning', $args );
+			$context                      = $args;
+			$context['scheduled_actions'] = $scheduled_actions;
+			Plugin::log( "訂閱 #{$subscription->get_id()} 已經排程或已寄信過，不重複排程", 'warning', $context );
 			return;
 		}
+
+		if (!$email->days) {
+			$action_id = \as_enqueue_async_action(
+				self::EXEC_SEND,
+				$args,
+				$group
+				);
+			Plugin::log( "訂閱 #{$subscription->get_id()} async 排程寄信 action_id #{$action_id}", 'info', $args );
+			return;
+		}
+
+		$send_timestamp = ( null === $timestamp ) ? time() + $email->get_timestamp() : $timestamp + $email->get_timestamp();
 
 		$action_id = \as_schedule_single_action(
-			$timestamp,
+			$send_timestamp,
 			self::EXEC_SEND,
 			$args,
-			'power_partner'
+			$group
 			);
 
 		$type_label = match ( $type ) {
@@ -230,17 +271,18 @@ final class Service {
 	 * 執行 Send email
 	 * 只要提供 email_key 和 subscription_id 即可
 	 *
-	 * @param array{
-	 * email_key:string,
-	 * subscription_id:int,
-	 * } $args
+	 * @param string $email_key 信件 key
+	 * @param int    $subscription_id 訂閱 id
+	 * @param string $action_name 動作名稱
 	 * @return void
 	 */
-	public function exec_send_email( array $args ) {
-		@[
-		'email_key' => $email_key,
-		'subscription_id' => $subscription_id
-		] = $args;
+	public function exec_send_email( string $email_key, int $subscription_id, string $action_name ) {
+
+		$args = [
+			'email_key'       => $email_key,
+			'subscription_id' => $subscription_id,
+			'action_name'     => $action_name,
+		];
 
 		if (!$email_key || !$subscription_id) {
 			Plugin::log(  'send_email 找不到 email_key 或 subscription_id', 'error', $args );
@@ -282,11 +324,15 @@ final class Service {
 		$headers[]   = 'Content-Type: text/html; charset=UTF-8';
 		$headers[]   = "Bcc: {$admin_email}";
 
-		\wp_mail(
+		$success = \wp_mail(
 			$last_order->get_billing_email(),
 			Token::replace( $email->subject, $tokens ),
 			Token::replace( $email->body, $tokens ),
 			$headers,
 		);
+
+		$success_label = $success ? '成功' : '失敗';
+
+		Plugin::log( "訂閱 #{$subscription->get_id()} 寄信{$success_label} email_action {$email->action_name} email_key {$email->key}", 'info', $args );
 	}
 }
