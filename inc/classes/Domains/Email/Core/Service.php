@@ -10,8 +10,12 @@ use J7\PowerPartner\Utils\Token;
 use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Domains\Subscription\Model\Times;
 use J7\PowerPartner\Domains\Subscription\Utils\Base as SubscriptionUtils;
+use J7\PowerPartner\Product\SiteSync;
 
-/** Class Service */
+/**
+ * Class Service
+ * 需要用 $is_power_partner_subscription = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, true ); 判斷是否為開站訂閱
+ *  */
 final class Service {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
@@ -55,7 +59,7 @@ final class Service {
 		$this->action_names = (object) self::get_action_names();
 
 		// 訂閱創建時
-		\add_action('wp_insert_post', [ $this, 'subscription_created' ], 10, 3 );
+		\add_action('pp_site_sync_by_subscription', [ $this, 'subscription_created' ], 10, 1 );
 
 		// 狀態改變時檢查
 		\add_action( 'woocommerce_subscription_status_updated', [ $this, 'subscription_status_changed' ], 10, 3 );
@@ -133,21 +137,10 @@ final class Service {
 	/**
 	 * Subscription created
 	 *
-	 * @param int      $post_id post id
-	 * @param \WP_Post $post post
-	 * @param bool     $update update
+	 * @param \WC_Subscription $subscription 訂閱
 	 * @return void
 	 */
-	public function subscription_created( int $post_id, \WP_Post $post, bool $update ) {
-		if ($update || $post->post_type !== 'shop_subscription' ) {
-			return;
-		}
-
-		$subscription = \wcs_get_subscription( $post_id );
-		if ( ! $subscription ) {
-			return;
-		}
-
+	public function subscription_created( $subscription ) {
 		$emails = $this->get_emails($this->action_names->date_created);
 		foreach ( $emails as $email ) {
 			$this->handle_email( $email, $subscription);
@@ -181,6 +174,10 @@ final class Service {
 			}
 
 			$this->handle_email( $email, $subscription, '', $times->{$map_time});
+		}
+
+		if (in_array($to_status, ShopSubscription::$failed_statuses, true)) {
+			SubscriptionUtils::disable_sites( $subscription->get_id() );
 		}
 	}
 
@@ -221,6 +218,12 @@ final class Service {
 	 * @return void
 	 */
 	private function handle_email( Email $email, \WC_Subscription $subscription, string $type = '', $timestamp = null ): void {
+		$is_power_partner_subscription = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, true );
+
+		if (!$is_power_partner_subscription) {
+			return;
+		}
+
 		$last_order = SubscriptionUtils::get_last_order( $subscription );
 		if (!$last_order) {
 			return;

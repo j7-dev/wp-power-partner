@@ -21,6 +21,7 @@ final class Bootstrap {
 
 	/** Constructor */
 	public function __construct() {
+
 		if ( 'local' === \wp_get_environment_type() ) {
 			Test\Retry::instance();
 		}
@@ -39,7 +40,6 @@ final class Bootstrap {
 		Product\SiteSync::instance();
 		ShopSubscription::instance();
 		Shortcode::instance();
-		Cron::instance();
 		LC\Main::instance();
 		LC\Api::instance();
 

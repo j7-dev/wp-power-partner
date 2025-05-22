@@ -40,13 +40,18 @@ final class SiteSync {
 		$parent_order = $subscription->get_parent();
 
 		if ( ! ( $parent_order instanceof \WC_Order ) ) {
+			Plugin::log( "訂閱 #{$subscription->get_id()} 的父訂單不是 WC_Order 實例", 'error' );
 			return;
 		}
 
 		$parent_order_id = $parent_order->get_id();
 
 		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
-		if ( count( $order_ids ) !== 1 || ( $order_ids[0] ?? 0 ) !== $parent_order_id ) {
+		if ( count( $order_ids ) !== 1 || reset( $order_ids ) !== $parent_order_id ) {
+			Plugin::log(
+				"訂閱 #{$subscription->get_id()} 的訂單數量不是 1 或父訂單 ID 不一致",
+				'error'
+				);
 			return;
 		}
 
@@ -54,11 +59,7 @@ final class SiteSync {
 		$responses = [];
 
 		foreach ( $items as $item ) {
-			/**
-			 * Type
-			 *
-			 * @var \WC_Order_Item_Product $item
-			 */
+			/** @var \WC_Order_Item_Product $item */
 			$product_id = $item->get_product_id();
 			$product    = \wc_get_product( $product_id );
 
@@ -68,11 +69,13 @@ final class SiteSync {
 				$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
 				$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 				$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
+				$subscription->save();
 				$linked_site_ids[] = $linked_site_id;
 			} elseif ( 'subscription' === $product->get_type() ) {
 				$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
 				$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 				$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
+				$subscription->save();
 			} else {
 				continue;
 			}
@@ -107,9 +110,14 @@ final class SiteSync {
 				'data'    => $response_obj?->data,
 			];
 		}
-		ob_start();
-		print_r( $responses );
-		$responses_string = ob_get_clean();
+
+		Plugin::log(
+			"訂閱 #{$subscription->get_id()}  order_id: #{$parent_order_id}",
+			'info',
+			[
+				'responses' => $responses,
+			]
+			);
 
 		// 把網站建立成功與否的資訊存到訂單的 meta data
 		if ( is_array( $responses ) && count( $responses ) >= 1 ) {
@@ -128,13 +136,12 @@ final class SiteSync {
 			}
 
 			$parent_order->add_order_note( $note );
-		} else {
-			$parent_order->add_order_note( $responses_string );
 		}
 
 		$parent_order->update_meta_data( self::CREATE_SITE_RESPONSES_META_KEY, \wp_json_encode( $responses ) );
-
 		$parent_order->save();
+
+		\do_action( 'pp_site_sync_by_subscription', $subscription );
 	}
 
 	/**

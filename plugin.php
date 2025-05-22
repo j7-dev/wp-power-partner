@@ -118,27 +118,6 @@ final class Plugin {
 	}
 
 	/**
-	 * Deactivate
-	 *
-	 * @return void
-	 */
-	public function deactivate(): void {
-		$cron_hooks = [
-			Cron::SEND_EMAIL_HOOK_NAME,
-			Cron::SYNC_SUBSCRIPTION_META_HOOK_NAME,
-		];
-
-		foreach ($cron_hooks as $cron_hook) {
-			$timestamp = \wp_next_scheduled($cron_hook);
-
-			if ($timestamp !== false) {
-				// 如果找到了cron任務,就清除它
-				\wp_clear_scheduled_hook($cron_hook);
-			}
-		}
-	}
-
-	/**
 	 * 記錄 log
 	 *
 	 * @param string               $message 記錄訊息
@@ -147,9 +126,7 @@ final class Plugin {
 	 * @return void
 	 */
 	public static function log( $message = '', $level = 'info', $args = [] ) {
-		// ----- ▼ TEST 印出 WC Logger 記得移除 ----- //
 		\J7\WpUtils\Classes\WC::logger($message, $level, $args, 'power_partner');
-		// ---------- END TEST ---------- //
 	}
 }
 
