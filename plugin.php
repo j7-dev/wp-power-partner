@@ -126,7 +126,44 @@ final class Plugin {
 	 * @return void
 	 */
 	public static function log( $message = '', $level = 'info', $args = [] ) {
-		\J7\WpUtils\Classes\WC::logger($message, $level, $args, 'power_partner');
+		if (method_exists('\J7\WpUtils\Classes\WC', 'logger')) {
+			\J7\WpUtils\Classes\WC::logger($message, $level, $args, 'power_partner');
+			return;
+		}
+
+		$logger = new \WC_Logger();
+
+		$context = [
+			'source' => 'power_partner',
+		];
+
+		if ($args) {
+			$context['args'] = $args;
+		}
+
+		/** @var array<array{class:string|null, type:string|null, function:string|null, file:string|null, line:string|null}> $backtrace */
+		$backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
+
+		$trace_array = [];
+		foreach ($backtrace as $index => $trace) {
+			@[
+			'class'    => $class,
+			'type'     => $type,
+			'function' => $function,
+			'file'     => $file,
+			'line'     => $line,
+			] = $trace;
+
+			$function      = $function ?? 'N/A';
+			$file          = $file ?? 'N/A';
+			$line          = $line ?? 'N/A';
+			$trace_array[] = "#{$index} {$class}{$type}{$function} at {$file} L:{$line}";
+		}
+		if ($trace_array) {
+			$context['trace'] = $trace_array;
+		}
+
+		$logger->log( $level, $message, $context );
 	}
 }
 
