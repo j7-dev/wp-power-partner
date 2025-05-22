@@ -63,7 +63,7 @@ final class Plugin {
 				'name'     => 'Powerhouse',
 				'slug'     => 'powerhouse',
 				'source'   => 'https://github.com/j7-dev/wp-powerhouse/releases/latest/download/powerhouse.zip',
-				'version'  => '2.0.15',
+				'version'  => '3.2.20',
 				'required' => true,
 			],
 			[
@@ -147,33 +147,9 @@ final class Plugin {
 	 * @return void
 	 */
 	public static function log( $message = '', $level = 'info', $args = [] ) {
-		$logger    = new \WC_Logger();
-		$backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
-
-		$trace_array = [];
-		foreach ($backtrace as $trace) {
-			@[
-				'function' => $function,
-				'file'     => $file,
-				'line'     => $line,
-			] = $trace;
-
-			$function      = $function ?? 'N/A';
-			$file          = $file ?? 'N/A';
-			$line          = $line ?? 'N/A';
-			$trace_array[] = "{$function} at {$file} L:{$line}";
-		}
-
-		$context = [
-			'source' => 'power_partner',
-			'trace'  => $trace_array,
-		];
-
-		if ($args) {
-			$context['args'] = $args;
-		}
-
-		$logger->log( $level, $message, $context );
+		// ----- ▼ TEST 印出 WC Logger 記得移除 ----- //
+		\J7\WpUtils\Classes\WC::logger($message, $level, $args, 'power_partner');
+		// ---------- END TEST ---------- //
 	}
 }
 
