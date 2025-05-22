@@ -12,8 +12,6 @@ use J7\WpUtils\Classes\DTO;
  *  */
 final class Times extends DTO {
 
-	/** @var int $date_created 訂閱創建時間戳記 */
-	public int $date_created;
 
 	/** @var int $trial_end 試用期結束時間戳記 */
 	public int $trial_end;
@@ -41,7 +39,6 @@ final class Times extends DTO {
 	public static function instance( \WC_Subscription $subscription ): self {
 
 		$args = [
-			'date_created'            => $subscription->get_time( 'date_created' ),
 			'trial_end'               => $subscription->get_time( 'trial_end' ),
 			'next_payment'            => $subscription->get_time( 'next_payment' ),
 			'last_order_date_created' => $subscription->get_time( 'last_order_date_created' ),

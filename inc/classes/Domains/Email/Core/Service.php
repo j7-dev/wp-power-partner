@@ -54,6 +54,9 @@ final class Service {
 
 		$this->action_names = (object) self::get_action_names();
 
+		// 訂閱創建時
+		\add_action('wp_insert_post', [ $this, 'subscription_created' ], 10, 3 );
+
 		// 狀態改變時檢查
 		\add_action( 'woocommerce_subscription_status_updated', [ $this, 'subscription_status_changed' ], 10, 3 );
 
@@ -77,8 +80,8 @@ final class Service {
 			'date_created'            => 'date_created', // 訂閱成立後
 			'trial_end'               => 'trial_end', // 試用結束前|後
 			'next_payment'            => 'next_payment', // 下次付款前|後
-			'end'                     => 'end', // TODO: 可能沒用到?
-			'end_of_prepaid_term'     => 'end_of_prepaid_term', // TODO: 可能沒用到?
+			'end'                     => 'end', // 訂閱結束
+			'end_of_prepaid_term'     => 'end_of_prepaid_term', // 訂閱結束
 		];
 	}
 
@@ -128,9 +131,32 @@ final class Service {
 	}
 
 	/**
-	 * Subscription failed
-	 * 如果用戶續訂失敗，則停用訂單網站
-	 * 檢查訂閱時 狀態會  active -> on-hold -> active
+	 * Subscription created
+	 *
+	 * @param int      $post_id post id
+	 * @param \WP_Post $post post
+	 * @param bool     $update update
+	 * @return void
+	 */
+	public function subscription_created( int $post_id, \WP_Post $post, bool $update ) {
+		if ($update || $post->post_type !== 'shop_subscription' ) {
+			return;
+		}
+
+		$subscription = \wcs_get_subscription( $post_id );
+		if ( ! $subscription ) {
+			return;
+		}
+
+		$emails = $this->get_emails($this->action_names->date_created);
+		foreach ( $emails as $email ) {
+			$this->handle_email( $email, $subscription);
+		}
+	}
+
+
+
+	/**
 	 *
 	 * @see WCS_Action_Scheduler::get_scheduled_action_hook
 	 * @see woocommerce_subscription_status_updated
@@ -206,7 +232,7 @@ final class Service {
 			'action_name'     => (string) $email->action_name,
 		];
 
-		$group = "pp_{$email->action_name}_{$args['subscription_id']}";
+		$group = "{$email->key}_{$email->action_name}_{$args['subscription_id']}";
 
 		/**
 		 * 訂閱成功、訂閱失敗、last_order_date_created 才需要比對
