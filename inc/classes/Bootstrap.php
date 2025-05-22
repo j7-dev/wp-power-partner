@@ -1,7 +1,4 @@
 <?php
-/**
- * Bootstrap
- */
 
 declare (strict_types = 1);
 
@@ -13,9 +10,7 @@ use J7\PowerPartner\Api\Connect;
 
 use Kucrut\Vite;
 
-/**
- * Class Bootstrap
- */
+/** Bootstrap */
 final class Bootstrap {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
@@ -23,10 +18,12 @@ final class Bootstrap {
 	public $psw      = ''; // phpcs:ignore
 	public $base_url = ''; // phpcs:ignore
 	public $t        = ''; // phpcs:ignore
-	/**
-	 * Constructor
-	 */
+
+	/** Constructor */
 	public function __construct() {
+		if ( 'local' === \wp_get_environment_type() ) {
+			Test\Retry::instance();
+		}
 
 		Domains\Email\Core\Service::instance();
 		// 環境變數，調整 api auth
