@@ -72,6 +72,9 @@ final class Service {
 
 		// 執行寄信的動作
 		\add_action( self::EXEC_SEND, [ $this, 'exec_send_email' ], 10, 3 );
+
+		// 移除舊 CRON 排程
+		\add_action( 'init', [ $this, 'clear_cron' ], 10, 1 );
 	}
 
 	/** @return array<string,string> Action names */
@@ -363,5 +366,19 @@ final class Service {
 		$success_label = $success ? '成功' : '失敗';
 
 		Plugin::log( "訂閱 #{$subscription->get_id()} 寄信{$success_label} email_action {$email->action_name} email_key {$email->key}", 'info', $args );
+	}
+
+
+	/**
+	 * 移除舊 CRON 排程
+	 *
+	 * @deprecated 未來版本可以移除
+	 * @return void
+	 */
+	public function clear_cron(): void {
+		if ( !\wp_next_scheduled( self::EXEC_SEND ) ) {
+			return;
+		}
+		\wp_clear_scheduled_hook( self::EXEC_SEND );
 	}
 }
