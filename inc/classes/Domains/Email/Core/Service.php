@@ -71,7 +71,7 @@ final class Service {
 		\add_action( 'woocommerce_subscription_payment_failed', [ $this, 'subscription_payment_failed' ], 10, 2 );
 
 		// 執行寄信的動作
-		\add_action( self::EXEC_SEND, [ $this, 'exec_send_email' ], 10, 4 );
+		\add_action( self::EXEC_SEND, [ $this, 'exec_send_email' ], 10, 3 );
 	}
 
 	/** @return array<string,string> Action names */
