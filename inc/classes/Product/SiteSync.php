@@ -47,9 +47,13 @@ final class SiteSync {
 		$parent_order_id = $parent_order->get_id();
 
 		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
-		if ( count( $order_ids ) !== 1 || reset( $order_ids ) !== $parent_order_id ) {
+		if ( count( $order_ids ) !== 1) {
+			return;
+		}
+
+		if ( reset( $order_ids ) !== $parent_order_id ) {
 			Plugin::log(
-				"訂閱 #{$subscription->get_id()} 的訂單數量不是 1 或父訂單 ID 不一致",
+				"訂閱 #{$subscription->get_id()} 父訂單 ID 不一致",
 				'error'
 				);
 			return;
