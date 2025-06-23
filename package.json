@@ -6,7 +6,7 @@
 	"scripts": {
 		"bootstrap": "composer install --no-interaction",
 		"dev": "vite",
-		"prebuild": "echo 'todo: remove console'",
+
 		"build": "vite build",
 		"build:wp": "vite --config vite.config-for-wp.ts build",
 		"preview": "vite preview",
@@ -23,7 +23,6 @@
 		"sync:version": "wp-update-project-version -s package.json -p plugin.php"
 	},
 	"dependencies": {
-		"@power/general": "workspace:*",
 		"antd-toolkit": "workspace:*",
 		"crypto-js": "^4.2.0",
 		"jotai": "^2.12.5",
