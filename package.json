@@ -6,7 +6,6 @@
 	"scripts": {
 		"bootstrap": "composer install --no-interaction",
 		"dev": "vite",
-
 		"build": "vite build",
 		"build:wp": "vite --config vite.config-for-wp.ts build",
 		"preview": "vite preview",
@@ -23,16 +22,16 @@
 		"sync:version": "wp-update-project-version -s package.json -p plugin.php"
 	},
 	"dependencies": {
+		"@tanstack/react-query": "^5.28.9",
 		"antd-toolkit": "workspace:*",
 		"crypto-js": "^4.2.0",
-		"jotai": "^2.12.5",
 		"react-quill": "^2.0.0",
-		"react-shadow": "^20.5.0",
-		"@tanstack/react-query": "^5.28.9"
+		"react-shadow": "^20.5.0"
 	},
 	"devDependencies": {
 		"@power/eslint-config": "workspace:*",
 		"@power/tailwind-config": "workspace:*",
-		"@power/typescript-config": "workspace:*"
+		"@power/typescript-config": "workspace:*",
+		"@tanstack/react-query-devtools": "^5.81.5"
 	}
 }
