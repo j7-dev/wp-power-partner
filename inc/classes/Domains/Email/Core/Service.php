@@ -11,6 +11,7 @@ use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Domains\Subscription\Model\Times;
 use J7\PowerPartner\Domains\Subscription\Utils\Base as SubscriptionUtils;
 use J7\PowerPartner\Product\SiteSync;
+use J7\Powerhouse\Utils\Base as PowerhouseUtils;
 
 /**
  * Class Service
@@ -41,6 +42,8 @@ final class Service {
 	/** @var string 執行 send email 的 action name */
 	const EXEC_SEND = 'power_partner_send_email';
 
+	const DAILY_CHECK = 'power_partner_daily_check';
+
 
 	/** Constructor */
 	public function __construct() {
@@ -57,6 +60,10 @@ final class Service {
 		];
 
 		$this->action_names = (object) self::get_action_names();
+
+		// 每天檢查
+		\add_action( 'init', [ $this, 'daily_check' ], 10, 3 ); // 註冊
+		\add_action( self::DAILY_CHECK, [ $this, 'batch_process_subscriptions' ], 10 ); // 執行
 
 		// 訂閱創建時
 		\add_action('pp_site_sync_by_subscription', [ $this, 'subscription_created' ], 10, 1 );
@@ -135,6 +142,78 @@ final class Service {
 		}
 
 		return $enabled_emails;
+	}
+
+	/**
+	 * 每天檢查
+	 * 因為發信時機有 OOO 前 N 天的條件，沒辦法等事件發生後再寄信
+	 * 所以每天檢查一次，如果符合條件就寄信
+	 *
+	 * @return void
+	 */
+	public function daily_check(): void {
+		// 檢查是否已經有排程任務
+		if (\as_has_scheduled_action(self::DAILY_CHECK)) {
+			return;
+		}
+
+		// 計算下次 19:00 的時間戳
+		$next_run_time = $this->get_next_19_oclock_timestamp();
+
+		// 建立每日重複排程任務
+		\as_schedule_recurring_action(
+					$next_run_time,        // 首次執行時間
+					DAY_IN_SECONDS,        // 重複間隔（每日）
+					self::DAILY_CHECK,            // Hook 名稱
+					[],               // 傳遞給 hook 的參數
+			);
+	}
+
+	/**
+	 * 每天檢查
+	 *
+	 * @return void
+	 */
+	public function batch_process_subscriptions(): void {
+		// 把對應狀態的所有的 訂閱ID 撈出來
+		/** @var array<int> $subscription_ids */
+		$subscription_ids = \get_posts(
+					[
+						'post_type'      => ShopSubscription::POST_TYPE,
+						'posts_per_page' => -1,
+						'post_status'    => [ 'active', 'on-hold', 'pending-cancel' ],
+						'fields'         => 'ids',
+						'meta_query'     => array( //phpcs:ignore
+							[
+								'key'     => ShopSubscription::IS_POWER_PARTNER_SUBSCRIPTION,
+								'compare' => 'EXISTS',
+							],
+						),
+					]
+				);
+
+		PowerhouseUtils::batch_process(
+					$subscription_ids,
+					[ $this, 'handle_subscription' ],
+				);
+	}
+
+	/**
+	 * 處理訂閱
+	 *
+	 * @param int $subscription_id 訂閱 ID
+	 * @return void
+	 */
+	public function handle_subscription( $subscription_id ) {
+		$subscription = \wcs_get_subscription( $subscription_id );
+		if (!$subscription) {
+			Plugin::log( "訂閱 #{$subscription_id} 不存在", 'error', [ 'subscription_id' => $subscription_id ] );
+			return;
+		}
+
+		$status = $subscription->get_status();
+
+		$this->subscription_status_changed( $subscription, $status, $status );
 	}
 
 	/**
@@ -265,6 +344,7 @@ final class Service {
 			'ids'
 			);
 		$is_scheduled      = (bool) $scheduled_actions;
+
 		if ( $is_scheduled ) {
 			$context                      = $args;
 			$context['scheduled_actions'] = $scheduled_actions;
@@ -370,7 +450,7 @@ final class Service {
 
 
 	/**
-	 * 移除舊 CRON 排程
+	 * 移除舊 WP Cron 排程
 	 *
 	 * @deprecated 未來版本可以移除
 	 * @return void
@@ -380,5 +460,28 @@ final class Service {
 			return;
 		}
 		\wp_clear_scheduled_hook( self::EXEC_SEND );
+	}
+
+
+	/**
+	 * 計算下次 19:00 的時間戳
+	 *
+	 * @return int
+	 */
+	private function get_next_19_oclock_timestamp(): int {
+		// 取得當前時間
+		$current_time = current_time('timestamp');
+
+		// 取得今天 19:00 的時間戳
+		$today_19_oclock = strtotime(date('Y-m-d 19:00:00', $current_time));
+
+		// 如果現在時間已經超過今天 19:00，則設定為明天 19:00
+		if ($current_time >= $today_19_oclock) {
+			$next_19_oclock = strtotime('+1 day', $today_19_oclock);
+		} else {
+			$next_19_oclock = $today_19_oclock;
+		}
+
+		return $next_19_oclock;
 	}
 }

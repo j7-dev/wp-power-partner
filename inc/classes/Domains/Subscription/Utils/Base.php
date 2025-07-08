@@ -45,7 +45,7 @@ abstract class Base {
 	public static function disable_sites( int $subscription_id ) {
 
 		$subscription = \wcs_get_subscription( $subscription_id );
-		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
+		if ( ! $subscription ) {
 			Plugin::log( "停用網站失敗，訂閱 #{$subscription_id} 不是 WC_Subscription 實例", 'error' );
 			return;
 		}
