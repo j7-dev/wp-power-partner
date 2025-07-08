@@ -257,10 +257,6 @@ final class Service {
 
 			$this->handle_email( $email, $subscription, '', $times->{$map_time});
 		}
-
-		if (in_array($to_status, ShopSubscription::$failed_statuses, true)) {
-			SubscriptionUtils::disable_sites( $subscription->get_id() );
-		}
 	}
 
 	/**

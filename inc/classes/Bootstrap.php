@@ -27,6 +27,7 @@ final class Bootstrap {
 		}
 
 		Domains\Email\Core\Service::instance();
+		Domains\Site\Core\Disable::instance();
 		// 環境變數，調整 api auth
 		Base::set_api_auth( $this );
 

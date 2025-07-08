@@ -25,15 +25,10 @@ use J7\PowerPartner\Product\DataTabs\LinkedSites;
 final class ShopSubscription {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
-	const IS_POWER_PARTNER_SUBSCRIPTION  = 'is_power_partner_site_sync';
-	const LAST_FAILED_TIMESTAMP_META_KEY = 'power_partner_last_failed_timestamp';
-	const POST_TYPE                      = 'shop_subscription';
+	const IS_POWER_PARTNER_SUBSCRIPTION = 'is_power_partner_site_sync';
+	const POST_TYPE                     = 'shop_subscription';
 
-	/**
-	 * Success statuses
-	 *
-	 * @var array<string>
-	 */
+	/** @var array<string> Success statuses */
 	public static $success_statuses = [ 'active' ];
 
 	/**
@@ -46,68 +41,20 @@ final class ShopSubscription {
 	 */
 	public static $failed_statuses = [ 'cancelled', 'expired' ];
 
-	/**
-	 * Not failed statuses
-	 *
-	 * @var array<string>
-	 */
+	/** @var array<string> Not failed statuses  */
 	public static $not_failed_statuses = [ 'active', 'pending-cancel' ];
 
-	/**
-	 * All statuses
-	 *
-	 * @var array<string>
-	 */
+	/** @var array<string> All statuses */
 	public static $all_statuses = [ 'active', 'on-hold', 'pending-cancel', 'cancelled', 'expired' ];
 
-
-	/**
-	 * Constructor
-	 */
+	/** Constructor */
 	public function __construct() {
-		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_failed' ], 10, 3 );
+
 		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'add_meta' ], 10, 1 );
-		\add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
+		// \add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
 		\add_action( 'save_post', [ $this, 'save' ] );
 		\add_filter( 'manage_edit-' . self::POST_TYPE . '_columns', [ $this, 'add_order_column' ], 99, 1 );
 		\add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', [ $this, 'render_order_column' ] );
-	}
-
-	/**
-	 * Subscription failed
-	 * 如果用戶續訂失敗，則停用訂單網站
-	 *
-	 * @param string           $old_status old status
-	 * @param string           $new_status new status
-	 * @param \WC_Subscription $subscription post
-	 * @return void
-	 */
-	public function subscription_failed( $old_status, $new_status, $subscription ): void {
-
-		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
-			return;
-		}
-
-		$is_power_partner_subscription = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, true );
-
-		// 如果不是 power partner 網站訂閱 就不處理
-		if ( ! $is_power_partner_subscription ) {
-			return;
-		}
-
-		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等  就算失敗，[待取消]不算失敗
-		$is_subscription_failed = ( in_array( $new_status, self::$failed_statuses, true ) ) && in_array( $old_status, self::$not_failed_statuses, true );
-
-		// 如果訂閱沒失敗 就不處理，並且刪除 上次失敗的時間 紀錄
-		if ( ! $is_subscription_failed ) {
-			$subscription->delete_meta_data( self::LAST_FAILED_TIMESTAMP_META_KEY );
-			$subscription->save();
-			return;
-		}
-
-		// 記錄當下失敗時間，因為要搭配 CRON 判斷過了多久然後發信
-		$subscription->update_meta_data( self::LAST_FAILED_TIMESTAMP_META_KEY, time() );
-		$subscription->save();
 	}
 
 	/**

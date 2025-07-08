@@ -1,18 +1,12 @@
 <?php
-/**
- * Fetch
- */
 
 declare(strict_types=1);
 
 namespace J7\PowerPartner\Api;
 
-use J7\PowerPartner\Utils\Base;
 use J7\PowerPartner\Bootstrap;
 
-/**
- * Class Fetch
- */
+/** Class Fetch */
 abstract class Fetch {
 
 	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = 'power_partner_allowed_template_options';
