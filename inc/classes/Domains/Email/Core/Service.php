@@ -360,6 +360,20 @@ final class Service {
 
 		$send_timestamp = ( null === $timestamp ) ? time() + $email->get_timestamp() : $timestamp + $email->get_timestamp();
 
+		$current_time = time();
+
+		if ($current_time <= $send_timestamp || $current_time >= $send_timestamp + 86400) {
+			$args['current_time']   = \wp_date( 'Y-m-d H:i:s', $current_time );
+			$args['send_timestamp'] = \wp_date( 'Y-m-d H:i:s', $send_timestamp );
+			Plugin::log(
+				"訂閱 #{$subscription->get_id()} 寄信時間不在 1 天內，不排程",
+				'info',
+				$args
+				);
+			return;
+		}
+
+		// 因為每日會檢查一次，所以確保在 1 天內寄信
 		$action_id = \as_schedule_single_action(
 			$send_timestamp,
 			self::EXEC_SEND,
