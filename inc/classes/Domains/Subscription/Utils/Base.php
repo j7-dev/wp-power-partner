@@ -78,8 +78,11 @@ abstract class Base {
 			return;
 		}
 
-		$action_id = \as_schedule_single_action( time() + ( 86400 * $disable_site_after_n_days ), Disable::DISABLE_SITE, [ $subscription_id ], Disable::DISABLE_SITE_GROUP );
+		$timestamp = time() + ( 86400 * $disable_site_after_n_days );
+		$date      = \wp_date( 'Y-m-d H:i', $timestamp );
+		$action_id = \as_schedule_single_action( $timestamp, Disable::DISABLE_SITE, [ $subscription_id ], Disable::DISABLE_SITE_GROUP );
 		$subscription->add_meta_data( Disable::DISABLE_SITE_ACTION_ID_META_KEY, $action_id, true );
+		$subscription->add_order_note( $action_id ? "已排程停用網站，預計於 {$date} 停用網站，action_id: {$action_id}" : "排程停用網站失敗，action_id: {$action_id}" );
 		$subscription->save();
 		Plugin::log( "訂閱 #{$subscription_id} 排程停用網站", 'info', [ 'action_id' => $action_id ] );
 	}
