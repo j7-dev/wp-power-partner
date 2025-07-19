@@ -33,22 +33,25 @@ final class Email extends DTO {
 	/** @var string 信件運算子 'after' | 'before' */
 	public string $operator;
 
-	/** @return void Validate */
+	/**
+	 * @return void Validate
+	 * @throws \Exception 如果驗證失敗
+	 *  */
 	protected function validate(): void {
 		if ( !in_array( $this->enabled, [ '1', '0' ], true ) ) {
 			$this->enabled = \wc_string_to_bool( $this->enabled ) ? '1' : '0';
 		}
 
 		if ( !in_array( $this->operator, [ 'after', 'before' ], true ) ) {
-			$this->dto_error->add( 'invalid_operator', 'Invalid operator，只接受 after 或 before' );
+			throw new \Exception('Invalid operator，只接受 after 或 before');
 		}
 
 		if ( !is_numeric( $this->days ) ) {
-			$this->dto_error->add( 'invalid_days', 'Invalid days，只接受數字' );
+			throw new \Exception('Invalid days，只接受數字');
 		}
 
 		if ( !in_array( $this->action_name, Service::get_action_names(), true ) ) {
-			$this->dto_error->add( 'invalid_action_name', 'Invalid action_name，只接受 ' . implode( ', ', Service::get_action_names() ) );
+			throw new \Exception('Invalid action_name，只接受 ' . implode( ', ', Service::get_action_names() )); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 		}
 	}
 
