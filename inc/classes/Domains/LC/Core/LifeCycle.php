@@ -1,11 +1,8 @@
 <?php
-/**
- * ShopSubscription 相關
- */
 
 declare(strict_types=1);
 
-namespace J7\PowerPartner\LC;
+namespace J7\PowerPartner\Domains\LC\Core;
 
 use J7\PowerPartner\Product\DataTabs\LinkedLC;
 use J7\Powerhouse\Api\Base as CloudApi;
@@ -14,7 +11,7 @@ use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Api\Connect;
 
 /**
- * Class ShopSubscription
+ * LC 生命週期
  *
  * Status:
  * active 已啟用
@@ -22,10 +19,8 @@ use J7\PowerPartner\Api\Connect;
  * expired 已過期
  * on-hold 保留
  * pending-cancel 待取消
- *
- * @deprecated
  */
-final class Main {
+final class LifeCycle {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
 	const EXPIRE_ACTION = 'power_partner_lc_expire';

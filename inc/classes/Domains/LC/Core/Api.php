@@ -1,30 +1,23 @@
 <?php
-/**
- * Api
- */
 
 declare( strict_types=1 );
 
-namespace J7\PowerPartner\LC;
+namespace J7\PowerPartner\Domains\LC\Core;
 
-use J7\PowerPartner\Plugin;
 use J7\WpUtils\Classes\WP;
+use J7\WpUtils\Classes\ApiBase;
 use J7\WpUtils\Classes\General;
 use J7\Powerhouse\Api\Base as CloudApi;
 use J7\PowerPartner\ShopSubscription;
 
-/**
- * Class Api
- */
-final class Api {
+/** Class Api */
+final class Api extends ApiBase {
 	use \J7\WpUtils\Traits\SingletonTrait;
-	use \J7\WpUtils\Traits\ApiRegisterTrait;
 
-	/**
-	 * APIs
-	 *
-	 * @var array<int, array{endpoint: string, method: string, permission_callback?:callable}>
-	 */
+	/** @var string 命名空間 */
+	protected $namespace = 'power-partner';
+
+	/** @var array<int, array{endpoint: string, method: string, permission_callback?:callable}> APIs */
 	protected $apis = [
 		[
 			'endpoint' => 'license-codes/update',
@@ -42,33 +35,12 @@ final class Api {
 	];
 
 	/**
-	 * Constructor.
-	 */
-	public function __construct() {
-		\add_action( 'rest_api_init', [ $this, 'register_api_license_codes' ] );
-	}
-
-	/**
-	 * Register products API
-	 *
-	 * @return void
-	 */
-	public function register_api_license_codes(): void {
-		$this->register_apis(
-		apis: $this->apis,
-		namespace: Plugin::$kebab,
-		default_permission_callback: fn() => \current_user_can('manage_options'),
-		);
-	}
-
-
-
-	/**
 	 * 更新 License Codes
 	 * 可能會修改到訂閱綁定
 	 *
 	 * @param \WP_REST_Request $request 包含請求參數的 REST 請求對象。
 	 * @return \WP_REST_Response 返回包含操作結果的 REST 響應對象。
+	 * @throws \Exception 如果更新授權碼到站長路可失敗
 	 * @phpstan-ignore-next-line
 	 */
 	public function post_license_codes_update_callback( \WP_REST_Request $request ): \WP_REST_Response {
@@ -81,37 +53,15 @@ final class Api {
 
 		$body_params = $this->handle_bind_subscription($body_params);
 
-		if (\is_wp_error($body_params)) {
-			return new \WP_REST_Response(
-				[
-					'code'    => 'bind_subscription_failed',
-					'message' => '連結授權碼到訂閱失敗',
-					'data'    => [
-						'body_params' => $body_params,
-					],
-				],
-				400
-			);
-		}
-
 		// 發給站長路可變更 LC
 		$api_instance = CloudApi::instance();
 		$response     = $api_instance->remote_post(
 			'license-codes/update',
 			$body_params
 		);
-		$is_error     = \is_wp_error($response);
-		if ($is_error) {
-			return new \WP_REST_Response(
-				[
-					'code'    => 'update_license_codes_failed',
-					'message' => "更新授權碼到站長路可失敗，{$response->get_error_message()}",
-					'data'    => [
-						'body_params' => $body_params,
-					],
-				],
-				400
-			);
+
+		if ( \is_wp_error($response)) {
+			throw new \Exception("更新授權碼到站長路可失敗，{$response->get_error_message()}");
 		}
 
 		$body = \wp_remote_retrieve_body($response);
@@ -129,6 +79,7 @@ final class Api {
 	 *
 	 * @param \WP_REST_Request $request 包含請求參數的 REST 請求對象。
 	 * @return \WP_REST_Response 返回包含操作結果的 REST 響應對象。
+	 * @throws \Exception 如果刪除授權碼到站長路可失敗
 	 * @phpstan-ignore-next-line
 	 */
 	public function delete_license_codes_callback( \WP_REST_Request $request ): \WP_REST_Response {
@@ -157,18 +108,9 @@ final class Api {
 			'license-codes',
 			$body_params
 		);
-		$is_error     = \is_wp_error($response);
-		if ($is_error) {
-			return new \WP_REST_Response(
-				[
-					'code'    => 'delete_license_codes_failed',
-					'message' => "刪除授權碼到站長路可失敗，{$response->get_error_message()}",
-					'data'    => [
-						'body_params' => $body_params,
-					],
-				],
-				400
-			);
+
+		if (\is_wp_error($response)) {
+			throw new \Exception("刪除授權碼到站長路可失敗，{$response->get_error_message()}");
 		}
 
 		$body = \wp_remote_retrieve_body($response);
@@ -185,9 +127,10 @@ final class Api {
 	 * 處理連結授權碼到訂閱
 	 *
 	 * @param array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int, recover?:boolean} $body_params 參數
-	 * @return array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int, recover?:boolean}|\WP_Error 連結成功回傳 $body_params，否則 \WP_Error
+	 * @return array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int, recover?:boolean} 連結成功回傳 $body_params
+	 * @throws \Exception 如果訂閱不存在
 	 */
-	public function handle_bind_subscription( array $body_params ): array|\WP_Error {
+	public function handle_bind_subscription( array $body_params ): array {
 		$lc_ids          = $body_params['ids'] ?? []; // @phpstan-ignore-line
 		$subscription_id = $body_params['subscription_id'] ?? null;
 
@@ -210,7 +153,7 @@ final class Api {
 
 		$subscription = \wcs_get_subscription($subscription_id);
 		if (!$subscription) {
-			return new \WP_Error('subscription_not_found', " #{$subscription_id} 訂閱不存在");
+			throw new \Exception("#{$subscription_id} 訂閱不存在");
 		}
 
 		foreach ($lc_ids as $lc_id) {
@@ -259,46 +202,5 @@ final class Api {
 		];
 		$query = new \WP_Query($args);
 		return $query->posts;
-	}
-
-
-	/**
-	 * 取得訂閱下次付款日
-	 *
-	 * @param \WP_REST_Request $request 包含請求參數的 REST 請求對象。
-	 * @return \WP_REST_Response|\WP_Error 返回包含操作結果的 REST 響應對象。
-	 * @phpstan-ignore-next-line
-	 */
-	public function get_subscriptions_next_payment_callback( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
-		$params = $request->get_params();
-
-		$include_required_params = WP::include_required_params($params, [ 'ids' ]);
-
-		if (true !== $include_required_params) {
-			return $include_required_params;
-		}
-
-		$subscription_ids = $params['ids'];
-		if (!is_array($subscription_ids)) {
-			return new \WP_Error('invalid_subscription_ids', '訂閱 id 須為陣列');
-		}
-
-		$subscription_ids = array_map('intval', $subscription_ids);
-
-		$results = [];
-		foreach ($subscription_ids as $subscription_id) {
-			$subscription = \wcs_get_subscription($subscription_id);
-			if ($subscription) {
-				$results[] = [
-					'id'   => (int) $subscription_id,
-					'time' => $subscription->get_time( 'next_payment' ),
-				];
-			}
-		}
-
-		return new \WP_REST_Response(
-			$results,
-			200
-			);
 	}
 }
