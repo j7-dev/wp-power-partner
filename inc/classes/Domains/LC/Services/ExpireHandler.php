@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace J7\PowerPartner\Domains\LC\Services;
 
 use J7\Powerhouse\Domains\AsSchedulerHandler\Shared\Base;
+use J7\Powerhouse\Api\Base as CloudApi;
+use J7\WpUtils\Classes\General;
+use J7\WpUtils\Classes\WP;
 
 /**
  * LC 生命週期
@@ -27,7 +30,7 @@ final class ExpireHandler extends Base {
 	/** Constructor，每次傳入的資源實例可能不同 */
 	public function __construct(
 		/** @var \WC_Subscription 訂閱 */
-		protected \WC_Subscription $item,
+		protected $item,
 	) {
 		parent::__construct( $item );
 	}
@@ -52,10 +55,34 @@ final class ExpireHandler extends Base {
 	/**
 	 * 取得排程的 callback
 	 *
-	 * @param array<string, string> $args 排程的參數
+	 * @param array{lc_ids: array<int|string>, subscription_id: int} $args 排程的參數
 	 * @return void
 	 */
 	public static function action_callback( $args ): void {
+		$lc_ids          = $args['lc_ids'] ?? [];
+		$subscription_id = $args['subscription_id'] ?? 0;
+
+		$subscription = \wcs_get_subscription($subscription_id);
+
+		// 發API停用授權碼
+		// 訂閱失敗，發API停用授權碼
+		$api_instance = CloudApi::instance();
+		$response     = $api_instance->remote_post(
+			'license-codes/expire',
+			[
+				'ids' => $lc_ids,
+			]
+		);
+		$is_error     = \is_wp_error($response);
+		if ($is_error) {
+			$subscription->add_order_note("站長路可《過期》授權碼 ❌失敗: \n{$response->get_error_message()}");
+			return;
+		}
+
+		$body = \wp_remote_retrieve_body($response);
+		$data = General::json_parse($body, []);
+
+		$subscription->add_order_note("站長路可《過期》授權碼 ✅成功: \n" . WP::array_to_html($data));
 	}
 
 	/**

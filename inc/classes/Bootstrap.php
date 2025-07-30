@@ -43,6 +43,7 @@ final class Bootstrap {
 		Shortcode::instance();
 		Domains\LC\Core\Api::instance();
 		Domains\LC\Core\LifeCycle::instance();
+		Domains\LC\Core\Deprecated::instance();
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 99 );
 		\add_action( 'wp_enqueue_scripts', [ $this, 'frontend_enqueue_script' ], 99 );
