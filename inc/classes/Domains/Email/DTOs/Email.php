@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace J7\PowerPartner\Domains\Email\Model;
+namespace J7\PowerPartner\Domains\Email\DTOs;
 
 use J7\WpUtils\Classes\DTO;
 use J7\PowerPartner\Domains\Email\Shared\Enums;

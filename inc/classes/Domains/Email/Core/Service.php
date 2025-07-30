@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace J7\PowerPartner\Domains\Email\Core;
 
 use J7\PowerPartner\Plugin;
-use J7\PowerPartner\Domains\Email\Model\Email;
+use J7\PowerPartner\Domains\Email\DTOs\Email;
 use J7\PowerPartner\Utils\Token;
 use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Domains\Subscription\Model\Times;
