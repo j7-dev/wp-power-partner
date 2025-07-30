@@ -12,6 +12,7 @@ use J7\PowerPartner\Domains\Subscription\Model\Times;
 use J7\PowerPartner\Domains\Subscription\Utils\Base as SubscriptionUtils;
 use J7\PowerPartner\Product\SiteSync;
 use J7\Powerhouse\Utils\Base as PowerhouseUtils;
+use J7\PowerPartner\Domains\Email\Shared\Enums\Action;
 
 /**
  * Class Service
@@ -22,19 +23,6 @@ final class Service {
 
 	/** @var object{subject:string, body:string} $default Default email */
 	public object $default;
-
-	/** @var object{
-	 * site_sync:string,
-	 * subscription_failed:string,
-	 * subscription_success:string,
-	 * last_order_date_created:string,
-	 * date_created:string,
-	 * trial_end:string,
-	 * next_payment:string,
-	 * end:string,
-	 * end_of_prepaid_term:string,
-	 * } $action_names Action names */
-	public object $action_names;
 
 	/** @var array<Email> $emails Emails */
 	public array $emails;
@@ -59,8 +47,6 @@ final class Service {
 			'body'    => Plugin::DEFAULT_EMAIL_BODY,
 		];
 
-		$this->action_names = (object) self::get_action_names();
-
 		// 每天檢查
 		\add_action( 'init', [ $this, 'daily_check' ], 10, 3 ); // 註冊
 		\add_action( self::DAILY_CHECK, [ $this, 'batch_process_subscriptions' ], 10 ); // 執行
@@ -84,21 +70,6 @@ final class Service {
 		\add_action( 'init', [ $this, 'clear_cron' ], 10, 1 );
 	}
 
-	/** @return array<string,string> Action names */
-	public static function get_action_names(): array {
-		return [
-			'site_sync'               => 'site_sync', // 下單開站後
-			'subscription_failed'     => 'subscription_failed', // 續訂失敗後
-			'subscription_success'    => 'subscription_success', // 續訂成功後
-			'last_order_date_created' => 'last_order_date_created', // 上次續訂訂單日期後
-			'date_created'            => 'date_created', // 訂閱成立後
-			'trial_end'               => 'trial_end', // 試用結束前|後
-			'next_payment'            => 'next_payment', // 下次付款前|後
-			'end'                     => 'end', // 訂閱結束
-			'end_of_prepaid_term'     => 'end_of_prepaid_term', // 訂閱結束
-		];
-	}
-
 	/**
 	 * Get email by key
 	 *
@@ -118,7 +89,7 @@ final class Service {
 	 * Get emails
 	 * 預設只拿 enabled 的 email
 	 *
-	 * @param string $action_name Action name 'subscription_failed' | 'subscription_success' | 'site_sync'
+	 * @param Action::value $action_name Action name 'subscription_failed' | 'subscription_success' | 'site_sync'
 	 * @return array<Email>
 	 */
 	public function get_emails( string $action_name = '' ): array {
@@ -223,7 +194,7 @@ final class Service {
 	 * @return void
 	 */
 	public function subscription_created( $subscription ) {
-		$emails = $this->get_emails($this->action_names->date_created);
+		$emails = $this->get_emails(Action::DATE_CREATED->value );
 		foreach ( $emails as $email ) {
 			$this->handle_email( $email, $subscription);
 		}
@@ -266,7 +237,7 @@ final class Service {
 	 * @return void
 	 */
 	public function subscription_payment_complete( $subscription ): void {
-		$emails = $this->get_emails( $this->action_names->subscription_success );
+		$emails = $this->get_emails( Action::SUBSCRIPTION_SUCCESS->value );
 		foreach ( $emails as $email ) {
 			$this->handle_email( $email, $subscription, 'success' );
 		}
@@ -280,7 +251,7 @@ final class Service {
 	 * @return void
 	 */
 	public function subscription_payment_failed( $subscription, $new_status ): void {
-		$emails = $this->get_emails( $this->action_names->subscription_failed );
+		$emails = $this->get_emails( Action::SUBSCRIPTION_FAILED->value );
 		foreach ( $emails as $email ) {
 			$this->handle_email( $email, $subscription, 'failed' );
 		}
@@ -322,9 +293,9 @@ final class Service {
 		if (in_array(
 			$email->action_name,
 			[
-				$this->action_names->subscription_success,
-				$this->action_names->subscription_failed,
-				$this->action_names->last_order_date_created,
+				Action::SUBSCRIPTION_SUCCESS->value,
+				Action::SUBSCRIPTION_FAILED->value,
+				Action::LAST_ORDER_DATE_CREATED->value,
 			],
 			true
 			)) {
@@ -422,7 +393,7 @@ final class Service {
 		$subscription_status = $subscription->get_status();
 		$is_failed           = in_array( $subscription_status, ShopSubscription::$failed_statuses, true );
 		// 如果訂閱失敗，除了續訂成功的信件不寄送以外，其他都寄
-		if ( $is_failed && $email->action_name === $this->action_names->subscription_success ) {
+		if ( $is_failed && $email->action_name === Action::SUBSCRIPTION_SUCCESS->value ) {
 			Plugin::log(
 				"訂閱 #{$subscription->get_id()} 續訂失敗，不寄送續訂成功的信件",
 				'info',

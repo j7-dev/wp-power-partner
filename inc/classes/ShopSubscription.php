@@ -36,7 +36,6 @@ final class ShopSubscription {
 	 * 'pending-cancel' [待取消] = 用戶不續訂，不應該停用網站，也不會停用授權
 	 *
 	 * @see https://github.com/j7-dev/wp-power-partner/issues/11
-	 *
 	 * @var array<string>
 	 */
 	public static $failed_statuses = [ 'cancelled', 'expired' ];

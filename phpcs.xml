@@ -55,6 +55,7 @@
 	<exclude name="Squiz.Commenting.FileComment.Missing"/>
 	<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
 	<exclude name="PHPCompatibility.Variables.ForbiddenThisUseContexts.OutsideObjectContext"/>
+	<exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>
     </rule>
 
     <exclude-pattern>.idea/*</exclude-pattern>

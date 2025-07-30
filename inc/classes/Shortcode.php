@@ -7,8 +7,6 @@ declare (strict_types = 1);
 
 namespace J7\PowerPartner;
 
-use J7\PowerPartner\Plugin;
-
 /**
  * Class Shortcode
  */
