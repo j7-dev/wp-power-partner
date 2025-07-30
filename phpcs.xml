@@ -54,6 +54,7 @@
 	<exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
 	<exclude name="Squiz.Commenting.FileComment.Missing"/>
 	<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
+	<exclude name="PHPCompatibility.Variables.ForbiddenThisUseContexts.OutsideObjectContext"/>
     </rule>
 
     <exclude-pattern>.idea/*</exclude-pattern>
