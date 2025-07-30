@@ -445,7 +445,8 @@ final class Service {
 
 
 	/**
-	 * 計算下次 19:00 的時間戳
+	 * 計算下次 19:00 的 unix timestamp
+	 * 伺服器時間 = 凌晨3點 UTC+8
 	 *
 	 * @return int
 	 */

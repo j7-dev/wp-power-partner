@@ -27,11 +27,20 @@ final class ExpireHandler extends Base {
 	/** @var array<int|string> 授權碼 ids */
 	private array $lc_ids = [];
 
-	/** Constructor，每次傳入的資源實例可能不同 */
+	/**
+	 * Constructor，每次傳入的資源實例可能不同
+	 *
+	 * @param \WC_Subscription $item 訂閱
+	 * @throws \Exception 如果 $item 不是 \WC_Subscription 實例
+	 */
 	public function __construct(
 		/** @var \WC_Subscription 訂閱 */
 		protected $item,
 	) {
+		if ( ! $item instanceof \WC_Subscription ) {
+			throw new \Exception('$item 不是 \WC_Subscription 實例');
+		}
+
 		parent::__construct( $item );
 	}
 
