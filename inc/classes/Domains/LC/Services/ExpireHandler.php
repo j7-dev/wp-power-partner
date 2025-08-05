@@ -95,44 +95,35 @@ final class ExpireHandler extends Base {
 	}
 
 	/**
-	 * 單次排程
+	 * 單次排程後，寫入訂單備註
 	 *
+	 * @param int    $action_id 排程的 action_id
 	 * @param int    $timestamp 排程的時間
 	 * @param string $group     排程的群組
-	 * @param string $unique    排程的唯一值
-	 * @param int    $priority  排程的優先級
 	 *
-	 * @return int|null 排程的 action_id
+	 * @return void
 	 */
-	public function schedule_single( int $timestamp, string $group = '', string $unique = '', int $priority = 10 ): int|null {
+	public function after_schedule_single( int $action_id, int $timestamp, string $group ): void {
 		if ( ! $this->lc_ids ) {
-			return null;
+			return;
 		}
 
-		$action_id = parent::schedule_single( $timestamp, $group, $unique, $priority );
 		if ( ! $action_id ) {
 			// 失敗也不讓用戶知道他沒被停用
-			return null;
+			return;
 		}
 
 		$date = \wp_date('Y-m-d H:i', $timestamp);
 		$this->item->add_order_note("已排程動作 #{$action_id}， 於 {$date} 停用授權碼");
-
-		return $action_id;
 	}
 
 	/**
-	 * 取消排程
+	 * 取消排程後
 	 *
-	 * @return int|null 取消的排程 action_id
+	 * @param int $action_id 排程的 action_id
+	 * @return void
 	 */
-	public function unschedule(): int|null {
-		$action_id = parent::unschedule();
-		if ( ! $action_id ) {
-			$this->item->add_order_note("排程動作 #{$action_id} 不存在，無法取消");
-			return null;
-		}
+	public function after_unschedule( int $action_id ): void {
 		$this->item->add_order_note("已取消排程動作 #{$action_id}");
-		return $action_id;
 	}
 }

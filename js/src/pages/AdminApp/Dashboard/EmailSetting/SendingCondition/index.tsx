@@ -41,8 +41,8 @@ const actions = [
 		helper: '試用期結束 前/後 N 天發送',
 	},
 	{
-		label: '上次續訂訂單日期',
-		value: 'last_order_date_created',
+		label: '新的續訂訂單創建',
+		value: 'renewal_order_created',
 		helper: '上次續訂訂單日期後 N 天發送',
 	},
 	{
