@@ -120,10 +120,11 @@ final class ExpireHandler extends Base {
 	/**
 	 * 取消排程後
 	 *
-	 * @param int $action_id 排程的 action_id
+	 * @param int    $action_id 排程的 action_id
+	 * @param string $group     排程的群組
 	 * @return void
 	 */
-	public function after_unschedule( int $action_id ): void {
+	public function after_unschedule( int $action_id, string $group ): void {
 		$this->item->add_order_note("已取消排程動作 #{$action_id}");
 	}
 }

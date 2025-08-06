@@ -110,9 +110,12 @@ final class SubscriptionEmailScheduler extends Base {
 			$headers,
 		);
 
-		$success_label = $success ? '成功' : '失敗';
+		$log_args = (object) [
+			'sent_status' => $success ? '成功' : '失敗',
+			'level'       => $success ? 'info' : 'error',
+		];
 
-		Plugin::log( "訂閱 #{$subscription->get_id()} 寄信{$success_label} email_action {$email->action_name} email_key {$email->key}", 'info', $args );
+		Plugin::log( "訂閱 #{$subscription->get_id()} 寄信{$log_args->sent_status} email_action {$email->action_name} email_key {$email->key}", $log_args->level, $args );
 	}
 
 	/**
@@ -130,10 +133,11 @@ final class SubscriptionEmailScheduler extends Base {
 	/**
 	 * 取消排程後，寫入 log
 	 *
-	 * @param int $action_id 排程的 action_id
+	 * @param int    $action_id 排程的 action_id
+	 * @param string $group 排程的群組
 	 * @return void
 	 */
-	public function after_unschedule( int $action_id ): void {
+	public function after_unschedule( int $action_id, string $group ): void {
 		Plugin::log( "訂閱 #{$this->item->subscription->get_id()} 取消排程寄信 action_name #{$this->item->dto->action_name} action_id #{$action_id}", 'debug', $this->item->get_scheduler_args() );
 	}
 }
