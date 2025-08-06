@@ -44,8 +44,8 @@ final class Email extends DTO {
 	protected function validate(): void {
 		Enums\Operator::from( $this->operator );
 
-		if ( !Action::tryFrom( $this->action_name ) || 'site_sync' !== $this->action_name ) {
-			throw new \Exception('Invalid action_name');
+		if ( !Action::tryFrom( $this->action_name ) && 'site_sync' !== $this->action_name ) {
+			throw new \Exception('Invalid action_name, got: ' . $this->action_name);
 		}
 
 		if ( !Enums\Enabled::tryFrom( $this->enabled ) ) {
@@ -53,7 +53,7 @@ final class Email extends DTO {
 		}
 
 		if ( !is_numeric( $this->days ) ) {
-			throw new \Exception('Invalid days，只接受數字');
+			throw new \Exception('Invalid days, only accept numeric, got: ' . $this->days);
 		}
 	}
 }
