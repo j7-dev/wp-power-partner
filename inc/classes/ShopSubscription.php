@@ -28,23 +28,6 @@ final class ShopSubscription {
 	const IS_POWER_PARTNER_SUBSCRIPTION = 'is_power_partner_site_sync';
 	const POST_TYPE                     = 'shop_subscription';
 
-	/** @var array<string> Success statuses */
-	public static $success_statuses = [ 'active' ];
-
-	/**
-	 * Failed statuses
-	 * 'pending-cancel' [待取消] = 用戶不續訂，不應該停用網站，也不會停用授權
-	 *
-	 * @see https://github.com/j7-dev/wp-power-partner/issues/11
-	 * @var array<string>
-	 */
-	public static $failed_statuses = [ 'cancelled', 'expired' ];
-
-	/** @var array<string> Not failed statuses  */
-	public static $not_failed_statuses = [ 'active', 'pending-cancel' ];
-
-	/** @var array<string> All statuses */
-	public static $all_statuses = [ 'active', 'on-hold', 'pending-cancel', 'cancelled', 'expired' ];
 
 	/** Constructor */
 	public function __construct() {
