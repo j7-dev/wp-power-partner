@@ -18,8 +18,8 @@ class SubscriptionEmail extends EmailBase {
 
 	/** Constructor */
 	public function __construct(
-		private EmailDTO $dto,
-		private \WC_Subscription $subscription
+		public EmailDTO $dto,
+		public \WC_Subscription $subscription
 	) {
 		parent::__construct( $dto );
 		$this->times = Times::instance( $subscription );
