@@ -8,7 +8,7 @@ use J7\WpUtils\Classes\WP;
 use J7\WpUtils\Classes\ApiBase;
 use J7\WpUtils\Classes\General;
 use J7\Powerhouse\Api\Base as CloudApi;
-use J7\PowerPartner\ShopSubscription;
+use J7\Powerhouse\Domains\Subscription\Shared\Enums\Status;
 
 /** Class Api */
 final class Api extends ApiBase {
@@ -174,7 +174,7 @@ final class Api extends ApiBase {
 		}
 
 		$subscription_status = $subscription->get_status();
-		$is_success_status   = in_array($subscription_status, ShopSubscription::$success_statuses, true);
+		$is_success_status   = $subscription_status === Status::ACTIVE->value;
 		// 原本 $body_params['post_status'] 是 follow_subscription
 		$body_params['post_status'] = $is_success_status ? 'available' : 'expired';
 
