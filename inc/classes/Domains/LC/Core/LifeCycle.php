@@ -7,9 +7,9 @@ namespace J7\PowerPartner\Domains\LC\Core;
 use J7\PowerPartner\Product\DataTabs\LinkedLC;
 use J7\Powerhouse\Api\Base as CloudApi;
 use J7\WpUtils\Classes\General;
-use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Api\Connect;
 use J7\PowerPartner\Domains\LC\Services\ExpireHandler;
+use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 
 /**
  * LC 生命週期
@@ -30,42 +30,27 @@ final class LifeCycle {
 	public function __construct() {
 		ExpireHandler::register();
 
-		/** @category 訂閱完成 */
-		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'create_lcs' ], 10, 1 );
+		/** @category 訂閱首次付款成功後 */
+		\add_action( Action::INITIAL_PAYMENT_COMPLETE->get_action_hook(), [ $this, 'create_lcs' ], 10, 2 );
 
-		/** @category 訂閱失敗 */
-		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_failed' ], 10, 3 );
+		/** @category 訂閱從成功到失敗 */
+		\add_action( Action::SUBSCRIPTION_FAILED->get_action_hook(), [ $this, 'subscription_failed' ], 10, 2 );
 
-		/** @category 訂閱成功 */
-		\add_action( 'woocommerce_subscription_pre_update_status', [ $this, 'subscription_success' ], 10, 3 );
+		/** @category 訂閱從失敗到成功 */
+		\add_action( Action::SUBSCRIPTION_SUCCESS->get_action_hook(), [ $this, 'subscription_success' ], 10, 2 );
 	}
 
 	/**
 	 * Subscription failed
 	 * 如果用戶續訂失敗，則停用授權碼
 	 *
-	 * @param string           $old_status old status
-	 * @param string           $new_status new status
-	 * @param \WC_Subscription $subscription post
+	 * @param \WC_Subscription     $subscription 訂閱
+	 * @param array<string, mixed> $args 參數
 	 * @return void
 	 */
-	public function subscription_failed( $old_status, $new_status, $subscription ): void {
-
-		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
-			return;
-		}
-
-		// 從成功變成失敗
-		// 從 [已啟用] 變成 [已取消] [已過期] [保留] 等等 就算失敗 [待取消]不算失敗
-		$is_subscription_failed = ( in_array( $new_status, ShopSubscription::$failed_statuses, true ) ) && in_array( $old_status, ShopSubscription::$not_failed_statuses, true );
-
-		// 如果訂閱不是轉變為失敗 就不處理
-		if ( ! $is_subscription_failed ) {
-			return;
-		}
-
+	public function subscription_failed( \WC_Subscription $subscription, array $args ): void {
 		$expire_handler = new ExpireHandler( $subscription );
-		$expire_handler->schedule_single( time() + self::DELAY_TIME );
+		$expire_handler->schedule_single( time() + self::DELAY_TIME, '', true );
 	}
 
 
@@ -75,26 +60,11 @@ final class LifeCycle {
 	 * Subscription success
 	 * 如果手動調整訂閱成功，則讓授權碼變成可用
 	 *
-	 * @param string           $old_status old status
-	 * @param string           $new_status new status
-	 * @param \WC_Subscription $subscription post
+	 * @param \WC_Subscription     $subscription 訂閱
+	 * @param array<string, mixed> $args 參數
 	 * @return void
 	 */
-	public function subscription_success( $old_status, $new_status, $subscription ): void {
-
-		if ( ! ( $subscription instanceof \WC_Subscription ) ) {
-			return;
-		}
-
-		// 從失敗變成成功
-		// 從 [已取消] [已過期] [保留] 變成 [已啟用] 等等  就算成功
-		$is_subscription_success = ( in_array( $new_status, ShopSubscription::$success_statuses, true ) ) && in_array( $old_status, ShopSubscription::$failed_statuses, true );
-
-		// 如果訂閱不是轉變為成功 就不處理
-		if ( ! $is_subscription_success ) {
-			return;
-		}
-
+	public function subscription_success( \WC_Subscription $subscription, array $args ): void {
 		$lc_ids = \get_post_meta($subscription->get_id(), 'lc_id', false);
 
 		// 如果訂閱身上沒有授權碼 就不處理
@@ -129,43 +99,23 @@ final class LifeCycle {
 	/**
 	 * 創建授權碼
 	 *
-	 * @param \WC_Subscription $subscription subscription
+	 * @param \WC_Subscription     $subscription subscription
+	 * @param array<string, mixed> $args 參數
 	 * @return void
 	 */
-	public function create_lcs( \WC_Subscription $subscription ) {
+	public function create_lcs( \WC_Subscription $subscription, $args ) {
 		$partner_id = \get_option(Connect::PARTNER_ID_OPTION_NAME);
 		if ( ! $partner_id ) {
 			return;
 		}
 
-		$related_order_ids = $subscription->get_related_orders();
-
+		/** @var \WC_Order $parent_order */
 		$parent_order = $subscription->get_parent();
 
-		if ( ! ( $parent_order instanceof \WC_Order ) ) {
-			return;
-		}
-
-		$parent_order_id = $parent_order->get_id();
-
-		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
-		if ( count( $related_order_ids ) !== 1 ) {
-			return;
-		}
-
-		// 唯一一筆關聯訂單必須要 = parent order id
-		if ( ( (int) reset( $related_order_ids ) ) !== ( (int) $parent_order_id )) {
-			return;
-		}
-
-		/**
-		 * @var array<int, array{product_slug:string, quantity:string}> $linked_lc_products
-		 */
+		/** @var array<int, array{product_slug:string, quantity:string}> $linked_lc_products */
 		$all_linked_lc_products = [];
 
-		/**
-		 * @var array<int, \WC_Order_Item_Product> $items
-		 */
+		/** @var array<int, \WC_Order_Item_Product> $items */
 		$items = $parent_order->get_items();
 
 		// 把訂單中每個商品的 LinkedLC 找出來拼成一個陣列
