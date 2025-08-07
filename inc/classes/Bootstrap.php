@@ -26,8 +26,8 @@ final class Bootstrap {
 			Test\Retry::instance();
 		}
 
-		Domains\Email\Core\Service::instance();
-		Domains\Site\Core\Disable::instance();
+		Domains\Email\Core\SubscriptionEmailHooks::instance();
+		Domains\Site\Core\DisableHooks::instance();
 		// 環境變數，調整 api auth
 		Base::set_api_auth( $this );
 

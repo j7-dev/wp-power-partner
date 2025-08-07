@@ -10,7 +10,7 @@ namespace J7\PowerPartner\Api;
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Utils\Token;
 use J7\PowerPartner\Api\Fetch;
-use J7\PowerPartner\Domains\Email\Core\Service as EmailService;
+use J7\PowerPartner\Domains\Email\Core\SubscriptionEmailHooks as EmailService;
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\ShopSubscription;
 use J7\WpUtils\Classes\WP;

@@ -8,10 +8,10 @@ use J7\PowerPartner\Domains\Site\Services\DisableSiteScheduler;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 
 /**
- * Disable Site
+ * 註冊 Disable Site 相關的 action hook
  * 排程時間到之後，停用網站
  *  */
-final class Disable {
+final class DisableHooks {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
 	/** Constructor */

@@ -10,7 +10,7 @@ use J7\PowerPartner\Domains\Email\Models\SubscriptionEmail;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Status;
 use J7\PowerPartner\Utils\Token;
-use J7\PowerPartner\Domains\Email\Core\Service;
+use J7\PowerPartner\Domains\Email\Core\SubscriptionEmailHooks;
 use J7\Powerhouse\Domains\Subscription\Utils\Base as PowerhouseSubscriptionUtils;
 
 /**
@@ -66,7 +66,7 @@ final class SubscriptionEmailScheduler extends Base {
 			return;
 		}
 
-		$service      = Service::instance();
+		$service      = SubscriptionEmailHooks::instance();
 		$email        = $service->get_email( $email_key );
 		$subscription = \wcs_get_subscription( $subscription_id );
 		if ( !$email || !$subscription ) {
