@@ -7,6 +7,7 @@ namespace J7\PowerPartner\Product;
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Product\DataTabs\LinkedSites;
+use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 
 /** Class SiteSync */
 final class SiteSync {
@@ -21,7 +22,7 @@ final class SiteSync {
 
 	/** Constructor */
 	public function __construct() {
-		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'site_sync_by_subscription' ], 20, 1 );
+		\add_action( Action::DATE_CREATED->get_action_hook(), [ $this, 'site_sync_by_subscription' ], 1, 2 );
 	}
 
 
@@ -31,66 +32,69 @@ final class SiteSync {
 	 * 訂閱首次創建
 	 *
 	 * @param \WC_Subscription $subscription Subscription object.
+	 * @param array            $args 參數
 	 * @return void
 	 */
-	public function site_sync_by_subscription(\WC_Subscription $subscription ): void { // phpcs:ignore
+	public function site_sync_by_subscription(\WC_Subscription $subscription, $args ): void { // phpcs:ignore
 
-		$order_ids = $subscription->get_related_orders();
+		try {
 
-		$parent_order = $subscription->get_parent();
+			$order_ids = $subscription->get_related_orders();
 
-		if ( ! ( $parent_order instanceof \WC_Order ) ) {
-			Plugin::log( "訂閱 #{$subscription->get_id()} 的父訂單不是 WC_Order 實例", 'error' );
-			return;
-		}
+			$parent_order = $subscription->get_parent();
 
-		$parent_order_id = $parent_order->get_id();
+			if ( ! ( $parent_order instanceof \WC_Order ) ) {
+				Plugin::log( "訂閱 #{$subscription->get_id()} 的父訂單不是 WC_Order 實例", 'error' );
+				return;
+			}
 
-		// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
-		if ( count( $order_ids ) !== 1) {
-			return;
-		}
+			$parent_order_id = $parent_order->get_id();
 
-		if ( reset( $order_ids ) !== $parent_order_id ) {
-			Plugin::log(
+			// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
+			if ( count( $order_ids ) !== 1) {
+				return;
+			}
+
+			if ( reset( $order_ids ) !== $parent_order_id ) {
+				Plugin::log(
 				"訂閱 #{$subscription->get_id()} 父訂單 ID 不一致",
 				'error'
-				);
-			return;
-		}
-
-		$items     = $parent_order->get_items();
-		$responses = [];
-
-		foreach ( $items as $item ) {
-			/** @var \WC_Order_Item_Product $item */
-			$product_id = $item->get_product_id();
-			$product    = \wc_get_product( $product_id );
-
-			// 如果不是可變訂閱商品，就不處理
-			if ( 'variable-subscription' === $product->get_type() ) {
-				$variation_id   = $item->get_variation_id();
-				$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-				$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
-				$subscription->save();
-				$linked_site_ids[] = $linked_site_id;
-			} elseif ( 'subscription' === $product->get_type() ) {
-				$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
-				$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-				$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
-				$subscription->save();
-			} else {
-				continue;
+					);
+				return;
 			}
 
-			if ( empty( $linked_site_id ) ) {
-				continue;
-			}
+			$items     = $parent_order->get_items();
+			$responses = [];
 
-			$host_position = empty( $host_position ) ? LinkedSites::DEFAULT_HOST_POSITION : $host_position;
+			foreach ( $items as $item ) {
+				/** @var \WC_Order_Item_Product $item */
+				$product_id = $item->get_product_id();
+				$product    = \wc_get_product( $product_id );
 
-			$response_obj = Fetch::site_sync(
+				// 如果不是可變訂閱商品，就不處理
+				if ( 'variable-subscription' === $product->get_type() ) {
+					$variation_id   = $item->get_variation_id();
+					$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
+					$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
+					$subscription->save();
+					$linked_site_ids[] = $linked_site_id;
+				} elseif ( 'subscription' === $product->get_type() ) {
+					$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
+					$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
+					$subscription->save();
+				} else {
+					continue;
+				}
+
+				if ( empty( $linked_site_id ) ) {
+					continue;
+				}
+
+				$host_position = empty( $host_position ) ? LinkedSites::DEFAULT_HOST_POSITION : $host_position;
+
+				$response_obj = Fetch::site_sync(
 				[
 					'site_url'        => \site_url(),
 					'site_id'         => $linked_site_id,
@@ -106,16 +110,16 @@ final class SiteSync {
 					],
 					'subscription_id' => $subscription->get_id(),
 				]
-			);
+				);
 
-			$responses[] = [
-				'status'  => $response_obj?->status,
-				'message' => $response_obj?->message,
-				'data'    => $response_obj?->data,
-			];
-		}
+				$responses[] = [
+					'status'  => $response_obj?->status,
+					'message' => $response_obj?->message,
+					'data'    => $response_obj?->data,
+				];
+			}
 
-		Plugin::log(
+			Plugin::log(
 			"訂閱 #{$subscription->get_id()}  order_id: #{$parent_order_id}",
 			'info',
 			[
@@ -123,29 +127,38 @@ final class SiteSync {
 			]
 			);
 
-		// 把網站建立成功與否的資訊存到訂單的 meta data
-		if ( is_array( $responses ) && count( $responses ) >= 1 ) {
-			$note     = '';
-			$response = $responses[0];
-			if ( $response['status'] === 200 ) {
-				$data = $response['data'] ?? [];
+			// 把網站建立成功與否的資訊存到訂單的 meta data
+			if ( is_array( $responses ) && count( $responses ) >= 1 ) {
+				$note     = '';
+				$response = $responses[0];
+				if ( $response['status'] === 200 ) {
+					$data = $response['data'] ?? [];
 
-				foreach ( $data as $key => $value ) {
-					$note .= $key . ': ' . $value . '<br />';
+					foreach ( $data as $key => $value ) {
+						$note .= $key . ': ' . $value . '<br />';
+					}
+				} else {
+					ob_start();
+					print_r( $response );
+					$note = ob_get_clean();
 				}
-			} else {
-				ob_start();
-				print_r( $response );
-				$note = ob_get_clean();
+
+				$parent_order->add_order_note( $note );
 			}
 
-			$parent_order->add_order_note( $note );
+			$parent_order->update_meta_data( self::CREATE_SITE_RESPONSES_META_KEY, \wp_json_encode( $responses ) );
+			$parent_order->save();
+
+			\do_action( 'pp_site_sync_by_subscription', $subscription );
+		} catch (\Throwable $th) {
+			Plugin::log(
+			'訂閱 #' . $subscription->get_id() . ' 建立網站失敗',
+			'error',
+			[
+				'error' => $th->getMessage(),
+			]
+			);
 		}
-
-		$parent_order->update_meta_data( self::CREATE_SITE_RESPONSES_META_KEY, \wp_json_encode( $responses ) );
-		$parent_order->save();
-
-		\do_action( 'pp_site_sync_by_subscription', $subscription );
 	}
 
 	/**

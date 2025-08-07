@@ -34,9 +34,6 @@ final class Email extends DTO {
 	/** @var Enums\Operator::value 信件運算子 'after' | 'before' */
 	public string $operator;
 
-	/** @var bool $unique 是否唯一寄信，發過一次就不再寄信 */
-	public bool $unique = false;
-
 	/**
 	 * @return void Validate
 	 * @throws \Exception 如果驗證失敗

@@ -63,7 +63,7 @@ final class Plugin {
 				'name'     => 'Powerhouse',
 				'slug'     => 'powerhouse',
 				'source'   => 'https://github.com/j7-dev/wp-powerhouse/releases/latest/download/powerhouse.zip',
-				'version'  => '3.3.19',
+				'version'  => '3.3.21',
 				'required' => true,
 			],
 			[
@@ -119,6 +119,8 @@ final class Plugin {
 
 	/**
 	 * 記錄 log
+	 *
+	 * @deprecated 使用 \J7\WpUtils\Classes\WC::logger 代替
 	 *
 	 * @param string               $message 記錄訊息
 	 * @param string               $level 記錄等級

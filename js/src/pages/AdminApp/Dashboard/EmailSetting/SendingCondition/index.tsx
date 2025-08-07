@@ -7,7 +7,7 @@ import { useSetAtom } from 'jotai'
 
 const { Item } = Form
 
-// @param string $date_type 'date_created', 'trial_end', 'next_payment', 'last_order_date_created', 'end' or 'end_of_prepaid_term'
+// @param string $date_type 'date_created', 'trial_end', 'next_payment', 'renewal_order_created', 'end' or 'end_of_prepaid_term'
 
 const actions = [
 	{
@@ -29,11 +29,6 @@ const actions = [
 		label: '下次付款(含成功&失敗)',
 		value: 'next_payment',
 		helper: '續訂不論成功或失敗 前/後 N 天發送',
-	},
-	{
-		label: '訂閱成立(即第一個訂單成立)',
-		value: 'date_created',
-		helper: '訂閱成立後 N 天發送',
 	},
 	{
 		label: '試用期結束',
@@ -80,7 +75,7 @@ const SendingCondition = ({
 				'subscription_failed',
 				'subscription_success',
 				'date_created',
-				'last_order_date_created',
+				'renewal_order_created',
 				'end',
 			].includes(watchActionName),
 		},

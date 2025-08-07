@@ -32,7 +32,7 @@ final class ShopSubscription {
 	/** Constructor */
 	public function __construct() {
 
-		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'add_meta' ], 10, 1 );
+		\add_action( 'woocommerce_subscription_payment_complete', [ $this, 'add_meta' ], 0, 1 );
 		// \add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
 		\add_action( 'save_post', [ $this, 'save' ] );
 		\add_filter( 'manage_edit-' . self::POST_TYPE . '_columns', [ $this, 'add_order_column' ], 99, 1 );
