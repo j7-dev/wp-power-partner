@@ -76,7 +76,6 @@ const SendingCondition = ({
 				'subscription_success',
 				'date_created',
 				'renewal_order_created',
-				'end',
 			].includes(watchActionName),
 		},
 	]

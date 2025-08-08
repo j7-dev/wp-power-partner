@@ -44,6 +44,7 @@ final class Bootstrap {
 		Domains\LC\Core\Api::instance();
 		Domains\LC\Core\LifeCycle::instance();
 		Domains\LC\Core\Deprecated::instance();
+		Domains\Settings\Core\WatchSettingHooks::instance();
 		Compatibility\Compatibility::instance();
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_script' ], 99 );

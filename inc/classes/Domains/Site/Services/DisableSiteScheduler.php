@@ -108,4 +108,13 @@ final class DisableSiteScheduler extends Base {
 	public function after_unschedule( int $action_id, string $group ): void {
 		Plugin::logger( "訂閱 #{$this->item->get_id()} 成功，取消排程停用網站", 'info', [ 'action_id' => $action_id ] );
 	}
+
+	/**
+	 * 取得排程的 hook
+	 *
+	 * @return string
+	 */
+	public static function get_hook(): string {
+		return self::$hook;
+	}
 }

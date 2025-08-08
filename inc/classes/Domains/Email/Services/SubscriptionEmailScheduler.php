@@ -138,4 +138,13 @@ final class SubscriptionEmailScheduler extends Base {
 	public function after_unschedule( int|null $action_id, string $group ): void {
 		Plugin::logger( "訂閱 #{$this->item->subscription->get_id()} 取消排程寄信 action_name #{$this->item->dto->action_name} action_id #{$action_id}", 'debug', $this->item->get_scheduler_args() );
 	}
+
+	/**
+	 * 取得排程的 hook
+	 *
+	 * @return string
+	 */
+	public static function get_hook(): string {
+		return self::$hook;
+	}
 }

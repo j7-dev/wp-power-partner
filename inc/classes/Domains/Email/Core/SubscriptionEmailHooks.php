@@ -145,7 +145,7 @@ final class SubscriptionEmailHooks {
 		$emails = $this->get_emails($action->value);
 
 		foreach ($emails as $email) {
-			$this->schedule_email($email, $subscription, $email->action_name);
+			$this->schedule_email($email, $subscription);
 		}
 	}
 
@@ -161,7 +161,7 @@ final class SubscriptionEmailHooks {
 		$emails = $this->get_emails($action->value);
 
 		foreach ($emails as $email) {
-			$this->schedule_email($email, $subscription, $email->action_name);
+			$this->schedule_email($email, $subscription);
 		}
 	}
 
@@ -174,7 +174,7 @@ final class SubscriptionEmailHooks {
 	public function schedule_site_sync_email( $subscription ) {
 		$emails = $this->get_emails('site_sync');
 		foreach ($emails as $email) {
-			$this->schedule_email($email, $subscription, 'site_sync');
+			$this->schedule_email($email, $subscription);
 		}
 	}
 
@@ -189,8 +189,6 @@ final class SubscriptionEmailHooks {
 	public function unschedule_email( \WC_Subscription $subscription, $args ) {
 		$unschedule_actions = [
 			Action::SUBSCRIPTION_FAILED,
-			Action::END,
-			Action::END_OF_PREPAID_TERM,
 		];
 		$emails             = [];
 		foreach ($unschedule_actions as $action) {
@@ -200,7 +198,7 @@ final class SubscriptionEmailHooks {
 		foreach ($emails as $email) {
 			$subscription_email           = new SubscriptionEmail($email, $subscription);
 			$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
-			$subscription_email_scheduler->unschedule();
+			$subscription_email_scheduler->unschedule($email->action_name, $email->unique);
 		}
 	}
 
@@ -210,10 +208,9 @@ final class SubscriptionEmailHooks {
 	 *
 	 * @param Email            $email 信件
 	 * @param \WC_Subscription $subscription 訂閱
-	 * @param string           $type 類型
 	 * @return void
 	 */
-	private function schedule_email( Email $email, \WC_Subscription $subscription, string $type = '' ): void {
+	private function schedule_email( Email $email, \WC_Subscription $subscription ): void {
 		if (!SubscriptionUtils::is_site_sync($subscription)) {
 			return;
 		}
@@ -225,7 +222,7 @@ final class SubscriptionEmailHooks {
 
 		$subscription_email           = new SubscriptionEmail($email, $subscription);
 		$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
-		$subscription_email_scheduler->maybe_unschedule('', $email->unique);
-		$subscription_email_scheduler->schedule_single($subscription_email->get_timestamp(), '');
+		$subscription_email_scheduler->maybe_unschedule($email->action_name, $email->unique);
+		$subscription_email_scheduler->schedule_single($subscription_email->get_timestamp(), $email->action_name);
 	}
 }

@@ -63,7 +63,7 @@ final class Plugin {
 				'name'     => 'Powerhouse',
 				'slug'     => 'powerhouse',
 				'source'   => 'https://github.com/j7-dev/wp-powerhouse/releases/latest/download/powerhouse.zip',
-				'version'  => '3.3.21',
+				'version'  => '3.3.23',
 				'required' => true,
 			],
 			[

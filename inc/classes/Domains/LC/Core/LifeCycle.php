@@ -50,7 +50,8 @@ final class LifeCycle {
 	 */
 	public function subscription_failed( \WC_Subscription $subscription, array $args ): void {
 		$expire_handler = new ExpireHandler( $subscription );
-		$expire_handler->schedule_single( time() + self::DELAY_TIME, '', true );
+		$expire_handler->maybe_unschedule('', true);
+		$expire_handler->schedule_single( time() + self::DELAY_TIME );
 	}
 
 
