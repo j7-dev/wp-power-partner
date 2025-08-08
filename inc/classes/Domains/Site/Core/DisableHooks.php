@@ -37,7 +37,7 @@ final class DisableHooks {
 		$timestamp                 = time() + ( 86400 * $disable_site_after_n_days );
 
 		$disable_site_scheduler = new DisableSiteScheduler( $subscription );
-		$disable_site_scheduler->schedule_single( $timestamp, DisableSiteScheduler::DISABLE_SITE_GROUP, true );
+		$disable_site_scheduler->schedule_single( $timestamp, '', true );
 	}
 
 
@@ -51,6 +51,6 @@ final class DisableHooks {
 	 */
 	public function cancel_disable_site_schedule( $subscription, $args ): void {
 		$disable_site_scheduler = new DisableSiteScheduler( $subscription );
-		$disable_site_scheduler->unschedule(DisableSiteScheduler::DISABLE_SITE_GROUP);
+		$disable_site_scheduler->unschedule();
 	}
 }

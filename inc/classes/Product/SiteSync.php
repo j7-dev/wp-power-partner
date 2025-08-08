@@ -44,7 +44,7 @@ final class SiteSync {
 			$parent_order = $subscription->get_parent();
 
 			if ( ! ( $parent_order instanceof \WC_Order ) ) {
-				Plugin::log( "訂閱 #{$subscription->get_id()} 的父訂單不是 WC_Order 實例", 'error' );
+				Plugin::logger( "訂閱 #{$subscription->get_id()} 的父訂單不是 WC_Order 實例", 'error' );
 				return;
 			}
 
@@ -56,7 +56,7 @@ final class SiteSync {
 			}
 
 			if ( reset( $order_ids ) !== $parent_order_id ) {
-				Plugin::log(
+				Plugin::logger(
 				"訂閱 #{$subscription->get_id()} 父訂單 ID 不一致",
 				'error'
 					);
@@ -119,7 +119,7 @@ final class SiteSync {
 				];
 			}
 
-			Plugin::log(
+			Plugin::logger(
 			"訂閱 #{$subscription->get_id()}  order_id: #{$parent_order_id}",
 			'info',
 			[
@@ -151,12 +151,13 @@ final class SiteSync {
 
 			\do_action( 'pp_site_sync_by_subscription', $subscription );
 		} catch (\Throwable $th) {
-			Plugin::log(
+			Plugin::logger(
 			'訂閱 #' . $subscription->get_id() . ' 建立網站失敗',
 			'error',
 			[
 				'error' => $th->getMessage(),
-			]
+			],
+			5
 			);
 		}
 	}

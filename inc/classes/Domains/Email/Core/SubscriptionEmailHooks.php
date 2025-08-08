@@ -18,8 +18,6 @@ use J7\Powerhouse\Domains\Subscription\Utils\Base as PowerhouseSubscriptionUtils
  * 需要用 $is_power_partner_subscription = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, true ); 判斷是否為開站訂閱
  *  */
 final class SubscriptionEmailHooks {
-
-
 	use \J7\WpUtils\Traits\SingletonTrait;
 
 	/** @var object{subject:string, body:string} $default Default email */
@@ -34,8 +32,10 @@ final class SubscriptionEmailHooks {
 		$power_partner_settings = \get_option('power_partner_settings', []);
 		$emails_array           = is_array($power_partner_settings['emails']) ? $power_partner_settings['emails'] : [];
 
-		$strict       = \wp_get_environment_type() === 'local';
-		$this->emails = Email::parse_array($emails_array, $strict);
+		$this->emails = [];
+		foreach ($emails_array as $email_data) {
+			$this->emails[] = Email::create($email_data);
+		}
 
 		$this->default = (object) [
 			'subject' => '這裡填你的信件主旨 ##FIRST_NAME##',
@@ -47,19 +47,34 @@ final class SubscriptionEmailHooks {
 		// 網站訂閱創建後
 		\add_action('pp_site_sync_by_subscription', [ $this, 'schedule_site_sync_email' ], 10, 1);
 
-		// 以下三個時機點，用監聽的 hook 來發信
+		// 以下六個時機點，用監聽的 hook 來發信，且只發一次，如果有修改要取消排程，重新排程
 		$mapper = [
-			Action::TRIAL_END->value    => Action::WATCH_TRIAL_END,
-			Action::END->value          => Action::WATCH_END,
-			Action::NEXT_PAYMENT->value => Action::WATCH_NEXT_PAYMENT,
+			Action::TRIAL_END->value          => Action::WATCH_TRIAL_END,
+			Action::WATCH_TRIAL_END->value    => Action::WATCH_TRIAL_END,
+			Action::END->value                => Action::WATCH_END,
+			Action::WATCH_END->value          => Action::WATCH_END,
+			Action::NEXT_PAYMENT->value       => Action::WATCH_NEXT_PAYMENT,
+			Action::WATCH_NEXT_PAYMENT->value => Action::WATCH_NEXT_PAYMENT,
 		];
 
 		// 取得訂閱生命週期勾點
 		foreach (Action::cases() as $action) {
-			$hook_name = isset($mapper[ $action->value ]) ? $mapper[ $action->value ]->get_action_hook() : $action->get_action_hook();
+
+			if (isset($mapper[ $action->value ])) {
+				\add_action(
+					$mapper[ $action->value ]->get_action_hook(),
+					function ( $subscription, $args ) use ( $action ) {
+						$this->schedule_subscription_email_once($subscription, $args, $action);
+					},
+				10,
+				2
+				);
+
+				continue;
+			}
 
 			\add_action(
-					$hook_name,
+				$action->get_action_hook(),
 					function ( $subscription, $args ) use ( $action ) {
 						$this->schedule_subscription_email($subscription, $args, $action);
 					},
@@ -118,6 +133,23 @@ final class SubscriptionEmailHooks {
 	}
 
 	/**
+	 * 訂閱生命週期發信，只發一次
+	 * 如果修改，就要重新排程
+	 *
+	 * @param \WC_Subscription $subscription 訂閱
+	 * @param array            $args 參數
+	 * @param Action           $action 動作
+	 * @return void
+	 */
+	public function schedule_subscription_email_once( \WC_Subscription $subscription, array $args, Action $action ) {
+		$emails = $this->get_emails($action->value);
+
+		foreach ($emails as $email) {
+			$this->schedule_email($email, $subscription, $email->action_name);
+		}
+	}
+
+	/**
 	 * 訂閱生命週期發信
 	 *
 	 * @param \WC_Subscription $subscription 訂閱
@@ -126,14 +158,6 @@ final class SubscriptionEmailHooks {
 	 * @return void
 	 */
 	public function schedule_subscription_email( \WC_Subscription $subscription, array $args, Action $action ) {
-		// if (Action::INITIAL_PAYMENT_COMPLETE === $action) {
-		// $all_emails = $this->get_emails();
-		// 將所有 OO 時機點"前N天"的信件找出來，以及 訂閱首次付款成功後 的信件找出來
-		// $emails = array_filter($all_emails, fn( $email ) => ( $email->operator === Operator::BEFORE->value ) || $email->action_name === $action->value);
-		// } else {
-		// $emails = $this->get_emails($action->value);
-		// }
-
 		$emails = $this->get_emails($action->value);
 
 		foreach ($emails as $email) {
@@ -201,6 +225,7 @@ final class SubscriptionEmailHooks {
 
 		$subscription_email           = new SubscriptionEmail($email, $subscription);
 		$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
+		$subscription_email_scheduler->maybe_unschedule('', $email->unique);
 		$subscription_email_scheduler->schedule_single($subscription_email->get_timestamp(), '');
 	}
 }

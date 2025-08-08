@@ -14,14 +14,8 @@ use J7\PowerPartner\ShopSubscription;
  */
 final class DisableSiteScheduler extends Base {
 
-	const DISABLE_SITE = 'power_partner_disable_site';
-
-	const DISABLE_SITE_GROUP = 'power_partner_disable_site_group';
-
 	/** @var string 排程的 hook */
-	protected static string $hook = 'power_partner_disable_site';
-	// protected static string $hook = 'power_partner/3.1.0/site/disable';
-	// 要改 hook 的話，db 也要一起改，把 所有排程的 hook 改掉
+	protected static string $hook = 'power_partner/3.1.0/site/disable';
 
 	/**
 	 * Constructor，每次傳入的資源實例可能不同
@@ -67,13 +61,13 @@ final class DisableSiteScheduler extends Base {
 		}
 
 		if (!$subscription_id) {
-			Plugin::log( '找不到 subscription_id', 'error', $args );
+			Plugin::logger( '找不到 subscription_id', 'error', $args );
 			return;
 		}
 
 		$subscription = \wcs_get_subscription( $subscription_id );
 		if (!$subscription) {
-			Plugin::log( "訂閱 #{$subscription_id} 不存在", 'error', [ 'subscription_id' => $subscription_id ] );
+			Plugin::logger( "訂閱 #{$subscription_id} 不存在", 'error', [ 'subscription_id' => $subscription_id ] );
 			return;
 		}
 
@@ -86,7 +80,7 @@ final class DisableSiteScheduler extends Base {
 			Fetch::disable_site( $site_id, $reason );
 			$subscription->add_order_note( $reason );
 			$subscription->save();
-			Plugin::log($reason);
+			Plugin::logger($reason);
 		}
 	}
 
@@ -101,7 +95,7 @@ final class DisableSiteScheduler extends Base {
 	public function after_schedule_single( int $action_id, int $timestamp, string $group ): void {
 		$date = \wp_date( 'Y-m-d H:i', $timestamp );
 		$this->item->add_order_note( $action_id ? "已排程停用網站，預計於 {$date} 停用網站，action_id: {$action_id}" : "排程停用網站失敗，action_id: {$action_id}" );
-		Plugin::log( "訂閱 #{$this->item->get_id()} 排程停用網站", 'info', [ 'action_id' => $action_id ] );
+		Plugin::logger( "訂閱 #{$this->item->get_id()} 排程停用網站", 'info', [ 'action_id' => $action_id ] );
 	}
 
 	/**
@@ -112,6 +106,6 @@ final class DisableSiteScheduler extends Base {
 	 * @return void
 	 */
 	public function after_unschedule( int $action_id, string $group ): void {
-		Plugin::log( "訂閱 #{$this->item->get_id()} 成功，取消排程停用網站", 'info', [ 'action_id' => $action_id ] );
+		Plugin::logger( "訂閱 #{$this->item->get_id()} 成功，取消排程停用網站", 'info', [ 'action_id' => $action_id ] );
 	}
 }

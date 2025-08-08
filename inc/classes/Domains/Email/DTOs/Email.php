@@ -34,6 +34,9 @@ final class Email extends DTO {
 	/** @var Enums\Operator::value 信件運算子 'after' | 'before' */
 	public string $operator;
 
+	/** @var bool 是否只發一次 */
+	public bool $unique = false;
+
 	/**
 	 * @return void Validate
 	 * @throws \Exception 如果驗證失敗
@@ -52,5 +55,30 @@ final class Email extends DTO {
 		if ( !is_numeric( $this->days ) ) {
 			throw new \Exception('Invalid days, only accept numeric, got: ' . $this->days);
 		}
+	}
+
+	/**
+	 * 建立 Email DTO
+	 *
+	 * @param array $data 資料
+	 * @return self
+	 */
+	public static function create( $data ): self {
+		$unique_actions = [
+			Action::TRIAL_END->value,
+			Action::WATCH_TRIAL_END->value,
+			Action::END->value,
+			Action::WATCH_END->value,
+			Action::NEXT_PAYMENT->value,
+			Action::WATCH_NEXT_PAYMENT->value,
+		];
+
+		$action_name = $data['action_name'] ?? '';
+
+		if (in_array($action_name, $unique_actions, true)) {
+			$data['unique'] = true;
+		}
+
+		return new self( $data );
 	}
 }

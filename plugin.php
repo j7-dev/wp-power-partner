@@ -120,52 +120,14 @@ final class Plugin {
 	/**
 	 * 記錄 log
 	 *
-	 * @deprecated 使用 \J7\WpUtils\Classes\WC::logger 代替
-	 *
 	 * @param string               $message 記錄訊息
 	 * @param string               $level 記錄等級
 	 * @param array<string, mixed> $args 記錄參數
+	 * @param int                  $limit 記錄數量
 	 * @return void
 	 */
-	public static function log( $message = '', $level = 'info', $args = [] ) {
-		if (method_exists('\J7\WpUtils\Classes\WC', 'logger')) {
-			\J7\WpUtils\Classes\WC::logger($message, $level, $args, 'power_partner');
-			return;
-		}
-
-		$logger = new \WC_Logger();
-
-		$context = [
-			'source' => 'power_partner',
-		];
-
-		if ($args) {
-			$context['args'] = $args;
-		}
-
-		/** @var array<array{class:string|null, type:string|null, function:string|null, file:string|null, line:string|null}> $backtrace */
-		$backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 5);
-
-		$trace_array = [];
-		foreach ($backtrace as $index => $trace) {
-			@[
-			'class'    => $class,
-			'type'     => $type,
-			'function' => $function,
-			'file'     => $file,
-			'line'     => $line,
-			] = $trace;
-
-			$function      = $function ?? 'N/A';
-			$file          = $file ?? 'N/A';
-			$line          = $line ?? 'N/A';
-			$trace_array[] = "#{$index} {$class}{$type}{$function} at {$file} L:{$line}";
-		}
-		if ($trace_array) {
-			$context['trace'] = $trace_array;
-		}
-
-		$logger->log( $level, $message, $context );
+	public static function logger( $message = '', $level = 'info', $args = [], $limit = 0 ): void {
+		\J7\WpUtils\Classes\WC::logger($message, $level, $args, 'power_partner', $limit );
 	}
 }
 
