@@ -15,19 +15,21 @@ abstract class Fetch {
 	/**
 	 * 發 API 開站
 	 *
-	 * @param array $props {
-	 *   @type string $site_url      網站網址
-	 *   @type string $site_id       網站 ID
-	 *   @type string $host_position 網站位置
-	 *   @type string $partner_id    合作夥伴 ID
-	 *   @type array  $customer {
-	 *       @type int    $id         顧客 ID
-	 *       @type string $first_name 顧客名
-	 *       @type string $last_name  顧客姓
-	 *       @type string $username   顧客帳號
-	 *       @type string $email      顧客 Email
-	 *       @type string $phone      顧客電話
-	 *   }
+	 * @param array{
+	 *     site_url: string,
+	 *     site_id: string, // 複製的模板站 id，如果是 0 就是開空的 WP
+	 *     server_id?: string, // 指定的伺服器 id，不帶就是隨機
+	 *     host_position: string,
+	 *     partner_id: string,
+	 *          customer: array{
+	 *     id: int,
+	 *     first_name: string,
+	 *     last_name: string,
+	 *     username: string,
+	 *     email: string,
+	 *     phone: string,
+	 *     },
+	 *     subscription_id?: int,
 	 * } $props 開站所需的參數
 	 *
 	 * @return array<string, mixed>|\WP_Error — The response or WP_Error on failure.
