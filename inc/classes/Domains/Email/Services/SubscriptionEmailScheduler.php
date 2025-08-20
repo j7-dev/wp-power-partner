@@ -24,7 +24,7 @@ final class SubscriptionEmailScheduler extends Base {
 	/**
 	 * Constructor，每次傳入的資源實例可能不同
 	 *
-	 * @param \SubscriptionEmail $item 訂閱
+	 * @param SubscriptionEmail $item 訂閱
 	 * @throws \Exception 如果 $item 不是 \WC_Subscription 實例
 	 */
 	public function __construct(
@@ -36,15 +36,6 @@ final class SubscriptionEmailScheduler extends Base {
 		}
 
 		parent::__construct( $item );
-	}
-
-	/**
-	 * 取得排程的參數，執行時會傳入 action_callback
-	 *
-	 * @return array{email_key: string, subscription_id: int, action_name: string}
-	 * */
-	protected function get_args(): array {
-		return $this->item->get_scheduler_args();
 	}
 
 	/**
@@ -117,6 +108,15 @@ final class SubscriptionEmailScheduler extends Base {
 	}
 
 	/**
+	 * 取得排程的 hook
+	 *
+	 * @return string
+	 */
+	public static function get_hook(): string {
+		return self::$hook;
+	}
+
+	/**
 	 * 排程後，寫入 log
 	 *
 	 * @param int|null $action_id 排程的 action_id
@@ -140,11 +140,11 @@ final class SubscriptionEmailScheduler extends Base {
 	}
 
 	/**
-	 * 取得排程的 hook
+	 * 取得排程的參數，執行時會傳入 action_callback
 	 *
-	 * @return string
-	 */
-	public static function get_hook(): string {
-		return self::$hook;
+	 * @return array{email_key: string, subscription_id: int, action_name: string}
+	 * */
+	protected function get_args(): array {
+		return $this->item->get_scheduler_args();
 	}
 }
