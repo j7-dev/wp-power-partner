@@ -74,56 +74,6 @@ final class Api extends ApiBase {
 	}
 
 	/**
-	 * 刪除 License Codes
-	 * 可能會修改到訂閱綁定
-	 *
-	 * @param \WP_REST_Request $request 包含請求參數的 REST 請求對象。
-	 * @return \WP_REST_Response 返回包含操作結果的 REST 響應對象。
-	 * @throws \Exception 如果刪除授權碼到站長路可失敗
-	 * @phpstan-ignore-next-line
-	 */
-	public function delete_license_codes_callback( \WP_REST_Request $request ): \WP_REST_Response {
-		$body_params = $request->get_json_params();
-
-		/**
-		 * @var array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int} $body_params
-		 */
-		$body_params = WP::sanitize_text_field_deep( $body_params );
-		$lc_ids      = $body_params['ids'] ?? [];
-		foreach ($lc_ids as $lc_id) {
-			$related_subscription_ids = $this->get_related_subscriptions( (int) $lc_id);
-			foreach ($related_subscription_ids as $related_subscription_id) {
-				$related_subscription = \wcs_get_subscription($related_subscription_id);
-				if ($related_subscription) {
-					// 只刪除 lc_id 相同的 meta data
-					$related_subscription->delete_meta_data_value('lc_id', $lc_id);
-					$related_subscription->save();
-				}
-			}
-		}
-
-		// 發給站長路可變更 LC
-		$api_instance = CloudApi::instance();
-		$response     = $api_instance->remote_delete(
-			'license-codes',
-			$body_params
-		);
-
-		if (\is_wp_error($response)) {
-			throw new \Exception("刪除授權碼到站長路可失敗，{$response->get_error_message()}");
-		}
-
-		$body = \wp_remote_retrieve_body($response);
-		$data = General::json_parse($body, []);
-
-		return new \WP_REST_Response(
-			$data,
-			200
-			);
-	}
-
-
-	/**
 	 * 處理連結授權碼到訂閱
 	 *
 	 * @param array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int, recover?:boolean} $body_params 參數
@@ -202,5 +152,94 @@ final class Api extends ApiBase {
 		];
 		$query = new \WP_Query($args);
 		return $query->posts;
+	}
+
+	/**
+	 * 刪除 License Codes
+	 * 可能會修改到訂閱綁定
+	 *
+	 * @param \WP_REST_Request $request 包含請求參數的 REST 請求對象。
+	 * @return \WP_REST_Response 返回包含操作結果的 REST 響應對象。
+	 * @throws \Exception 如果刪除授權碼到站長路可失敗
+	 * @phpstan-ignore-next-line
+	 */
+	public function delete_license_codes_callback( \WP_REST_Request $request ): \WP_REST_Response {
+		$body_params = $request->get_json_params();
+
+		/**
+		 * @var array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int} $body_params
+		 */
+		$body_params = WP::sanitize_text_field_deep( $body_params );
+		$lc_ids      = $body_params['ids'] ?? [];
+		foreach ($lc_ids as $lc_id) {
+			$related_subscription_ids = $this->get_related_subscriptions( (int) $lc_id);
+			foreach ($related_subscription_ids as $related_subscription_id) {
+				$related_subscription = \wcs_get_subscription($related_subscription_id);
+				if ($related_subscription) {
+					// 只刪除 lc_id 相同的 meta data
+					$related_subscription->delete_meta_data_value('lc_id', $lc_id);
+					$related_subscription->save();
+				}
+			}
+		}
+
+		// 發給站長路可變更 LC
+		$api_instance = CloudApi::instance();
+		$response     = $api_instance->remote_delete(
+			'license-codes',
+			$body_params
+		);
+
+		if (\is_wp_error($response)) {
+			throw new \Exception("刪除授權碼到站長路可失敗，{$response->get_error_message()}");
+		}
+
+		$body = \wp_remote_retrieve_body($response);
+		$data = General::json_parse($body, []);
+
+		return new \WP_REST_Response(
+			$data,
+			200
+			);
+	}
+
+	/**
+	 * 取得訂閱下次付款日
+	 *
+	 * @param \WP_REST_Request $request 包含請求參數的 REST 請求對象。
+	 *
+	 * @return \WP_REST_Response|\WP_Error 返回包含操作結果的 REST 響應對象。
+	 * @throws \Exception 如果訂閱 ID 無效或不存在
+	 * @phpstan-ignore-next-line
+	 */
+	public function get_subscriptions_next_payment_callback( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+		$params = $request->get_params();
+
+		$include_required_params = WP::include_required_params($params, [ 'ids' ]);
+
+		if (true !== $include_required_params) {
+			return $include_required_params;
+		}
+
+		$subscription_ids = $params['ids'];
+		if (!is_array($subscription_ids)) {
+			return new \WP_Error('invalid_subscription_ids', '訂閱 id 須為陣列');
+		}
+
+		$results = [];
+		foreach ($subscription_ids as $subscription_id) {
+			$subscription = \wcs_get_subscription($subscription_id);
+			if ($subscription) {
+				$results[] = [
+					'id'   => $subscription_id,
+					'time' => $subscription->get_time( 'next_payment' ),
+				];
+			}
+		}
+
+		return new \WP_REST_Response(
+			$results,
+			200
+		);
 	}
 }
