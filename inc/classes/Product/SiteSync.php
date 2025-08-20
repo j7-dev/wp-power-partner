@@ -22,7 +22,7 @@ final class SiteSync {
 
 	/** Constructor */
 	public function __construct() {
-		\add_action( Action::DATE_CREATED->get_action_hook(), [ $this, 'site_sync_by_subscription' ], 1, 2 );
+		\add_action( Action::INITIAL_PAYMENT_COMPLETE->get_action_hook(), [ $this, 'site_sync_by_subscription' ], 1, 2 );
 	}
 
 
