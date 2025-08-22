@@ -1,7 +1,4 @@
 <?php
-/**
- * Api
- */
 
 declare(strict_types=1);
 
@@ -586,11 +583,7 @@ final class Main {
 	 *
 	 * @return bool
 	 */
-	public function check_ip_permission() {
-		// 允許的 IP 範圍起始和結束 IP
-		// 以前的版本
-		$start_ip = '61.220.44.0';
-		$end_ip   = '61.220.44.10';
+	public function check_ip_permission(): bool {
 
 		// 103.153.176.121 = 黃亦主機對外  199.99.88.1 = 黃亦主機打黃亦主機
 		// 163.61.60.80 = 是方主機對外  是方主機打是方主機
@@ -600,16 +593,43 @@ final class Main {
 		if (in_array($_SERVER['REMOTE_ADDR'], $fixed_ips, true)) {
 			return true;
 		}
+        
+        // 內網
+        if($this->in_ip( '10.0.0.0', '10.255.255.255')){
+            return true;
+        }
+        
+        // 內網
+        if($this->in_ip( '172.16.0.0', '172.31.255.255')){
+            return true;
+        }
+        
+        // 內網
+        if($this->in_ip( '192.168.0.0', '192.168.255.255')){
+            return true;
+        }
+        
+        // 以前的版本
+        return $this->in_ip( '61.220.44.0', '61.220.44.10');
+	}
 
+
+	/**
+	 * 檢查 REMOTE_ADDR IP 是否在指定範圍內
+	 *
+	 * @param string $from_ip 起始 IP
+	 * @param string $to_ip 結束 IP
+	 *
+	 * @return bool
+	 */
+	private function in_ip( string $from_ip, string $to_ip ): bool {
+		// phpcs:ignore
+		$request_ip_long = sprintf('%u', ip2long($_SERVER['REMOTE_ADDR']));
 		// 將起始和結束 IP 轉換為長整型
-		$start_ip_long = sprintf( '%u', ip2long( $start_ip ) );
-		$end_ip_long   = sprintf( '%u', ip2long( $end_ip ) );
-
-		// @phpstan-ignore-next-line
-    $request_ip_long = sprintf("%u", ip2long($_SERVER['REMOTE_ADDR']));
-    // phpcs:enable
+		$from_ip_long = sprintf( '%u', ip2long( $from_ip ) );
+		$to_ip_long   = sprintf( '%u', ip2long( $to_ip ) );
 
 		// 檢查發起請求的 IP 是否在允許的範圍內
-		return ( $request_ip_long >= $start_ip_long && $request_ip_long <= $end_ip_long );
+		return ( $request_ip_long >= $from_ip_long && $request_ip_long <= $to_ip_long );
 	}
 }
