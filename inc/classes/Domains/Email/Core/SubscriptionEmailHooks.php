@@ -45,7 +45,7 @@ final class SubscriptionEmailHooks {
 		SubscriptionEmailScheduler::register();
 
 		// 網站訂閱創建後
-		\add_action('pp_site_sync_by_subscription', [ $this, 'schedule_site_sync_email' ], 10, 1);
+		// \add_action('pp_site_sync_by_subscription', [ $this, 'schedule_site_sync_email' ], 10, 1);
 
 		// 以下六個時機點，用監聽的 hook 來發信，且只發一次，如果有修改要取消排程，重新排程
 		$mapper = [
@@ -88,18 +88,20 @@ final class SubscriptionEmailHooks {
 	}
 
 	/**
-	 * Get email by key
+	 * 訂閱生命週期發信，只發一次
+	 * 如果修改，就要重新排程
 	 *
-	 * @param string $key 唯一 key
-	 * @return Email|null
+	 * @param \WC_Subscription $subscription 訂閱
+	 * @param array            $args 參數
+	 * @param Action           $action 動作
+	 * @return void
 	 */
-	public function get_email( string $key ): Email|null {
-		foreach ($this->emails as $email) {
-			if ($email->key === $key) {
-				return $email;
-			}
+	public function schedule_subscription_email_once( \WC_Subscription $subscription, array $args, Action $action ): void {
+		$emails = $this->get_emails($action->value);
+
+		foreach ($emails as $email) {
+			$this->schedule_email($email, $subscription);
 		}
-		return null;
 	}
 
 	/**
@@ -133,77 +135,6 @@ final class SubscriptionEmailHooks {
 	}
 
 	/**
-	 * 訂閱生命週期發信，只發一次
-	 * 如果修改，就要重新排程
-	 *
-	 * @param \WC_Subscription $subscription 訂閱
-	 * @param array            $args 參數
-	 * @param Action           $action 動作
-	 * @return void
-	 */
-	public function schedule_subscription_email_once( \WC_Subscription $subscription, array $args, Action $action ) {
-		$emails = $this->get_emails($action->value);
-
-		foreach ($emails as $email) {
-			$this->schedule_email($email, $subscription);
-		}
-	}
-
-	/**
-	 * 訂閱生命週期發信
-	 *
-	 * @param \WC_Subscription $subscription 訂閱
-	 * @param array            $args 參數
-	 * @param Action           $action 動作
-	 * @return void
-	 */
-	public function schedule_subscription_email( \WC_Subscription $subscription, array $args, Action $action ) {
-		$emails = $this->get_emails($action->value);
-
-		foreach ($emails as $email) {
-			$this->schedule_email($email, $subscription);
-		}
-	}
-
-	/**
-	 * 網站訂閱創建後發信
-	 *
-	 * @param \WC_Subscription $subscription 訂閱
-	 * @return void
-	 */
-	public function schedule_site_sync_email( $subscription ) {
-		$emails = $this->get_emails('site_sync');
-		foreach ($emails as $email) {
-			$this->schedule_email($email, $subscription);
-		}
-	}
-
-
-	/**
-	 * 取消排程寄信
-	 *
-	 * @param \WC_Subscription $subscription 訂閱
-	 * @param array            $args 參數
-	 * @return void
-	 */
-	public function unschedule_email( \WC_Subscription $subscription, $args ) {
-		$unschedule_actions = [
-			Action::SUBSCRIPTION_FAILED,
-		];
-		$emails             = [];
-		foreach ($unschedule_actions as $action) {
-			$emails = array_merge($emails, $this->get_emails($action->value));
-		}
-
-		foreach ($emails as $email) {
-			$subscription_email           = new SubscriptionEmail($email, $subscription);
-			$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
-			$subscription_email_scheduler->unschedule($email->action_name, $email->unique);
-		}
-	}
-
-
-	/**
 	 * 排程寄信
 	 *
 	 * @param Email            $email 信件
@@ -224,5 +155,72 @@ final class SubscriptionEmailHooks {
 		$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
 		$subscription_email_scheduler->maybe_unschedule($email->action_name, $email->unique);
 		$subscription_email_scheduler->schedule_single($subscription_email->get_timestamp(), $email->action_name);
+	}
+
+	/**
+	 * 訂閱生命週期發信
+	 *
+	 * @param \WC_Subscription $subscription 訂閱
+	 * @param array            $args 參數
+	 * @param Action           $action 動作
+	 * @return void
+	 */
+	public function schedule_subscription_email( \WC_Subscription $subscription, array $args, Action $action ): void {
+		$emails = $this->get_emails($action->value);
+
+		foreach ($emails as $email) {
+			$this->schedule_email($email, $subscription);
+		}
+	}
+
+	/**
+	 * Get email by key
+	 *
+	 * @param string $key 唯一 key
+	 * @return Email|null
+	 */
+	public function get_email( string $key ): Email|null {
+		foreach ($this->emails as $email) {
+			if ($email->key === $key) {
+				return $email;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 網站訂閱創建後發信
+	 *
+	 * @param \WC_Subscription $subscription 訂閱
+	 * @return void
+	 */
+	public function schedule_site_sync_email( $subscription ): void {
+		$emails = $this->get_emails('site_sync');
+		foreach ($emails as $email) {
+			$this->schedule_email($email, $subscription);
+		}
+	}
+
+	/**
+	 * 取消排程寄信
+	 *
+	 * @param \WC_Subscription $subscription 訂閱
+	 * @param array            $args 參數
+	 * @return void
+	 */
+	public function unschedule_email( \WC_Subscription $subscription, $args ): void {
+		$unschedule_actions = [
+			Action::SUBSCRIPTION_FAILED,
+		];
+		$emails             = [];
+		foreach ($unschedule_actions as $action) {
+			$emails = array_merge($emails, $this->get_emails($action->value));
+		}
+
+		foreach ($emails as $email) {
+			$subscription_email           = new SubscriptionEmail($email, $subscription);
+			$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
+			$subscription_email_scheduler->unschedule($email->action_name, $email->unique);
+		}
 	}
 }
