@@ -16,6 +16,7 @@ final class DisableHooks {
 
 	/** Constructor */
 	public function __construct() {
+		DisableSiteScheduler::register();
 
 		// 訂閱成功 -> 失敗時，排程 禁用網站
 		\add_action( Action::SUBSCRIPTION_FAILED->get_action_hook(), [ $this, 'schedule_disable_site' ], 10, 2 );
