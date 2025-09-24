@@ -71,19 +71,6 @@ final class Bootstrap {
 	}
 
 	/**
-	 * Frontend Enqueue script
-	 * You can load the script on demand
-	 * 按需載入?
-	 * 前台 shortcode 會用到，所以先不用按需載入
-	 *
-	 * @return void
-	 */
-	public function frontend_enqueue_script(): void {
-		$this->enqueue_script();
-	}
-
-
-	/**
 	 * Enqueue script
 	 * You can load the script on demand
 	 *
@@ -130,6 +117,7 @@ final class Bootstrap {
 					't'                         => $this->t,
 					'cloudBaseUrl'              => $this->base_url,
 					'is_kiwissec'               => strpos( \site_url(), 'kiwissec.io' ) !== false,
+					'myAccountUrl'              => \get_permalink( \wc_get_page_id( 'myaccount' ) ),
 				],
 			]
 		);
@@ -142,6 +130,18 @@ final class Bootstrap {
 				'nonce' => \wp_create_nonce( 'wp_rest' ),
 			]
 		);
+	}
+
+	/**
+	 * Frontend Enqueue script
+	 * You can load the script on demand
+	 * 按需載入?
+	 * 前台 shortcode 會用到，所以先不用按需載入
+	 *
+	 * @return void
+	 */
+	public function frontend_enqueue_script(): void {
+		$this->enqueue_script();
 	}
 
 	/**
