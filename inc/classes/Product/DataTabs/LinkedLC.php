@@ -260,24 +260,23 @@ final class LinkedLC {
 	 * @return array<array{product_slug: string, quantity: string}> 格式化後的資料
 	 */
 	public static function format_linked_lc_products( array $linked_lc_products ): array {
-		$key_value_linked_lc_products = [];
-		foreach ($linked_lc_products as $linked_lc_product) {
-			$array_keys = array_keys($key_value_linked_lc_products);
-			if (!in_array($linked_lc_product['product_slug'], $array_keys, true)) {
-				$key_value_linked_lc_products[ $linked_lc_product['product_slug'] ] = $linked_lc_product['quantity'];
-			} else {
-				$key_value_linked_lc_products[ $linked_lc_product['product_slug'] ] += $linked_lc_product['quantity'];
-			}
+		$merged = [];
+
+		foreach ($linked_lc_products as $product) {
+			$slug            = $product['product_slug'];
+			$qty             = (int) ( $merged[ $slug ] ?? 0 );
+			$merged[ $slug ] = ( $qty + (int) $product['quantity'] );
 		}
 
-		$formatted_linked_lc_products = [];
-		foreach ($key_value_linked_lc_products as $product_slug => $quantity) {
-			$formatted_linked_lc_products[] = [
-				'product_slug' => $product_slug,
+		$result = [];
+		foreach ($merged as $slug => $quantity) {
+			$result[] = [
+				'product_slug' => $slug,
 				'quantity'     => $quantity,
 			];
 		}
-		return $formatted_linked_lc_products;
+
+		return $result;
 	}
 
 	/**
