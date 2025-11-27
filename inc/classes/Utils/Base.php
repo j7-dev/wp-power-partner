@@ -37,9 +37,9 @@ abstract class Base {
 			// $psw      = '5NTw cqYl uhJU pixF Myj6 rBuA';
 			// $base_url = 'https://cloud.local';
 			case 'local': // local 辦公室
-				$username = $is_home ? 'j7.dev.gg' : 'powerpartner';
-				$psw      = $is_home ? '5NTw cqYl uhJU pixF Myj6 rBuA' : 'WDdk K7nm SSNr AwGy Dhab sipK';
-				$base_url = $is_home ? 'http://cloud.local' : 'http://cloud.local';
+				$username = 'powerpartner';
+				$psw      = '7t4T WpSr HgZL Auyl TtOw USyG';
+				$base_url = 'http://cloud.local';
 				break;
 			case 'staging': // staging 線上測試站
 				$username = 'powerpartner';

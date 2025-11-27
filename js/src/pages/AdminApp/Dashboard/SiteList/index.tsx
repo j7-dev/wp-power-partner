@@ -4,10 +4,16 @@ import {
 	useTable,
 } from '@/components/SiteListTable'
 import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
+import { GlobalOutlined, CloudOutlined } from '@ant-design/icons'
+import { Tabs, TabsProps } from 'antd'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
 
-const index = () => {
+const K8S = () => {
+	return 'k8s content'
+}
+
+const WPCD = () => {
 	const identity = useAtomValue(identityAtom)
 	const setGlobalLoading = useSetAtom(globalLoadingAtom)
 
@@ -52,6 +58,27 @@ const index = () => {
 			isAdmin
 		/>
 	)
+}
+
+const siteTypeItems: TabsProps['items'] = [
+	{
+		key: 'k8s',
+		icon: <CloudOutlined />,
+		label: '新架構',
+		children: <K8S />,
+		forceRender: false,
+	},
+	{
+		key: 'wpcd',
+		icon: <GlobalOutlined />,
+		label: '舊架構',
+		children: <WPCD />,
+		forceRender: false,
+	},
+]
+
+const index = () => {
+	return <Tabs items={siteTypeItems} />
 }
 
 export default index
