@@ -5,12 +5,17 @@ import {
 	kebab,
 	is_kiwissec,
 } from '@/utils'
-import { Select, Form, Button, notification } from 'antd'
+import { Select, Form, Button, notification, Tabs } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { axios } from '@/api'
-import { LoadingOutlined } from '@ant-design/icons'
+import {
+	CloudOutlined,
+	GlobalOutlined,
+	LoadingOutlined,
+} from '@ant-design/icons'
 import { identityAtom } from '@/pages/AdminApp/atom'
 import { useAtomValue } from 'jotai'
+import { TabsProps } from 'antd/lib'
 
 const { Item } = Form
 
@@ -19,7 +24,11 @@ type TManualSiteSyncParams = {
 	host_position: string
 }
 
-const index = () => {
+const K8S = () => {
+	return 'k8s content'
+}
+
+const WPCD = () => {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [form] = Form.useForm()
 	const [api, contextHolder] = notification.useNotification({
@@ -215,6 +224,27 @@ const index = () => {
 			</Form>
 		</div>
 	)
+}
+
+const siteTypeItems: TabsProps['items'] = [
+	{
+		key: 'k8s',
+		icon: <CloudOutlined />,
+		label: '新架構',
+		children: <K8S />,
+		forceRender: false,
+	},
+	{
+		key: 'wpcd',
+		icon: <GlobalOutlined />,
+		label: '舊架構',
+		children: <WPCD />,
+		forceRender: false,
+	},
+]
+
+const index = () => {
+	return <Tabs items={siteTypeItems} />
 }
 
 export default index
