@@ -13,9 +13,14 @@ import {
 	GlobalOutlined,
 	LoadingOutlined,
 } from '@ant-design/icons'
-import { identityAtom } from '@/pages/AdminApp/atom'
-import { useAtomValue } from 'jotai'
+import { identityAtom } from '@/pages/AdminApp/Atom/atom'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { TabsProps } from 'antd/lib'
+import {
+	EPowercloudIdentityStatusEnum,
+	powercloudIdentityAtom,
+} from '../../Atom/powercloud.atom'
+import { TabKeyEnum, setTabAtom } from '../../Atom/tab.atom'
 
 const { Item } = Form
 
@@ -24,8 +29,16 @@ type TManualSiteSyncParams = {
 	host_position: string
 }
 
-const K8S = () => {
-	return 'k8s content'
+const Powercloud = () => {
+	const powercloudIdentity = useAtomValue(powercloudIdentityAtom)
+	const setTab = useSetAtom(setTabAtom)
+
+	const handleRedirectToPowercloudAuth = () => setTab(TabKeyEnum.POWERCLOUD_AUTH)
+
+	if (powercloudIdentity.status !== EPowercloudIdentityStatusEnum.LOGGED_IN || !powercloudIdentity.apiKey) {
+		return (<Button variant='link' danger onClick={handleRedirectToPowercloudAuth}>登入新架構</Button>)
+	}
+	return 'powercloud content'
 }
 
 const WPCD = () => {
@@ -228,17 +241,17 @@ const WPCD = () => {
 
 const siteTypeItems: TabsProps['items'] = [
 	{
-		key: 'k8s',
-		icon: <CloudOutlined />,
-		label: '新架構',
-		children: <K8S />,
-		forceRender: false,
-	},
-	{
 		key: 'wpcd',
 		icon: <GlobalOutlined />,
 		label: '舊架構',
 		children: <WPCD />,
+		forceRender: false,
+	},
+	{
+		key: 'powercloud',
+		icon: <CloudOutlined />,
+		label: '新架構',
+		children: <Powercloud />,
 		forceRender: false,
 	},
 ]

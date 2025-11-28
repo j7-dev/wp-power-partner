@@ -1,6 +1,6 @@
 import { Table, TableProps, Tag, Typography } from 'antd'
 import { DataType, TLogParams } from './types'
-import { identityAtom } from '@/pages/AdminApp/atom'
+import { identityAtom } from '@/pages/AdminApp/Atom/atom'
 import { useAtomValue } from 'jotai'
 import { useTable } from '@/hooks'
 

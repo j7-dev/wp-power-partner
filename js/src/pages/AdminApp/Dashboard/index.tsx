@@ -1,4 +1,3 @@
-import React, { useState } from 'react'
 import {
 	MoneyCollectOutlined,
 	ClusterOutlined,
@@ -7,6 +6,7 @@ import {
 	CodeOutlined,
 	BarcodeOutlined,
 	SettingOutlined,
+	CloudOutlined,
 } from '@ant-design/icons'
 import { Tabs, TabsProps, Form, Button } from 'antd'
 import AccountIcon from './AccountIcon'
@@ -17,60 +17,71 @@ import EmailSetting from './EmailSetting'
 import ManualSiteSync from './ManualSiteSync'
 import Settings from './Settings'
 import LicenseCodes from './LicenseCodes'
+import PowercloudAuth from './PowercloudAuth'
 import useSave, {
 	TFormValues,
 } from '@/pages/AdminApp/Dashboard/EmailSetting/hooks/useSave'
 
 import { windowWidth } from '@/utils'
+import { TabKeyEnum, setTabAtom } from '../Atom/tab.atom'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { tabAtom } from '../Atom/tab.atom'
 
 const items: TabsProps['items'] = [
 	{
-		key: 'siteList',
+		key: TabKeyEnum.SITE_LIST,
 		icon: <ClusterOutlined />,
 		label: '所有站台',
 		children: <SiteList />,
 		forceRender: false,
 	},
 	{
-		key: 'logList',
+		key: TabKeyEnum.LOG_LIST,
 		icon: <MoneyCollectOutlined />,
 		label: '點數 Log',
 		children: <LogList />,
 		forceRender: false,
 	},
 	{
-		key: 'email',
+		key: TabKeyEnum.EMAIL,
 		icon: <MailOutlined />,
 		label: 'Email 設定',
 		children: <EmailSetting />,
 		forceRender: true,
 	},
 	{
-		key: 'manualSiteSync',
+		key: TabKeyEnum.MANUAL_SITE_SYNC,
 		icon: <CodeOutlined />,
 		label: '手動開站',
 		children: <ManualSiteSync />,
 		forceRender: true,
 	},
 	{
-		key: 'settings',
+		key: TabKeyEnum.SETTINGS,
 		icon: <SettingOutlined />,
 		label: '設定',
 		children: <Settings />,
 		forceRender: true,
 	},
 	{
-		key: 'license-codes',
+		key: TabKeyEnum.LICENSE_CODES,
 		icon: <BarcodeOutlined />,
 		label: '授權碼管理',
 		children: <LicenseCodes isAdmin />,
 		forceRender: false,
 	},
 	{
-		key: 'description',
+		key: TabKeyEnum.DESCRIPTION,
 		icon: <InfoCircleOutlined />,
 		label: '其他資訊',
 		children: <Description />,
+		forceRender: false,
+	},
+	{
+		key: TabKeyEnum.POWERCLOUD_AUTH,
+		icon: <CloudOutlined />,
+		label: '新架構權限',
+		children: <PowercloudAuth />,
 		forceRender: false,
 	},
 ]
@@ -79,8 +90,8 @@ const index = () => {
 	const [form] = Form.useForm()
 	const { mutation, contextHolder } = useSave(form)
 	const { mutate: saveSettings, isPending } = mutation
-	const [activeKey, setActiveKey] = useState<string>('siteList')
-
+	const activeKey = useAtomValue(tabAtom)
+	const setActiveKey = useSetAtom(setTabAtom)
 	const handleSave = () => {
 		form
 			.validateFields()
@@ -96,13 +107,13 @@ const index = () => {
 			{contextHolder}
 			<Tabs
 				activeKey={activeKey}
-				onChange={setActiveKey}
+				onChange={(key) => setActiveKey(key as TabKeyEnum)}
 				className={`${windowWidth < 1200 ? 'mt-16' : ''}`}
 				type="card"
 				tabBarExtraContent={<AccountIcon />}
 				items={items}
 			/>
-			{['email', 'settings'].includes(activeKey) && (
+			{[TabKeyEnum.EMAIL, TabKeyEnum.SETTINGS].includes(activeKey) && (
 				<Button
 					type="primary"
 					className="mt-4"
