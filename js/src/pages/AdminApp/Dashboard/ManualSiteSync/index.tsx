@@ -33,6 +33,8 @@ import {
 	powercloudIdentityAtom,
 } from '../../Atom/powercloud.atom'
 import { TabKeyEnum, setTabAtom } from '../../Atom/tab.atom'
+import { generateRandomPassword } from '@/utils/functions/password'
+import { generateRandomWpsiteProConfig } from '@/utils/functions/wordpress'
 
 const { Item } = Form
 
@@ -235,11 +237,38 @@ const PowercloudOpenSite = () => {
 		},
 	})
 
+	const handleGenerateRandomPassword = (prefix: string) => {
+		return generateRandomPassword(prefix)
+	}
+
 	const handleFinish = () => {
 		form
 			.validateFields()
 			.then((values: TPowercloudOpenSiteParams) => {
-				createWordPress(values)
+				// 生成隨機配置（只調用一次）
+				const wpsiteConfig = generateRandomWpsiteProConfig()
+
+				createWordPress({
+					...values,
+					name: wpsiteConfig.name,
+					namespace: wpsiteConfig.namespace,
+					domain: wpsiteConfig.domain,
+					wordpress: {
+						autoInstall: {
+							siteTitle: 'Wordpress Site',
+							adminUser: 'admin',
+							adminPassword: handleGenerateRandomPassword('wordpress'),
+							adminEmail:
+								values?.wordpress?.autoInstall?.adminEmail || 'admin@example.com',
+						},
+					},
+					mysql: {
+						auth: {
+							rootPassword: handleGenerateRandomPassword('mysql-root'),
+							password: handleGenerateRandomPassword('mysql'),
+						},
+					},
+				})
 			})
 			.catch((error) => {
 				console.log('表單驗證失敗:', error)
@@ -274,60 +303,6 @@ const PowercloudOpenSite = () => {
 				</Form.Item>
 
 				<Form.Item
-					label="網站名稱 (Name)"
-					name={['name']}
-					rules={[
-						{ required: true, message: '請輸入網站名稱' },
-						{
-							pattern: /^[a-z0-9-]+$/,
-							message: '只能包含小寫字母、數字和連字符',
-						},
-					]}
-				>
-					<input
-						type="text"
-						placeholder="demo-wpsite-pro"
-						disabled={isPending}
-						className="ant-input"
-					/>
-				</Form.Item>
-
-				<Form.Item
-					label="命名空間 (Namespace)"
-					name={['namespace']}
-					rules={[
-						{ required: true, message: '請輸入命名空間' },
-						{
-							pattern: /^[a-z0-9-]+$/,
-							message: '只能包含小寫字母、數字和連字符',
-						},
-					]}
-				>
-					<input
-						type="text"
-						placeholder="demo-wpsite-pro"
-						disabled={isPending}
-						className="ant-input"
-					/>
-				</Form.Item>
-
-				<Form.Item
-					label="域名 (Domain)"
-					name={['domain']}
-					rules={[
-						{ required: true, message: '請輸入域名' },
-						{ type: 'string', message: '請輸入有效的域名' },
-					]}
-				>
-					<input
-						type="text"
-						placeholder="demo.wpsite.pro"
-						disabled={isPending}
-						className="ant-input"
-					/>
-				</Form.Item>
-
-				<Form.Item
 					label="是否通配符域名"
 					name={['isWildcard']}
 					initialValue={true}
@@ -335,105 +310,6 @@ const PowercloudOpenSite = () => {
 				>
 					<input type="checkbox" disabled={isPending} />
 				</Form.Item>
-
-				<div className="pt-4 mt-4 border-t">
-					<h3 className="mb-4 text-lg font-semibold">MySQL 設定</h3>
-
-					<Form.Item
-						label="Root 密碼"
-						name={['mysql', 'auth', 'rootPassword']}
-						rules={[
-							{ required: true, message: '請輸入 Root 密碼' },
-							{ min: 8, message: '密碼至少 8 個字元' },
-						]}
-					>
-						<input
-							type="password"
-							placeholder="my-db-root-password"
-							disabled={isPending}
-							className="ant-input"
-						/>
-					</Form.Item>
-
-					<Form.Item
-						label="資料庫密碼"
-						name={['mysql', 'auth', 'password']}
-						rules={[
-							{ required: true, message: '請輸入資料庫密碼' },
-							{ min: 8, message: '密碼至少 8 個字元' },
-						]}
-					>
-						<input
-							type="password"
-							placeholder="my-db-password"
-							disabled={isPending}
-							className="ant-input"
-						/>
-					</Form.Item>
-				</div>
-
-				<div className="pt-4 mt-4 border-t">
-					<h3 className="mb-4 text-lg font-semibold">WordPress 設定</h3>
-
-					<Form.Item
-						label="管理員帳號"
-						name={['wordpress', 'autoInstall', 'adminUser']}
-						initialValue="admin"
-						rules={[{ required: true, message: '請輸入管理員帳號' }]}
-					>
-						<input
-							type="text"
-							placeholder="admin"
-							disabled={isPending}
-							className="ant-input"
-						/>
-					</Form.Item>
-
-					<Form.Item
-						label="管理員密碼"
-						name={['wordpress', 'autoInstall', 'adminPassword']}
-						rules={[
-							{ required: true, message: '請輸入管理員密碼' },
-							{ min: 8, message: '密碼至少 8 個字元' },
-						]}
-					>
-						<input
-							type="password"
-							placeholder="strong-admin-password-789"
-							disabled={isPending}
-							className="ant-input"
-						/>
-					</Form.Item>
-
-					<Form.Item
-						label="管理員 Email"
-						name={['wordpress', 'autoInstall', 'adminEmail']}
-						rules={[
-							{ required: true, message: '請輸入管理員 Email' },
-							{ type: 'email', message: '請輸入有效的 Email' },
-						]}
-					>
-						<input
-							type="email"
-							placeholder="admin@example.com"
-							disabled={isPending}
-							className="ant-input"
-						/>
-					</Form.Item>
-
-					<Form.Item
-						label="網站標題"
-						name={['wordpress', 'autoInstall', 'siteTitle']}
-						rules={[{ required: true, message: '請輸入網站標題' }]}
-					>
-						<input
-							type="text"
-							placeholder="My WordPress Site"
-							disabled={isPending}
-							className="ant-input"
-						/>
-					</Form.Item>
-				</div>
 
 				<div className="flex gap-x-2 mt-8">
 					<Button type="primary" loading={isPending} onClick={handleFinish}>
