@@ -1,23 +1,33 @@
 /* eslint-disable quote-props */
-import axios, { AxiosInstance } from 'axios'
+import { powercloudIdentityAtom } from '@/pages/AdminApp/Atom/powercloud.atom'
 import { POWERCLOUD_API, apiTimeout } from '@/utils'
 import { notification } from 'antd'
+import axios, { AxiosInstance } from 'axios'
+import { useAtomValue } from 'jotai'
+import { useMemo } from 'react'
 
-async function generateAxiosInstance(): Promise<AxiosInstance> {
-	const identity = await localStorage.getItem('power-partner-powercloud-identity')
-	const apiKey = identity ? JSON.parse(identity).apiKey : ''
+const instance: AxiosInstance = axios.create({
+	baseURL: POWERCLOUD_API,
+	timeout: parseInt(apiTimeout, 10),
+	headers: {
+		'Content-Type': 'application/json',
+	},
+})
 
-	return axios.create({
-		baseURL: POWERCLOUD_API,
-		timeout: parseInt(apiTimeout, 10),
-		headers: {
-			'Content-Type': 'application/json',
-			'X-API-Key': `${apiKey}`,
-		},
-	})
+export const usePowerCloudAxiosWithApiKey = (axiosInstance: AxiosInstance) => {
+	const apiKey = useAtomValue(powercloudIdentityAtom)?.apiKey
+	const instance = useMemo(
+		() =>
+			axiosInstance.create({
+				headers: {
+					'X-API-Key': apiKey,
+				},
+			}),
+		[apiKey],
+	)
+
+	return instance
 }
-
-const instance = await generateAxiosInstance()
 
 instance.interceptors.response.use(
 	function (response) {

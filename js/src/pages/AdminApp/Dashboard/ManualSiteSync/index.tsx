@@ -1,4 +1,4 @@
-import { axios, powerCloudAxios } from '@/api'
+import { axios, powerCloudAxios, usePowerCloudAxiosWithApiKey } from '@/api'
 import { identityAtom } from '@/pages/AdminApp/Atom/atom'
 import {
 	allowed_template_options,
@@ -12,7 +12,19 @@ import {
 	LoadingOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Card, Col, Empty, Form, Row, Select, Spin, Tabs, Tag, notification } from 'antd'
+import {
+	Button,
+	Card,
+	Col,
+	Empty,
+	Form,
+	Row,
+	Select,
+	Spin,
+	Tabs,
+	Tag,
+	notification,
+} from 'antd'
 import { TabsProps } from 'antd/lib'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useRef } from 'react'
@@ -49,13 +61,14 @@ interface IPowercloudPackage {
 }
 
 const PowercloudPakcageList = () => {
+	const powerCloudInstance = usePowerCloudAxiosWithApiKey(powerCloudAxios)
 	const { data, isLoading } = useQuery({
 		queryKey: ['powercloud-package-list'],
-		queryFn: () => powerCloudAxios.get(`/website-packages`),
+		queryFn: () => powerCloudInstance.get(`/website-packages`),
 	})
 
-	// 確保 websitePackages 是數組
-	const websitePackages: IPowercloudPackage[] = data?.data?.data as IPowercloudPackage[] || []
+	const websitePackages: IPowercloudPackage[] =
+		(data?.data?.data as IPowercloudPackage[]) || []
 
 	if (isLoading) {
 		return (
