@@ -1,21 +1,21 @@
-import React, { useRef } from 'react'
+import { axios, powerCloudAxios } from '@/api'
+import { identityAtom } from '@/pages/AdminApp/Atom/atom'
 import {
 	allowed_template_options,
 	host_positions,
-	kebab,
 	is_kiwissec,
+	kebab,
 } from '@/utils'
-import { Select, Form, Button, notification, Tabs } from 'antd'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { axios } from '@/api'
 import {
 	CloudOutlined,
 	GlobalOutlined,
 	LoadingOutlined,
 } from '@ant-design/icons'
-import { identityAtom } from '@/pages/AdminApp/Atom/atom'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, Card, Col, Empty, Form, Row, Select, Spin, Tabs, Tag, notification } from 'antd'
 import { TabsProps } from 'antd/lib'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { useRef } from 'react'
 import {
 	EPowercloudIdentityStatusEnum,
 	powercloudIdentityAtom,
@@ -29,16 +29,161 @@ type TManualSiteSyncParams = {
 	host_position: string
 }
 
+interface IPowercloudPackage {
+	id: string
+	name: string
+	price: string
+	description: string
+	userId: string | null
+	cupLimit: string
+	cupRequest: string
+	memoryLimit: string
+	memoryRequest: string
+	mysqlSize: string
+	wordpressSize: string
+	isPublic: boolean
+	isActive: boolean
+	createdAt: string
+	deletedAt: string | null
+	updatedAt: string
+}
+
+const PowercloudPakcageList = () => {
+	const { data, isLoading } = useQuery({
+		queryKey: ['powercloud-package-list'],
+		queryFn: () => powerCloudAxios.get(`/website-packages`),
+	})
+
+	// 確保 websitePackages 是數組
+	const websitePackages: IPowercloudPackage[] = data?.data?.data as IPowercloudPackage[] || []
+
+	if (isLoading) {
+		return (
+			<div className="flex justify-center items-center min-h-[300px]">
+				<Spin size="large" />
+			</div>
+		)
+	}
+
+	if (websitePackages.length === 0) {
+		return (
+			<div className="flex justify-center items-center min-h-[300px]">
+				<Empty description="暫無方案" />
+			</div>
+		)
+	}
+
+	return (
+		<div className="p-4">
+			<Row gutter={[16, 16]}>
+				{websitePackages.map((pkg) => (
+					<Col xs={24} sm={12} lg={8} xl={6} key={pkg.id}>
+						<Card
+							title={
+								<div className="flex justify-between items-center">
+									<span className="text-lg font-semibold">{pkg.name}</span>
+									<div className="flex gap-2">
+										{pkg.isPublic && (
+											<Tag color="blue" className="m-0">
+												公開
+											</Tag>
+										)}
+										{pkg.isActive ? (
+											<Tag color="green" className="m-0">
+												啟用
+											</Tag>
+										) : (
+											<Tag color="red" className="m-0">
+												停用
+											</Tag>
+										)}
+									</div>
+								</div>
+							}
+							hoverable
+							className="h-full"
+						>
+							<div className="space-y-3">
+								<div className="text-2xl font-bold text-primary">
+									NT$ {pkg.price}
+								</div>
+
+								{pkg.description && (
+									<div className="text-gray-600 text-sm min-h-[40px]">
+										{pkg.description}
+									</div>
+								)}
+
+								<div className="pt-3 space-y-2 border-t">
+									<div className="flex justify-between text-sm">
+										<span className="text-gray-500">CPU 限制:</span>
+										<span className="font-medium">{pkg.cupLimit}</span>
+									</div>
+									<div className="flex justify-between text-sm">
+										<span className="text-gray-500">CPU 請求:</span>
+										<span className="font-medium">{pkg.cupRequest}</span>
+									</div>
+									<div className="flex justify-between text-sm">
+										<span className="text-gray-500">記憶體限制:</span>
+										<span className="font-medium">{pkg.memoryLimit}</span>
+									</div>
+									<div className="flex justify-between text-sm">
+										<span className="text-gray-500">記憶體請求:</span>
+										<span className="font-medium">{pkg.memoryRequest}</span>
+									</div>
+									<div className="flex justify-between text-sm">
+										<span className="text-gray-500">MySQL 大小:</span>
+										<span className="font-medium">{pkg.mysqlSize}</span>
+									</div>
+									<div className="flex justify-between text-sm">
+										<span className="text-gray-500">WordPress 大小:</span>
+										<span className="font-medium">{pkg.wordpressSize}</span>
+									</div>
+								</div>
+							</div>
+						</Card>
+					</Col>
+				))}
+			</Row>
+		</div>
+	)
+}
+
+const powercloudItems: TabsProps['items'] = [
+	{
+		key: 'open-site',
+		icon: '',
+		label: '開站',
+		children: 'open-site',
+		forceRender: false,
+	},
+	{
+		key: 'website-package-list',
+		icon: '',
+		label: '方案',
+		children: <PowercloudPakcageList />,
+		forceRender: false,
+	},
+]
+
 const Powercloud = () => {
 	const powercloudIdentity = useAtomValue(powercloudIdentityAtom)
 	const setTab = useSetAtom(setTabAtom)
 
-	const handleRedirectToPowercloudAuth = () => setTab(TabKeyEnum.POWERCLOUD_AUTH)
+	const handleRedirectToPowercloudAuth = () =>
+		setTab(TabKeyEnum.POWERCLOUD_AUTH)
 
-	if (powercloudIdentity.status !== EPowercloudIdentityStatusEnum.LOGGED_IN || !powercloudIdentity.apiKey) {
-		return (<Button variant='link' danger onClick={handleRedirectToPowercloudAuth}>登入新架構</Button>)
+	if (
+		powercloudIdentity.status !== EPowercloudIdentityStatusEnum.LOGGED_IN ||
+		!powercloudIdentity.apiKey
+	) {
+		return (
+			<Button variant="link" danger onClick={handleRedirectToPowercloudAuth}>
+				登入新架構
+			</Button>
+		)
 	}
-	return 'powercloud content'
+	return <Tabs items={powercloudItems} tabPosition="left" />
 }
 
 const WPCD = () => {

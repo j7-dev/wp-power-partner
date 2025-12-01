@@ -3,13 +3,21 @@ import axios, { AxiosInstance } from 'axios'
 import { POWERCLOUD_API, apiTimeout } from '@/utils'
 import { notification } from 'antd'
 
-const instance: AxiosInstance = axios.create({
-	baseURL: POWERCLOUD_API,
-	timeout: parseInt(apiTimeout, 10),
-	headers: {
-		'Content-Type': 'application/json',
-	},
-})
+async function generateAxiosInstance(): Promise<AxiosInstance> {
+	const identity = await localStorage.getItem('power-partner-powercloud-identity')
+	const apiKey = identity ? JSON.parse(identity).apiKey : ''
+
+	return axios.create({
+		baseURL: POWERCLOUD_API,
+		timeout: parseInt(apiTimeout, 10),
+		headers: {
+			'Content-Type': 'application/json',
+			'X-API-Key': `${apiKey}`,
+		},
+	})
+}
+
+const instance = await generateAxiosInstance()
 
 instance.interceptors.response.use(
 	function (response) {
