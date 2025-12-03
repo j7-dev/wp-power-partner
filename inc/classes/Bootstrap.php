@@ -116,8 +116,8 @@ final class Bootstrap {
 					'disable_site_after_n_days' => (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' ),
 					't'                         => $this->t,
 					'cloudBaseUrl'              => $this->base_url,
-					'POWERCLOUD_API'            => 'https://api.wpsite.pro', // production powercloud api
-					// 'POWERCLOUD_API'            => 'http://localhost:5000', // local powercloud api
+					// 'POWERCLOUD_API'            => 'https://api.wpsite.pro', // production powercloud api
+					'POWERCLOUD_API'            => 'http://localhost:5000', // local powercloud api
 					'is_kiwissec'               => strpos( \site_url(), 'kiwissec.io' ) !== false,
 					'myAccountUrl'              => \get_permalink( \wc_get_page_id( 'myaccount' ) ),
 				],

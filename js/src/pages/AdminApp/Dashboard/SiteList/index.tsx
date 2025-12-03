@@ -10,8 +10,10 @@ import {
 	CloudOutlined,
 	LinkOutlined,
 	SettingOutlined,
-	CopyOutlined,
 	ReloadOutlined,
+	DeleteOutlined,
+	StopOutlined,
+	SyncOutlined,
 } from '@ant-design/icons'
 import {
 	Tabs,
@@ -22,14 +24,13 @@ import {
 	Space,
 	Tooltip,
 	Typography,
-	message,
 	Spin,
 	Empty,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
 	EPowercloudIdentityStatusEnum,
 	powercloudIdentityAtom,
@@ -109,13 +110,14 @@ const PowercloudContent = () => {
 			),
 	})
 
+	const { mutate: deleteWebsite } = useMutation({
+		mutationFn: (id: string) => {
+			return powerCloudInstance.delete(`/wordpress/${id}`)
+		},
+	})
+
 	const websites = data?.data?.data || []
 	const paginationInfo = data?.data?.pagination
-
-	const handleCopy = (text: string, label: string) => {
-		navigator.clipboard.writeText(text)
-		message.success(`已複製 ${label}`)
-	}
 
 	const columns: ColumnsType<IWebsite> = [
 		{
@@ -172,7 +174,7 @@ const PowercloudContent = () => {
 			ellipsis: true,
 			width: 300,
 			render: (email: string) => (
-				<Text copyable ellipsis >
+				<Text copyable ellipsis>
 					{email}
 				</Text>
 			),
@@ -181,18 +183,7 @@ const PowercloudContent = () => {
 			title: '管理員密碼',
 			key: 'adminPassword',
 			render: (_, record) => (
-				<Space size={4}>
-					<Tooltip title="點擊複製密碼">
-						<Button
-							type="link"
-							size="small"
-							style={{ padding: 0, height: 'auto', fontSize: 12 }}
-							onClick={() => handleCopy(record.adminPassword, '密碼')}
-						>
-							複製密碼<CopyOutlined /> 
-						</Button>
-					</Tooltip>
-				</Space>
+				<Text copyable={{ text: record.adminPassword }}>••••••••</Text>
 			),
 		},
 		{
@@ -223,30 +214,70 @@ const PowercloudContent = () => {
 			title: '操作',
 			key: 'actions',
 			fixed: 'right',
-			render: (_, record) => (
-				<Space>
-					<Tooltip title="前往後台">
-						<Button
-							type="link"
-							size="small"
-							icon={<SettingOutlined />}
-							href={`https://${record.domain}/wp-admin`}
-							target="_blank"
-						/>
-					</Tooltip>
-					<Tooltip title="前往前台">
-						<Button
-							type="link"
-							size="small"
-							icon={<LinkOutlined />}
-							href={`https://${record.domain}`}
-							target="_blank"
-						/>
-					</Tooltip>
-				</Space>
-			),
+			render: (_, record) => {
+				console.log('record', record)
+				return (
+					<Space>
+						<Tooltip title="前往後台">
+							<Button
+								type="link"
+								size="small"
+								icon={<SettingOutlined />}
+								href={`https://${record.domain}/wp-admin`}
+								target="_blank"
+							/>
+						</Tooltip>
+						{record.status !== 'creating' && (
+							<Tooltip title="刪除站台">
+								<Button
+									type="link"
+									size="small"
+									danger
+									icon={<DeleteOutlined />}
+									onClick={() => handleDelete(record.id)}
+								/>
+							</Tooltip>
+						)}
+
+						{record.status === 'running' && (
+							<Tooltip title="停止站台">
+								<Button
+									type="link"
+									size="small"
+									danger
+									icon={<StopOutlined />}
+									onClick={() => handleStop(record.id)}
+								/>
+							</Tooltip>
+						)}
+						{record.status === 'stopped' && (
+							<Tooltip title="啟動站台">
+								<Button
+									type="link"
+									size="small"
+									icon={<SyncOutlined />}
+									onClick={() => handleStart(record.id)}
+									className="animate-spin"
+								/>
+							</Tooltip>
+						)}
+					</Space>
+				)
+			},
 		},
 	]
+
+	const handleDelete = (id: string) => {
+		deleteWebsite(id)
+	}
+
+	const handleStop = (id: string) => {
+		console.log(id)
+	}
+
+	const handleStart = (id: string) => {
+		console.log(id)
+	}
 
 	if (isLoading) {
 		return (
