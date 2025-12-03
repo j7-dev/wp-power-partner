@@ -18,6 +18,7 @@ import {
 	Col,
 	Empty,
 	Form,
+	Input,
 	Row,
 	Select,
 	Spin,
@@ -35,6 +36,7 @@ import {
 import { TabKeyEnum, setTabAtom } from '../../Atom/tab.atom'
 import { generateRandomPassword } from '@/utils/functions/password'
 import { generateRandomWpsiteProConfig } from '@/utils/functions/wordpress'
+import { AxiosResponse } from 'axios'
 
 const { Item } = Form
 
@@ -184,6 +186,7 @@ type TPowercloudOpenSiteParams = {
 			siteTitle: string
 		}
 	}
+	ip: string
 }
 
 const PowercloudOpenSite = () => {
@@ -195,6 +198,7 @@ const PowercloudOpenSite = () => {
 		duration: 10,
 	})
 	const powerCloudInstance = usePowerCloudAxiosWithApiKey(powerCloudAxios)
+	const identity = useAtomValue(identityAtom)
 
 	// 取得 package 列表
 	const { data: packagesData, isLoading: isLoadingPackages } = useQuery({
@@ -226,13 +230,40 @@ const PowercloudOpenSite = () => {
 				description: err?.response?.data?.message || err?.message || '未知錯誤',
 			})
 		},
-		onSuccess: () => {
-			api.success({
-				key: 'powercloud-open-site',
-				message: '開站請求已送出',
-				description: '站台正在建置中，請稍候查看',
-				duration: 5,
-			})
+		onSuccess: (response: AxiosResponse, variables) => {
+			if (response?.status >= 300) {
+				return
+			}
+
+			// 開站成功，發送郵件通知
+			// 調用發送郵件 API
+			axios
+				.post(`/${kebab}/send-site-credentials-email`, {
+					adminEmail: variables.wordpress.autoInstall.adminEmail,
+					domain: variables.domain,
+					frontUrl: `https://${variables.domain}`,
+					adminUrl: `https://${variables.domain}/wp-admin`,
+					username: variables.wordpress.autoInstall.adminUser,
+					password: variables.wordpress.autoInstall.adminPassword,
+					ip: variables.ip || '',
+				})
+				.then(() => {
+					api.success({
+						key: 'powercloud-open-site',
+						message: '開站成功並已發送郵件',
+						description: `站台 ${variables.domain} 已建置完成，帳號密碼已寄送至您的信箱`,
+						duration: 10,
+					})
+				})
+				.catch((err) => {
+					console.error('發送郵件失敗:', err)
+					api.warning({
+						key: 'powercloud-open-site',
+						message: '開站成功但郵件發送失敗',
+						description: '站台已建置完成，但郵件發送失敗，請手動記錄帳號密碼',
+						duration: 10,
+					})
+				})
 			form.resetFields()
 		},
 	})
@@ -244,7 +275,7 @@ const PowercloudOpenSite = () => {
 	const handleFinish = () => {
 		form
 			.validateFields()
-			.then((values: TPowercloudOpenSiteParams) => {
+			.then((values) => {
 				// 生成隨機配置（只調用一次）
 				const wpsiteConfig = generateRandomWpsiteProConfig()
 
@@ -256,10 +287,9 @@ const PowercloudOpenSite = () => {
 					wordpress: {
 						autoInstall: {
 							siteTitle: 'Wordpress Site',
-							adminUser: 'admin',
+							adminUser: values?.adminEmail || identity.data?.email || '',
 							adminPassword: handleGenerateRandomPassword('wordpress'),
-							adminEmail:
-								values?.wordpress?.autoInstall?.adminEmail || 'admin@example.com',
+							adminEmail: values?.adminEmail || identity.data?.email || '',
 						},
 					},
 					mysql: {
@@ -268,6 +298,7 @@ const PowercloudOpenSite = () => {
 							password: handleGenerateRandomPassword('mysql'),
 						},
 					},
+					ip: '163.61.60.30',
 				})
 			})
 			.catch((error) => {
@@ -303,10 +334,24 @@ const PowercloudOpenSite = () => {
 				</Form.Item>
 
 				<Form.Item
+					label="開站完成後信息寄送Email"
+					name={['adminEmail']}
+					rules={[
+						{ required: true, message: '請輸入開站完成後信息寄送Email的信箱' },
+					]}
+				>
+					<Input
+						placeholder="請輸入開站完成後信息寄送Email的信箱"
+						disabled={isPending}
+					/>
+				</Form.Item>
+
+				<Form.Item
 					label="是否通配符域名"
 					name={['isWildcard']}
 					initialValue={true}
 					valuePropName="checked"
+					className="hidden"
 				>
 					<input type="checkbox" disabled={isPending} />
 				</Form.Item>
@@ -323,17 +368,17 @@ const PowercloudOpenSite = () => {
 
 const powercloudItems: TabsProps['items'] = [
 	{
-		key: 'open-site',
-		icon: '',
-		label: '開站',
-		children: <PowercloudOpenSite />,
-		forceRender: false,
-	},
-	{
 		key: 'website-package-list',
 		icon: '',
 		label: '方案',
 		children: <PowercloudPakcageList />,
+		forceRender: false,
+	},
+	{
+		key: 'open-site',
+		icon: '',
+		label: '開站',
+		children: <PowercloudOpenSite />,
 		forceRender: false,
 	},
 ]

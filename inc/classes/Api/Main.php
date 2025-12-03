@@ -77,6 +77,18 @@ final class Main {
 
 		\register_rest_route(
 			Plugin::$kebab,
+			'send-site-credentials-email',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'send_site_credentials_email_callback' ],
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			]
+		);
+
+		\register_rest_route(
+			Plugin::$kebab,
 			'emails',
 			[
 				'methods'             => 'POST',
@@ -206,7 +218,8 @@ final class Main {
 				$body    = Token::replace( $body, $tokens );
 
 				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
-				$result        = \wp_mail(
+
+				$result = \wp_mail(
 					$customer_email,
 					$subject,
 					\wpautop( $body ),
@@ -494,6 +507,134 @@ final class Main {
 		}
 	}
 
+	/**
+	 * 發送站點帳號密碼郵件
+	 * 供前端手動開站後調用
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function send_site_credentials_email_callback( $request ): \WP_REST_Response {
+
+		try {
+			$body_params = $request->get_json_params() ?? [];
+
+			// 獲取當前用戶
+			$current_user_id = \get_current_user_id();
+			$current_user    = \get_user_by( 'id', $current_user_id );
+
+			if ( ! $current_user ) {
+				return new \WP_REST_Response(
+					[
+						'status'  => 500,
+						'message' => '找不到當前用戶',
+					],
+					500
+				);
+			}
+
+			// 獲取郵件相關資訊
+			$admin_email = $body_params['adminEmail'] ?? $current_user->user_email;
+			$domain      = $body_params['domain'] ?? '';
+			$front_url   = $body_params['frontUrl'] ?? "https://{$domain}";
+			$admin_url   = $body_params['adminUrl'] ?? "https://{$domain}/wp-admin";
+			$username    = $body_params['username'] ?? 'admin';
+			$password    = $body_params['password'] ?? '';
+			$ip          = $body_params['ip'] ?? '';
+
+			if ( empty( $domain ) || empty( $password ) ) {
+				return new \WP_REST_Response(
+					[
+						'status'  => 400,
+						'message' => '缺少必要參數：domain 或 password',
+					],
+					400
+				);
+			}
+
+			// 準備 Token
+			$tokens                 = [];
+			$tokens['FIRST_NAME']   = $current_user->first_name ?: '網站使用者';
+			$tokens['LAST_NAME']    = $current_user->last_name ?: '';
+			$tokens['NICE_NAME']    = $current_user->user_nicename ?: '';
+			$tokens['EMAIL']        = $admin_email;
+			$tokens['DOMAIN']       = $domain;
+			$tokens['FRONTURL']     = $front_url;
+			$tokens['ADMINURL']     = $admin_url;
+			$tokens['SITEUSERNAME'] = $username;
+			$tokens['SITEPASSWORD'] = $password;
+			$tokens['IPV4']         = $ip;
+
+			// 取得 site_sync 的 email 模板
+			$email_service = EmailService::instance();
+			$emails        = $email_service->get_emails( 'site_sync' );
+
+			if ( empty( $emails ) ) {
+				return new \WP_REST_Response(
+					[
+						'status'  => 404,
+						'message' => '找不到郵件模板，請先設定 action_name 為 site_sync 的郵件模板',
+					],
+					404
+				);
+			}
+
+			$success_emails = [];
+			$failed_emails  = [];
+
+			foreach ( $emails as $email ) {
+				// 取得 subject
+				$subject = $email->subject;
+				$subject = empty( $subject ) ? $email_service->default->subject : $subject;
+
+				// 取得 message
+				$body = $email->body;
+				$body = empty( $body ) ? $email_service->default->body : $body;
+
+				// Replace tokens in email
+				$subject = Token::replace( $subject, $tokens );
+				$body    = Token::replace( $body, $tokens );
+
+
+
+				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+
+				$result = \wp_mail(
+					$admin_email,
+					$subject,
+					\wpautop( $body ),
+					$email_headers
+				);
+
+				if ( $result ) {
+					$success_emails[] = $email->action_name;
+				} else {
+					$failed_emails[] = $email->action_name;
+				}
+			}
+
+			return new \WP_REST_Response(
+				[
+					'status'  => 200,
+					'message' => '郵件發送完成',
+					'data'    => [
+						'to'             => $admin_email,
+						'success_emails' => $success_emails,
+						'failed_emails'  => $failed_emails,
+					],
+				],
+				200
+			);
+		} catch ( \Throwable $th ) {
+			return new \WP_REST_Response(
+				[
+					'status'  => 500,
+					'message' => '郵件發送失敗: ' . $th->getMessage(),
+				],
+				500
+			);
+		}
+	}
 
 	/**
 	 * 更新設定
