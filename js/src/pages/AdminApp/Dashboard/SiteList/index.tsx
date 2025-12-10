@@ -118,7 +118,7 @@ const PodSizeEditor = ({
 	const dailyCostPerPod = +(+(packagePrice ?? 0) / 365).toFixed(2)
 	const dailyCost = +(dailyCostPerPod * (1 + 0.6 * (value - 1))).toFixed(2)
 
-	useEffect(()=> {
+	useEffect(() => {
 		setValue(initialValue)
 	}, [initialValue])
 
@@ -136,13 +136,24 @@ const PodSizeEditor = ({
 					title="確認更新容器數量"
 					description={
 						<div className="flex flex-col gap-1">
-							<div>確定要將站台 <strong>{domain}</strong> 的容器數量更新為 <strong>{value}</strong> 個嗎？</div>
+							<div>
+								確定要將站台 <strong>{domain}</strong> 的容器數量更新為{' '}
+								<strong>{value}</strong> 個嗎？
+							</div>
 							<div className="mt-2 text-xs text-gray-500">
-								<div>計算公式：每日扣款價格 X 1 + 每日扣款價格 X 額外容器數量 X 0.6</div>
-								<div>= {dailyCostPerPod} X 1 + {dailyCostPerPod} X ({value} - 1) X 0.6</div>
+								<div>
+									計算公式：每日扣款價格 X 1 + 每日扣款價格 X 額外容器數量 X 0.6
+								</div>
+								<div>
+									= {dailyCostPerPod} X 1 + {dailyCostPerPod} X ({value} - 1) X
+									0.6
+								</div>
 								<div>= NT$ {dailyCost}/日</div>
 							</div>
-							<div className="mt-2 font-medium">每日預計扣款：<span className="text-blue-600">NT$ {dailyCost}/日</span></div>
+							<div className="mt-2 font-medium">
+								每日預計扣款：
+								<span className="text-blue-600">NT$ {dailyCost}/日</span>
+							</div>
 						</div>
 					}
 					onConfirm={() => onUpdate(value)}
@@ -188,7 +199,9 @@ const PowercloudContent = () => {
 
 	const { mutate: updatePodSize } = useMutation({
 		mutationFn: ({ id, phpPodSize }: { id: string; phpPodSize: number }) => {
-			return powerCloudInstance.patch(`/wordpress/${id}/pod-size`, { phpPodSize })
+			return powerCloudInstance.patch(`/wordpress/${id}/pod-size`, {
+				phpPodSize,
+			})
 		},
 	})
 
@@ -221,6 +234,7 @@ const PowercloudContent = () => {
 			title: '狀態',
 			dataIndex: 'status',
 			key: 'status',
+			width: 100,
 			render: (status: string) => (
 				<Tag color={statusColorMap[status] || 'default'}>
 					{statusTextMap[status] || status}
@@ -231,6 +245,7 @@ const PowercloudContent = () => {
 			title: '方案',
 			dataIndex: 'package',
 			key: 'package',
+			width: 150,
 			render: (pkg: IWebsite['package']) =>
 				pkg ? (
 					<Space direction="vertical" size={0}>
@@ -244,9 +259,29 @@ const PowercloudContent = () => {
 				),
 		},
 		{
+			title: '網站擁有者',
+			dataIndex: 'user',
+			key: 'user',
+			width: 250,
+			render: (user: IWebsite['user']) => (
+				<>
+					<div>
+						<Text>
+							{user?.firstName ?? ''} {user?.lastName ?? ''}
+						</Text>
+					</div>
+
+					<Text type="secondary" style={{ fontSize: 12 }}>
+						{user?.email ?? ''}
+					</Text>
+				</>
+			),
+		},
+		{
 			title: '每日扣款',
 			dataIndex: 'dailyCost',
 			key: 'dailyCost',
+			width: 150,
 			render: (dailyCost: number) => {
 				return <Text>NT$ {dailyCost}/日</Text>
 			},
@@ -255,6 +290,7 @@ const PowercloudContent = () => {
 			title: '容器數量',
 			dataIndex: 'phpPodSize',
 			key: 'phpPodSize',
+			width: 150,
 			render: (phpPodSize: number, record) => (
 				<PodSizeEditor
 					initialValue={phpPodSize ?? 1}
@@ -265,11 +301,11 @@ const PowercloudContent = () => {
 			),
 		},
 		{
-			title: '管理員信箱',
+			title: 'Wordpress 管理員信箱',
 			dataIndex: 'adminEmail',
 			key: 'adminEmail',
 			ellipsis: true,
-			width: 300,
+			width: 250,
 			render: (email: string) => (
 				<Text copyable ellipsis>
 					{email}
@@ -277,8 +313,9 @@ const PowercloudContent = () => {
 			),
 		},
 		{
-			title: '管理員密碼',
+			title: 'Wordpress 管理員密碼',
 			key: 'adminPassword',
+			width: 250,
 			render: (_, record) => (
 				<Text copyable={{ text: record.adminPassword }}>••••••••</Text>
 			),
@@ -287,6 +324,7 @@ const PowercloudContent = () => {
 			title: 'IP 位址',
 			dataIndex: 'ipAddress',
 			key: 'ipAddress',
+			width: 150,
 			render: (ipAddress: string) => (
 				<Text copyable={{ text: ipAddress }}>{ipAddress}</Text>
 			),
@@ -295,6 +333,7 @@ const PowercloudContent = () => {
 			title: '建立時間',
 			dataIndex: 'createdAt',
 			key: 'createdAt',
+			width: 200,
 			render: (date: string) => (
 				<Text type="secondary">
 					{new Date(date).toLocaleString('zh-TW', {
@@ -311,6 +350,7 @@ const PowercloudContent = () => {
 			title: '操作',
 			key: 'actions',
 			fixed: 'right',
+			width: 150,
 			render: (_, record) => {
 				return (
 					<Space>
