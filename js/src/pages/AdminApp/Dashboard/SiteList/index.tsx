@@ -217,17 +217,17 @@ const PowercloudContent = () => {
 			width: 300,
 			render: (name: string, record) => (
 				<Space direction="vertical" size={0}>
-					<Text strong ellipsis>
-						{name}
-					</Text>
-					<Link
-						href={`https://${record.domain}`}
-						target="_blank"
-						style={{ fontSize: 12 }}
-					>
-						<LinkOutlined /> {record.domain}
-					</Link>
-				</Space>
+				<Link
+					href={`https://${record.domain}`}
+					target="_blank"
+					style={{ fontSize: 14 }}
+				>
+					<LinkOutlined /> {record.domain}
+				</Link>
+				<Text className="text-xs text-gray-500">
+					{name}
+				</Text>
+			</Space>
 			),
 		},
 		{
@@ -245,7 +245,7 @@ const PowercloudContent = () => {
 			title: '方案',
 			dataIndex: 'package',
 			key: 'package',
-			width: 150,
+			width: 200,
 			render: (pkg: IWebsite['package']) =>
 				pkg ? (
 					<Space direction="vertical" size={0}>

@@ -28,7 +28,7 @@ import {
 } from 'antd'
 import { TabsProps } from 'antd/lib'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
 	EPowercloudIdentityStatusEnum,
 	powercloudIdentityAtom,
@@ -37,6 +37,7 @@ import { TabKeyEnum, setTabAtom } from '../../Atom/tab.atom'
 import { generateRandomPassword } from '@/utils/functions/password'
 import { generateRandomWpsiteProConfig } from '@/utils/functions/wordpress'
 import { AxiosResponse } from 'axios'
+import { atom } from 'jotai'
 
 const { Item } = Form
 
@@ -64,8 +65,17 @@ interface IPowercloudPackage {
 	updatedAt: string
 }
 
+// 選中的方案 Atom
+const selectedPackageIdAtom = atom<string | null>(null)
+// Powercloud 內部 tab 的狀態
+const powercloudActiveTabAtom = atom<string>('website-package-list')
+
 const PowercloudPakcageList = () => {
 	const powerCloudInstance = usePowerCloudAxiosWithApiKey(powerCloudAxios)
+	const setSelectedPackageId = useSetAtom(selectedPackageIdAtom)
+	const selectedPackageId = useAtomValue(selectedPackageIdAtom)
+	const setPowercloudActiveTab = useSetAtom(powercloudActiveTabAtom)
+
 	const { data, isLoading } = useQuery({
 		queryKey: ['powercloud-package-list'],
 		queryFn: () => powerCloudInstance.get(`/website-packages`),
@@ -73,6 +83,12 @@ const PowercloudPakcageList = () => {
 
 	const websitePackages: IPowercloudPackage[] =
 		(data?.data?.data as IPowercloudPackage[]) || []
+
+	const handleSelectPackage = (packageId: string) => {
+		setSelectedPackageId(packageId)
+		// 切換到開站 tab
+		setPowercloudActiveTab('open-site')
+	}
 
 	if (isLoading) {
 		return (
@@ -118,7 +134,12 @@ const PowercloudPakcageList = () => {
 								</div>
 							}
 							hoverable
-							className="h-full"
+							className={`h-full cursor-pointer transition-all ${
+								selectedPackageId === pkg.id
+									? 'border-2 border-primary shadow-lg'
+									: 'border'
+							}`}
+							onClick={() => handleSelectPackage(pkg.id)}
 						>
 							<div className="space-y-3">
 								<div className="text-2xl font-bold text-primary">
@@ -157,6 +178,18 @@ const PowercloudPakcageList = () => {
 										<span className="font-medium">{pkg.wordpressSize}</span>
 									</div>
 								</div>
+
+								<Button
+									type={selectedPackageId === pkg.id ? 'primary' : 'default'}
+									block
+									className="mt-4"
+									onClick={(e) => {
+										e.stopPropagation()
+										handleSelectPackage(pkg.id)
+									}}
+								>
+									{selectedPackageId === pkg.id ? '已選擇' : '選擇此方案'}
+								</Button>
 							</div>
 						</Card>
 					</Col>
@@ -186,6 +219,7 @@ type TPowercloudOpenSiteParams = {
 			siteTitle: string
 		}
 	}
+	ip?: string
 }
 
 const PowercloudOpenSite = () => {
@@ -198,6 +232,7 @@ const PowercloudOpenSite = () => {
 	})
 	const powerCloudInstance = usePowerCloudAxiosWithApiKey(powerCloudAxios)
 	const identity = useAtomValue(identityAtom)
+	const selectedPackageId = useAtomValue(selectedPackageIdAtom)
 
 	// 取得 package 列表
 	const { data: packagesData, isLoading: isLoadingPackages } = useQuery({
@@ -207,6 +242,15 @@ const PowercloudOpenSite = () => {
 
 	const websitePackages: IPowercloudPackage[] =
 		(packagesData?.data?.data as IPowercloudPackage[]) || []
+
+	// 當選中的方案改變時，自動設置表單值
+	useEffect(() => {
+		if (selectedPackageId) {
+			form.setFieldsValue({
+				packageId: selectedPackageId,
+			})
+		}
+	}, [selectedPackageId, form])
 
 	const { mutate: createWordPress, isPending } = useMutation({
 		mutationFn: (params: TPowercloudOpenSiteParams) => {
@@ -386,6 +430,8 @@ const powercloudItems: TabsProps['items'] = [
 const Powercloud = () => {
 	const powercloudIdentity = useAtomValue(powercloudIdentityAtom)
 	const setTab = useSetAtom(setTabAtom)
+	const activeTab = useAtomValue(powercloudActiveTabAtom)
+	const setPowercloudActiveTab = useSetAtom(powercloudActiveTabAtom)
 
 	const handleRedirectToPowercloudAuth = () =>
 		setTab(TabKeyEnum.POWERCLOUD_AUTH)
@@ -400,7 +446,14 @@ const Powercloud = () => {
 			</Button>
 		)
 	}
-	return <Tabs items={powercloudItems} tabPosition="left" />
+	return (
+		<Tabs
+			items={powercloudItems}
+			tabPosition="left"
+			activeKey={activeTab}
+			onChange={(key) => setPowercloudActiveTab(key)}
+		/>
+	)
 }
 
 const WPCD = () => {
