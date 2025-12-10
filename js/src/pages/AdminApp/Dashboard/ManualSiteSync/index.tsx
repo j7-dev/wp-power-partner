@@ -186,7 +186,6 @@ type TPowercloudOpenSiteParams = {
 			siteTitle: string
 		}
 	}
-	ip: string
 }
 
 const PowercloudOpenSite = () => {
@@ -279,17 +278,19 @@ const PowercloudOpenSite = () => {
 				// 生成隨機配置（只調用一次）
 				const wpsiteConfig = generateRandomWpsiteProConfig()
 
+				const {adminEmail, ...data} = values
+
 				createWordPress({
-					...values,
+					...data,
 					name: wpsiteConfig.name,
 					namespace: wpsiteConfig.namespace,
 					domain: wpsiteConfig.domain,
 					wordpress: {
 						autoInstall: {
 							siteTitle: 'Wordpress Site',
-							adminUser: values?.adminEmail || identity.data?.email || '',
+							adminUser: adminEmail || identity.data?.email || '',
 							adminPassword: handleGenerateRandomPassword('wordpress'),
-							adminEmail: values?.adminEmail || identity.data?.email || '',
+							adminEmail: adminEmail || identity.data?.email || '',
 						},
 					},
 					mysql: {
@@ -298,7 +299,6 @@ const PowercloudOpenSite = () => {
 							password: handleGenerateRandomPassword('mysql'),
 						},
 					},
-					ip: '163.61.60.30',
 				})
 			})
 			.catch((error) => {

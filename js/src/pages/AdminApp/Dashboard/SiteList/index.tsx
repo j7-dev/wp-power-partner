@@ -26,6 +26,8 @@ import {
 	Typography,
 	Spin,
 	Empty,
+	Popconfirm,
+	InputNumber,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAtomValue, useSetAtom } from 'jotai'
@@ -83,6 +85,7 @@ interface IWebsite {
 		lastName: string
 		email: string
 	} | null
+	phpPodSize: number
 	ipAddress: string
 	createdAt: string
 	updatedAt: string
@@ -96,6 +99,61 @@ interface IWebsiteResponse {
 		limit: number
 		totalPages: number
 	}
+}
+
+// 容器數量編輯組件
+const PodSizeEditor = ({
+	initialValue,
+	domain,
+	packagePrice,
+	onUpdate,
+}: {
+	initialValue: number
+	domain: string
+	packagePrice?: string
+	onUpdate: (value: number) => void
+}) => {
+	const [value, setValue] = useState(initialValue)
+
+	const dailyCostPerPod = +(+(packagePrice ?? 0) / 365).toFixed(2)
+	const dailyCost = +(dailyCostPerPod * (1 + 0.6 * (value - 1))).toFixed(2)
+
+	useEffect(()=> {
+		setValue(initialValue)
+	}, [initialValue])
+
+	return (
+		<div className="flex gap-2 items-center">
+			<InputNumber
+				min={1}
+				max={10}
+				value={value}
+				onChange={(v) => setValue(v ?? 1)}
+				size="small"
+			/>
+			<Tooltip title="更新容器數量">
+				<Popconfirm
+					title="確認更新容器數量"
+					description={
+						<div className="flex flex-col gap-1">
+							<div>確定要將站台 <strong>{domain}</strong> 的容器數量更新為 <strong>{value}</strong> 個嗎？</div>
+							<div className="mt-2 text-xs text-gray-500">
+								<div>計算公式：每日扣款價格 X 1 + 每日扣款價格 X 額外容器數量 X 0.6</div>
+								<div>= {dailyCostPerPod} X 1 + {dailyCostPerPod} X ({value} - 1) X 0.6</div>
+								<div>= NT$ {dailyCost}/日</div>
+							</div>
+							<div className="mt-2 font-medium">每日預計扣款：<span className="text-blue-600">NT$ {dailyCost}/日</span></div>
+						</div>
+					}
+					onConfirm={() => onUpdate(value)}
+					okText="確認更新"
+					cancelText="取消"
+				>
+					<Button type="link" size="small" icon={<SyncOutlined />} />
+				</Popconfirm>
+			</Tooltip>
+		</div>
+	)
 }
 
 const PowercloudContent = () => {
@@ -113,6 +171,24 @@ const PowercloudContent = () => {
 	const { mutate: deleteWebsite } = useMutation({
 		mutationFn: (id: string) => {
 			return powerCloudInstance.delete(`/wordpress/${id}`)
+		},
+	})
+
+	const { mutate: startWebsite } = useMutation({
+		mutationFn: (id: string) => {
+			return powerCloudInstance.patch(`/wordpress/${id}/start`)
+		},
+	})
+
+	const { mutate: stopWebsite } = useMutation({
+		mutationFn: (id: string) => {
+			return powerCloudInstance.patch(`/wordpress/${id}/stop`)
+		},
+	})
+
+	const { mutate: updatePodSize } = useMutation({
+		mutationFn: ({ id, phpPodSize }: { id: string; phpPodSize: number }) => {
+			return powerCloudInstance.patch(`/wordpress/${id}/pod-size`, { phpPodSize })
 		},
 	})
 
@@ -168,6 +244,27 @@ const PowercloudContent = () => {
 				),
 		},
 		{
+			title: '每日扣款',
+			dataIndex: 'dailyCost',
+			key: 'dailyCost',
+			render: (dailyCost: number) => {
+				return <Text>NT$ {dailyCost}/日</Text>
+			},
+		},
+		{
+			title: '容器數量',
+			dataIndex: 'phpPodSize',
+			key: 'phpPodSize',
+			render: (phpPodSize: number, record) => (
+				<PodSizeEditor
+					initialValue={phpPodSize ?? 1}
+					domain={record.domain}
+					packagePrice={record.package?.price}
+					onUpdate={(value) => handlePodSizeChange(record.id, value)}
+				/>
+			),
+		},
+		{
 			title: '管理員信箱',
 			dataIndex: 'adminEmail',
 			key: 'adminEmail',
@@ -215,7 +312,6 @@ const PowercloudContent = () => {
 			key: 'actions',
 			fixed: 'right',
 			render: (_, record) => {
-				console.log('record', record)
 				return (
 					<Space>
 						<Tooltip title="前往後台">
@@ -227,39 +323,56 @@ const PowercloudContent = () => {
 								target="_blank"
 							/>
 						</Tooltip>
-						{record.status !== 'creating' && (
-							<Tooltip title="刪除站台">
-								<Button
-									type="link"
-									size="small"
-									danger
-									icon={<DeleteOutlined />}
-									onClick={() => handleDelete(record.id)}
-								/>
-							</Tooltip>
-						)}
-
-						{record.status === 'running' && (
-							<Tooltip title="停止站台">
-								<Button
-									type="link"
-									size="small"
-									danger
-									icon={<StopOutlined />}
-									onClick={() => handleStop(record.id)}
-								/>
-							</Tooltip>
-						)}
 						{record.status === 'stopped' && (
-							<Tooltip title="啟動站台">
-								<Button
-									type="link"
-									size="small"
-									icon={<SyncOutlined />}
-									onClick={() => handleStart(record.id)}
-									className="animate-spin"
-								/>
-							</Tooltip>
+							<Popconfirm
+								title="確認啟動站台"
+								description={`確定要啟動站台 ${record.domain} 嗎？`}
+								onConfirm={() => handleStart(record.id)}
+								okText="確認啟動"
+								cancelText="取消"
+							>
+								<Tooltip title="啟動站台">
+									<Button type="link" size="small" icon={<SyncOutlined />} />
+								</Tooltip>
+							</Popconfirm>
+						)}
+						{record.status === 'running' && (
+							<Popconfirm
+								title="確認停止站台"
+								description={`確定要停止站台 ${record.domain} 嗎？`}
+								onConfirm={() => handleStop(record.id)}
+								okText="確認停止"
+								cancelText="取消"
+								okButtonProps={{ danger: true }}
+							>
+								<Tooltip title="停止站台">
+									<Button
+										type="link"
+										size="small"
+										danger
+										icon={<StopOutlined />}
+									/>
+								</Tooltip>
+							</Popconfirm>
+						)}
+						{record.status !== 'creating' && (
+							<Popconfirm
+								title="確認刪除站台"
+								description={`確定要刪除站台 ${record.domain} 嗎？此操作無法復原。`}
+								onConfirm={() => handleDelete(record.id)}
+								okText="確認刪除"
+								cancelText="取消"
+								okButtonProps={{ danger: true }}
+							>
+								<Tooltip title="刪除站台">
+									<Button
+										type="link"
+										size="small"
+										danger
+										icon={<DeleteOutlined />}
+									/>
+								</Tooltip>
+							</Popconfirm>
 						)}
 					</Space>
 				)
@@ -272,11 +385,15 @@ const PowercloudContent = () => {
 	}
 
 	const handleStop = (id: string) => {
-		console.log(id)
+		stopWebsite(id)
 	}
 
 	const handleStart = (id: string) => {
-		console.log(id)
+		startWebsite(id)
+	}
+
+	const handlePodSizeChange = (id: string, value: number) => {
+		updatePodSize({ id, phpPodSize: value })
 	}
 
 	if (isLoading) {
