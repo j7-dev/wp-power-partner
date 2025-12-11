@@ -14,6 +14,7 @@ import {
 	DeleteOutlined,
 	StopOutlined,
 	SyncOutlined,
+	EditOutlined,
 } from '@ant-design/icons'
 import {
 	Tabs,
@@ -28,6 +29,11 @@ import {
 	Empty,
 	Popconfirm,
 	InputNumber,
+	Modal,
+	Form,
+	Input,
+	Alert,
+	message,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAtomValue, useSetAtom } from 'jotai'
@@ -170,6 +176,9 @@ const PodSizeEditor = ({
 const PowercloudContent = () => {
 	const powerCloudInstance = usePowerCloudAxiosWithApiKey(powerCloudAxios)
 	const [pagination, setPagination] = useState({ page: 1, limit: 10 })
+	const [isChangeDomainModalOpen, setIsChangeDomainModalOpen] = useState(false)
+	const [selectedWebsite, setSelectedWebsite] = useState<IWebsite | null>(null)
+	const [form] = Form.useForm()
 
 	const { data, isLoading, refetch, isFetching } = useQuery({
 		queryKey: ['powercloud-websites', pagination.page, pagination.limit],
@@ -202,6 +211,23 @@ const PowercloudContent = () => {
 			return powerCloudInstance.patch(`/wordpress/${id}/pod-size`, {
 				phpPodSize,
 			})
+		},
+	})
+
+	const { mutate: changeDomain, isPending: isChangingDomain } = useMutation({
+		mutationFn: ({ id, newDomain }: { id: string; newDomain: string }) => {
+			return powerCloudInstance.patch(`/wordpress/${id}/domain`, {
+				domain: newDomain,
+			})
+		},
+		onSuccess: () => {
+			message.success('域名變更成功')
+			setIsChangeDomainModalOpen(false)
+			form.resetFields()
+			refetch()
+		},
+		onError: (error: any) => {
+			message.error(`域名變更失敗: ${error?.response?.data?.message || error.message}`)
 		},
 	})
 
@@ -239,6 +265,15 @@ const PowercloudContent = () => {
 				<Tag color={statusColorMap[status] || 'default'}>
 					{statusTextMap[status] || status}
 				</Tag>
+			),
+		},
+		{
+			title: 'IP 位址',
+			dataIndex: 'ipAddress',
+			key: 'ipAddress',
+			width: 150,
+			render: (ipAddress: string) => (
+				<Text copyable={{ text: ipAddress }}>{ipAddress}</Text>
 			),
 		},
 		{
@@ -301,7 +336,7 @@ const PowercloudContent = () => {
 			),
 		},
 		{
-			title: 'Wordpress 管理員信箱',
+			title: 'WordPress 管理員信箱',
 			dataIndex: 'adminEmail',
 			key: 'adminEmail',
 			ellipsis: true,
@@ -313,20 +348,11 @@ const PowercloudContent = () => {
 			),
 		},
 		{
-			title: 'Wordpress 管理員密碼',
+			title: 'WordPress 管理員密碼',
 			key: 'adminPassword',
 			width: 250,
 			render: (_, record) => (
 				<Text copyable={{ text: record.adminPassword }}>••••••••</Text>
-			),
-		},
-		{
-			title: 'IP 位址',
-			dataIndex: 'ipAddress',
-			key: 'ipAddress',
-			width: 150,
-			render: (ipAddress: string) => (
-				<Text copyable={{ text: ipAddress }}>{ipAddress}</Text>
 			),
 		},
 		{
@@ -350,7 +376,7 @@ const PowercloudContent = () => {
 			title: '操作',
 			key: 'actions',
 			fixed: 'right',
-			width: 150,
+			width: 180,
 			render: (_, record) => {
 				return (
 					<Space>
@@ -363,6 +389,17 @@ const PowercloudContent = () => {
 								target="_blank"
 							/>
 						</Tooltip>
+						<Popconfirm
+							title="確認變更域名"
+							description={`確定要變更站台 ${record.domain} 的域名嗎？`}
+							onConfirm={() => handleShowChangeDomainModal(record)}
+							okText="確認變更"
+							cancelText="取消"
+						>
+							<Tooltip title="變更域名">
+								<Button type="link" size="small" icon={<EditOutlined />} />
+							</Tooltip>
+						</Popconfirm>
 						{record.status === 'stopped' && (
 							<Popconfirm
 								title="確認啟動站台"
@@ -436,6 +473,23 @@ const PowercloudContent = () => {
 		updatePodSize({ id, phpPodSize: value })
 	}
 
+	const handleShowChangeDomainModal = (website: IWebsite) => {
+		setSelectedWebsite(website)
+		setIsChangeDomainModalOpen(true)
+		form.setFieldsValue({ newDomain: '' })
+	}
+
+	const handleChangeDomain = () => {
+		form.validateFields().then((values) => {
+			if (selectedWebsite) {
+				changeDomain({
+					id: selectedWebsite.id,
+					newDomain: values.newDomain,
+				})
+			}
+		})
+	}
+
 	if (isLoading) {
 		return (
 			<div style={{ textAlign: 'center', padding: '60px 0' }}>
@@ -494,6 +548,54 @@ const PowercloudContent = () => {
 					},
 				}}
 			/>
+
+			<Modal
+				title="變更域名 (Domain Name)"
+				open={isChangeDomainModalOpen}
+				onCancel={() => {
+					setIsChangeDomainModalOpen(false)
+					form.resetFields()
+				}}
+				onOk={handleChangeDomain}
+				confirmLoading={isChangingDomain}
+				okText="確認變更域名"
+				cancelText="取消"
+				okButtonProps={{ danger: true }}
+			>
+				<Form form={form} layout="vertical" className="mt-8">
+					<Alert
+						message="提醒："
+						description="請先將網域 DNS 設定中的 A 紀錄 (A Record) 指向正確的 IP，再變更網域"
+						type="info"
+						showIcon
+						className="mb-4"
+					/>
+					<div className="mb-6">
+						<p className="mt-0 mb-2 text-sm font-medium">當前域名</p>
+						<div className="px-3 py-2 bg-gray-100 rounded-md border border-gray-300">
+							<Text copyable>{selectedWebsite?.domain}</Text>
+						</div>
+					</div>
+					<Form.Item
+						label="新域名"
+						name="newDomain"
+						rules={[
+							{ required: true, message: '請輸入新的 domain name' },
+							{
+								pattern:
+									/^(?!http(s)?:\/\/)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/g,
+								message: (
+									<>
+										請輸入不含 <Tag>http(s)://</Tag> 的合格的網址
+									</>
+								),
+							},
+						]}
+					>
+						<Input placeholder="example.com" />
+					</Form.Item>
+				</Form>
+			</Modal>
 		</div>
 	)
 }
