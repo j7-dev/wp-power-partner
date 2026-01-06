@@ -6,9 +6,9 @@
 export function generateWpsiteProConfig(prefix: string) {
     const randomNumber = Math.floor(Math.random() * 10000)
 	return {
-		namespace: `${prefix}-${randomNumber}-wpsite-pro`,
+		namespace: `${prefix}-${randomNumber}`,
 		domain: `${prefix}-${randomNumber}.wpsite.pro`,
-		name: `${prefix}-${randomNumber}-wpsite-pro`,
+		name: `${prefix}-${randomNumber}`,
 	}
 }
 

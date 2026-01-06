@@ -227,7 +227,9 @@ const PowercloudContent = () => {
 			refetch()
 		},
 		onError: (error: any) => {
-			message.error(`域名變更失敗: ${error?.response?.data?.message || error.message}`)
+			message.error(
+				`域名變更失敗: ${error?.response?.data?.message || error.message}`,
+			)
 		},
 	})
 
@@ -243,17 +245,15 @@ const PowercloudContent = () => {
 			width: 300,
 			render: (name: string, record) => (
 				<Space direction="vertical" size={0}>
-				<Link
-					href={`https://${record.domain}`}
-					target="_blank"
-					style={{ fontSize: 14 }}
-				>
-					<LinkOutlined /> {record.domain}
-				</Link>
-				<Text className="text-xs text-gray-500">
-					{name}
-				</Text>
-			</Space>
+					<Link
+						href={`https://${record.domain}`}
+						target="_blank"
+						style={{ fontSize: 14 }}
+					>
+						<LinkOutlined /> {record.domain}
+					</Link>
+					<Text className="text-xs text-gray-500">{name}</Text>
+				</Space>
 			),
 		},
 		{

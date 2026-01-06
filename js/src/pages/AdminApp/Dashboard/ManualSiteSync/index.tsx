@@ -331,7 +331,7 @@ const PowercloudOpenSite = () => {
 					domain: wpsiteConfig.domain,
 					wordpress: {
 						autoInstall: {
-							siteTitle: 'Wordpress Site',
+							siteTitle: 'WordPress Site',
 							adminUser: adminEmail || identity.data?.email || '',
 							adminPassword: handleGenerateRandomPassword('wordpress'),
 							adminEmail: adminEmail || identity.data?.email || '',

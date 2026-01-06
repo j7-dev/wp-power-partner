@@ -37,6 +37,7 @@ final class LinkedSites {
 		'uk_london' => '英國倫敦',
 		'sg'        => '新加坡',
 		'hk'        => '香港',
+		'canada'    => '加拿大',
 	];
 
 	/**
@@ -52,6 +53,8 @@ final class LinkedSites {
 		\add_action( 'woocommerce_save_product_variation', [ $this, 'save_variable_subscription' ], 20, 2 );
 
 		\add_action( 'admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ] );
+
+		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_tab_scripts' ], 20 );
 	}
 
 	/**
@@ -66,7 +69,7 @@ final class LinkedSites {
 		$host_position_value = \get_post_meta( $product_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
 
-		echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
+		echo '<div class="hidden options_group subscription_pricing show_if_subscription">';
 
 		$partner_id = \get_option( Connect::PARTNER_ID_OPTION_NAME );
 
@@ -165,17 +168,69 @@ final class LinkedSites {
 		$host_position_value = \get_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
 
+		$field_id = self::HOST_POSITION_FIELD_NAME . '[' . $loop . ']';
+		$tab_id   = 'host-position-tabs-' . $loop;
+
+		// 定義兩個 tab 的選項
+		$tab1_options = [
+			'jp'     => '日本',
+			'tw'     => '台灣',
+			'sg'     => '新加坡',
+			'hk'     => '香港',
+		];
+
+		$tab2_options = [
+			'us_west'   => '美西',
+			'uk_london' => '英國倫敦',
+			'canada'    => '加拿大',
+		];
+
+		// 判斷當前選中的值屬於哪個 tab
+		$active_tab = ( isset( $tab1_options[ $host_position_value ] ) ) ? 'tab1' : 'tab2';
+
+		echo '<div class="hidden form-row show_if_variable-subscription power-partner-host-tabs-wrapper" data-loop="' . \esc_attr( $loop ) . '">';
+		echo '<div class="power-partner-tabs-container">';
+		
+		// Tab 按鈕
+		echo '<div class="power-partner-tab-buttons">';
+		echo '<button type="button" class="power-partner-tab-button' . ( 'tab1' === $active_tab ? 'active' : '' ) . '" data-tab="tab1-' . \esc_attr( $loop ) . '">亞洲地區</button>';
+		echo '<button type="button" class="power-partner-tab-button' . ( 'tab2' === $active_tab ? 'active' : '' ) . '" data-tab="tab2-' . \esc_attr( $loop ) . '">其他地區</button>';
+		echo '</div>';
+
+		// Tab 1 內容
+		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? 'active' : '' ) . '" id="tab1-' . \esc_attr( $loop ) . '">';
 		\woocommerce_wp_radio(
 			[
-				'id'            => self::HOST_POSITION_FIELD_NAME . '[' . $loop . ']',
+				'id'            => $field_id . '-tab1',
+				'name'          => $field_id,
 				'label'         => '主機種類',
-				'wrapper_class' => 'form-row show_if_variable-subscription hidden [&_ul]:!flex [&_ul]:gap-x-4',
+				'wrapper_class' => 'form-field [&_ul]:!flex [&_ul]:gap-x-4',
 				'desc_tip'      => true,
 				'description'   => '不同地區的主機，預設為日本',
-				'options'       => $this->host_positions,
-				'value'         => $host_position_value,
+				'options'       => $tab1_options,
+				'value'         => ( isset( $tab1_options[ $host_position_value ] ) ) ? $host_position_value : '',
 			]
 		);
+		echo '</div>';
+
+		// Tab 2 內容
+		echo '<div class="power-partner-tab-content' . ( 'tab2' === $active_tab ? 'active' : '' ) . '" id="tab2-' . \esc_attr( $loop ) . '">';
+		\woocommerce_wp_radio(
+			[
+				'id'            => $field_id . '-tab2',
+				'name'          => $field_id,
+				'label'         => '主機種類',
+				'wrapper_class' => 'form-field [&_ul]:!flex [&_ul]:gap-x-4',
+				'desc_tip'      => true,
+				'description'   => '不同地區的主機，預設為日本',
+				'options'       => $tab2_options,
+				'value'         => ( isset( $tab2_options[ $host_position_value ] ) ) ? $host_position_value : '',
+			]
+		);
+		echo '</div>';
+
+		echo '</div>'; // .power-partner-tabs-container
+		echo '</div>'; // .power-partner-host-tabs-wrapper
 
 		self::render_linked_site_variable_subscription( $variation_id, $loop );
 	}
@@ -239,6 +294,113 @@ final class LinkedSites {
 	}
 
 
+
+	/**
+	 * Enqueue tab scripts and styles
+	 *
+	 * @param string $hook current page hook
+	 * @return void
+	 */
+	public function enqueue_tab_scripts( $hook ): void {
+		if ( ! in_array( $hook, [ 'post.php', 'post-new.php' ], true ) ) {
+			return;
+		}
+
+		// 添加內聯 CSS
+		$css = '
+		.power-partner-host-tabs-wrapper {
+			margin-bottom: 20px;
+		}
+		.power-partner-tabs-container {
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			overflow: hidden;
+		}
+		.power-partner-tab-buttons {
+			display: flex;
+			border-bottom: 1px solid #ddd;
+			background: #f9f9f9;
+		}
+		.power-partner-tab-button {
+			flex: 1;
+			padding: 12px 20px;
+			background: transparent;
+			border: none;
+			border-bottom: 2px solid transparent;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			color: #555;
+			transition: all 0.3s ease;
+		}
+		.power-partner-tab-button:hover {
+			background: #f0f0f0;
+			color: #2271b1;
+		}
+		.power-partner-tab-button.active {
+			background: #fff;
+			color: #2271b1;
+			border-bottom-color: #2271b1;
+		}
+		.power-partner-tab-content {
+			display: none;
+			padding: 20px;
+			background: #fff;
+		}
+		.power-partner-tab-content.active {
+			display: block;
+		}
+		';
+
+		\wp_add_inline_style( 'woocommerce_admin_styles', $css );
+
+		// 添加內聯 JavaScript
+		$js = "
+		(function($) {
+			$(document).ready(function() {
+				// Tab 切換功能
+				$(document).on('click', '.power-partner-tab-button', function(e) {
+					e.preventDefault();
+					var \$button = $(this);
+					var tabId = \$button.data('tab');
+					var \$wrapper = \$button.closest('.power-partner-tabs-container');
+					
+					// 更新按鈕狀態
+					\$wrapper.find('.power-partner-tab-button').removeClass('active');
+					\$button.addClass('active');
+					
+					// 更新內容顯示
+					\$wrapper.find('.power-partner-tab-content').removeClass('active');
+					\$wrapper.find('#' + tabId).addClass('active');
+				});
+				
+				// 當 radio 改變時，切換到對應的 tab 並確保同步
+				$(document).on('change', '.power-partner-host-tabs-wrapper input[type=\"radio\"]', function() {
+					var \$radio = $(this);
+					var \$wrapper = \$radio.closest('.power-partner-host-tabs-wrapper');
+					var \$tabContent = \$radio.closest('.power-partner-tab-content');
+					var tabId = \$tabContent.attr('id');
+					var \$button = \$wrapper.find('.power-partner-tab-button[data-tab=\"' + tabId + '\"]');
+					var selectedValue = \$radio.val();
+					var fieldName = \$radio.attr('name');
+					
+					// 確保所有相同 name 的 radio 中只有當前選中的被選中
+					\$wrapper.find('input[type=\"radio\"][name=\"' + fieldName + '\"]').not(\$radio).prop('checked', false);
+					
+					// 切換到對應的 tab
+					if (\$button.length) {
+						\$wrapper.find('.power-partner-tab-button').removeClass('active');
+						\$button.addClass('active');
+						\$wrapper.find('.power-partner-tab-content').removeClass('active');
+						\$tabContent.addClass('active');
+					}
+				});
+			});
+		})(jQuery);
+		";
+
+		\wp_add_inline_script( 'jquery', $js );
+	}
 
 	/**
 	 * Clear allowed template options transient callback
