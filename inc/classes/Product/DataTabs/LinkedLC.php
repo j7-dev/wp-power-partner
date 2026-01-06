@@ -241,10 +241,12 @@ final class LinkedLC {
 				'rate'  => null,
 			],
 		];
-		/**
-		 * @var array<array{slug: string, label: string, rate: float}> $data
-		 */
+
+		/** @var array<array{slug: string, label: string, rate: float}>|array{code:string, data:mixed, message:string} $data */
 		$data = (array) General::json_parse($body, $default_data_value);
+		if (isset($data['code'])) {
+			$data = [];
+		}
 
 		\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, $data, self::CACHE_TIME);
 
