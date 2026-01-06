@@ -173,32 +173,33 @@ final class LinkedSites {
 
 		// 定義兩個 tab 的選項
 		$tab1_options = [
-			'jp'     => '日本',
-			'tw'     => '台灣',
-			'sg'     => '新加坡',
-			'hk'     => '香港',
+			'jp'        => '日本',
+			'tw'        => '台灣',
+			'us_west'   => '美西',
+			'uk_london' => '英國倫敦',
+			'sg'        => '新加坡',
+			'hk'        => '香港',
+			'canada'    => '加拿大',
 		];
 
 		$tab2_options = [
-			'us_west'   => '美西',
-			'uk_london' => '英國倫敦',
-			'canada'    => '加拿大',
+			'tw'        => '台灣',
 		];
 
 		// 判斷當前選中的值屬於哪個 tab
 		$active_tab = ( isset( $tab1_options[ $host_position_value ] ) ) ? 'tab1' : 'tab2';
 
-		echo '<div class="hidden form-row show_if_variable-subscription power-partner-host-tabs-wrapper" data-loop="' . \esc_attr( $loop ) . '">';
+		echo '<div class="hidden form-row form-row-full show_if_variable-subscription power-partner-host-tabs-wrapper" data-loop="' . \esc_attr( $loop ) . '">';
 		echo '<div class="power-partner-tabs-container">';
 		
 		// Tab 按鈕
 		echo '<div class="power-partner-tab-buttons">';
-		echo '<button type="button" class="power-partner-tab-button' . ( 'tab1' === $active_tab ? 'active' : '' ) . '" data-tab="tab1-' . \esc_attr( $loop ) . '">亞洲地區</button>';
-		echo '<button type="button" class="power-partner-tab-button' . ( 'tab2' === $active_tab ? 'active' : '' ) . '" data-tab="tab2-' . \esc_attr( $loop ) . '">其他地區</button>';
+		echo '<button type="button" class="power-partner-tab-button' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" data-tab="tab1-' . \esc_attr( $loop ) . '">舊架構</button>';
+		echo '<button type="button" class="power-partner-tab-button' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" data-tab="tab2-' . \esc_attr( $loop ) . '">新架構</button>';
 		echo '</div>';
 
 		// Tab 1 內容
-		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? 'active' : '' ) . '" id="tab1-' . \esc_attr( $loop ) . '">';
+		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" id="tab1-' . \esc_attr( $loop ) . '">';
 		\woocommerce_wp_radio(
 			[
 				'id'            => $field_id . '-tab1',
@@ -214,7 +215,7 @@ final class LinkedSites {
 		echo '</div>';
 
 		// Tab 2 內容
-		echo '<div class="power-partner-tab-content' . ( 'tab2' === $active_tab ? 'active' : '' ) . '" id="tab2-' . \esc_attr( $loop ) . '">';
+		echo '<div class="power-partner-tab-content' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" id="tab2-' . \esc_attr( $loop ) . '">';
 		\woocommerce_wp_radio(
 			[
 				'id'            => $field_id . '-tab2',
@@ -254,7 +255,7 @@ final class LinkedSites {
 			[
 				'id'            => self::LINKED_SITE_FIELD_NAME . '[' . $loop . ']',
 				'label'         => '連結的網站 id',
-				'wrapper_class' => 'form-field form-row form-row-first show_if_variable-subscription hidden',
+				'wrapper_class' => 'form-field form-row show_if_variable-subscription hidden',
 				'desc_tip'      => false,
 				'description'   => '如果想要更多模板站，請聯繫站長路可',
 				'value'         => $linked_site_value,
@@ -306,35 +307,43 @@ final class LinkedSites {
 			return;
 		}
 
-		// 添加內聯 CSS
+		// 添加內聯 CSS - 使用 WooCommerce 原生樣式
 		$css = '
 		.power-partner-host-tabs-wrapper {
-			margin-bottom: 20px;
+			clear: both;
+			margin: 0 0 1em;
 		}
 		.power-partner-tabs-container {
-			border: 1px solid #ddd;
+			border: 1px solid #c3c4c7;
 			border-radius: 4px;
 			overflow: hidden;
+			background: #fff;
 		}
 		.power-partner-tab-buttons {
 			display: flex;
-			border-bottom: 1px solid #ddd;
-			background: #f9f9f9;
+			border-bottom: 1px solid #c3c4c7;
+			background: #f6f7f7;
+			margin: 0;
 		}
 		.power-partner-tab-button {
 			flex: 1;
-			padding: 12px 20px;
+			padding: 10px 15px;
 			background: transparent;
 			border: none;
 			border-bottom: 2px solid transparent;
+			border-right: 1px solid #c3c4c7;
 			cursor: pointer;
-			font-size: 14px;
-			font-weight: 500;
-			color: #555;
-			transition: all 0.3s ease;
+			font-size: 13px;
+			font-weight: 600;
+			color: #50575e;
+			transition: all 0.2s ease;
+			margin: 0;
+		}
+		.power-partner-tab-button:last-child {
+			border-right: none;
 		}
 		.power-partner-tab-button:hover {
-			background: #f0f0f0;
+			background: #f0f0f1;
 			color: #2271b1;
 		}
 		.power-partner-tab-button.active {
@@ -344,11 +353,15 @@ final class LinkedSites {
 		}
 		.power-partner-tab-content {
 			display: none;
-			padding: 20px;
+			padding: 15px;
 			background: #fff;
 		}
 		.power-partner-tab-content.active {
 			display: block;
+		}
+		.power-partner-tab-content .form-field {
+			margin: 0;
+			padding: 0;
 		}
 		';
 
