@@ -19,10 +19,12 @@ use J7\PowerPartner\Api\Fetch;
 final class LinkedSites {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
+	const HOST_TYPE_FIELD_NAME     = 'power_partner_host_type'; // wpcd | powercloud
 	const HOST_POSITION_FIELD_NAME = 'power_partner_host_position';
 	const LINKED_SITE_FIELD_NAME   = 'power_partner_linked_site';
 	const PRODUCT_TYPE_SLUG        = 'power_partner';
 	const DEFAULT_HOST_POSITION    = 'jp';
+	const DEFAULT_HOST_TYPE        = 'powercloud'; // 預設為新架構
 
 	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME = 'clear_' . Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
 
@@ -167,8 +169,16 @@ final class LinkedSites {
 		$variation_id        = $variation->ID;
 		$host_position_value = \get_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
+		
+		// 取得 host_type，如果沒有則根據 host_position 判斷
+		$host_type_value = \get_post_meta( $variation_id, self::HOST_TYPE_FIELD_NAME, true );
+		if ( empty( $host_type_value ) ) {
+			// 如果沒有保存的 host_type，使用預設值
+			$host_type_value = self::DEFAULT_HOST_TYPE;
+		}
 
 		$field_id = self::HOST_POSITION_FIELD_NAME . '[' . $loop . ']';
+		$host_type_field_id = self::HOST_TYPE_FIELD_NAME . '[' . $loop . ']';
 		$tab_id   = 'host-position-tabs-' . $loop;
 
 		// 定義兩個 tab 的選項
@@ -186,8 +196,9 @@ final class LinkedSites {
 			'tw'        => '台灣',
 		];
 
-		// 判斷當前選中的值屬於哪個 tab
-		$active_tab = ( isset( $tab1_options[ $host_position_value ] ) ) ? 'tab1' : 'tab2';
+		// 根據 host_type 判斷當前應該顯示哪個 tab
+		// tab1 = 舊架構 (wpcd), tab2 = 新架構 (powercloud)
+		$active_tab = ( 'wpcd' === $host_type_value ) ? 'tab1' : 'tab2';
 
 		echo '<div class="hidden form-row form-row-full show_if_variable-subscription power-partner-host-tabs-wrapper" data-loop="' . \esc_attr( $loop ) . '">';
 		echo '<div class="power-partner-tabs-container">';
@@ -198,8 +209,10 @@ final class LinkedSites {
 		echo '<button type="button" class="power-partner-tab-button' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" data-tab="tab2-' . \esc_attr( $loop ) . '">新架構</button>';
 		echo '</div>';
 
-		// Tab 1 內容
+		// Tab 1 內容 (舊架構 - wpcd)
 		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" id="tab1-' . \esc_attr( $loop ) . '">';
+		// 隱藏的 host_type 欄位
+		echo '<input type="hidden" name="' . \esc_attr( $host_type_field_id ) . '" value="wpcd" class="host-type-field" data-tab="tab1-' . \esc_attr( $loop ) . '">';
 		\woocommerce_wp_radio(
 			[
 				'id'            => $field_id . '-tab1',
@@ -214,8 +227,10 @@ final class LinkedSites {
 		);
 		echo '</div>';
 
-		// Tab 2 內容
+		// Tab 2 內容 (新架構 - powercloud)
 		echo '<div class="power-partner-tab-content' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" id="tab2-' . \esc_attr( $loop ) . '">';
+		// 隱藏的 host_type 欄位
+		echo '<input type="hidden" name="' . \esc_attr( $host_type_field_id ) . '" value="powercloud" class="host-type-field" data-tab="tab2-' . \esc_attr( $loop ) . '">';
 		\woocommerce_wp_radio(
 			[
 				'id'            => $field_id . '-tab2',
@@ -286,6 +301,15 @@ final class LinkedSites {
 		if ( isset( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) ) {
 			$host_position = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) );
 			\update_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, $host_position );
+		}
+
+		// 保存 host_type
+		if ( isset( $_POST[ self::HOST_TYPE_FIELD_NAME ][ $loop ] ) ) {
+			$host_type = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_TYPE_FIELD_NAME ][ $loop ] ) );
+			// 驗證 host_type 值
+			if ( in_array( $host_type, [ 'wpcd', 'powercloud' ], true ) ) {
+				\update_post_meta( $variation_id, self::HOST_TYPE_FIELD_NAME, $host_type );
+			}
 		}
 
 		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) ) {
@@ -385,6 +409,10 @@ final class LinkedSites {
 					// 更新內容顯示
 					\$wrapper.find('.power-partner-tab-content').removeClass('active');
 					\$wrapper.find('#' + tabId).addClass('active');
+					
+					// 更新隱藏的 host_type 欄位
+					\$wrapper.find('.host-type-field').prop('disabled', true);
+					\$wrapper.find('#' + tabId + ' .host-type-field').prop('disabled', false);
 				});
 				
 				// 當 radio 改變時，切換到對應的 tab 並確保同步
@@ -406,7 +434,19 @@ final class LinkedSites {
 						\$button.addClass('active');
 						\$wrapper.find('.power-partner-tab-content').removeClass('active');
 						\$tabContent.addClass('active');
+						
+						// 更新隱藏的 host_type 欄位
+						\$wrapper.find('.host-type-field').prop('disabled', true);
+						\$tabContent.find('.host-type-field').prop('disabled', false);
 					}
+				});
+				
+				// 初始化時，只啟用當前 active tab 的 host_type 欄位
+				$('.power-partner-host-tabs-wrapper').each(function() {
+					var \$wrapper = $(this);
+					var \$activeTab = \$wrapper.find('.power-partner-tab-content.active');
+					\$wrapper.find('.host-type-field').prop('disabled', true);
+					\$activeTab.find('.host-type-field').prop('disabled', false);
 				});
 			});
 		})(jQuery);

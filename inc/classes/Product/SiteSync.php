@@ -6,6 +6,7 @@ namespace J7\PowerPartner\Product;
 
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
+use J7\PowerPartner\Api\FetchPowerCloud;
 use J7\PowerPartner\Product\DataTabs\LinkedSites;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 
@@ -23,6 +24,19 @@ final class SiteSync {
 	/** Constructor */
 	public function __construct() {
 		\add_action( Action::INITIAL_PAYMENT_COMPLETE->get_action_hook(), [ $this, 'site_sync_by_subscription' ], 1, 2 );
+
+		// TEST ----- ▼ 測試特定 hook 記得刪除 ----- //
+		\add_action(
+			'init',
+			function () {
+				if (isset($_GET['test'])) {
+					$subscription = \wcs_get_subscription( 174 );
+					$this->site_sync_by_subscription( $subscription, [] );
+					// $this->site_sync_by_subscription($subscription, [] );
+				}
+			}
+			);
+		// TEST ---------- END ---------- //
 	}
 
 
@@ -68,20 +82,20 @@ final class SiteSync {
 
 			foreach ( $items as $item ) {
 				/** @var \WC_Order_Item_Product $item */
-				$product_id = $item->get_product_id();
+				$product_id = $item->get_variation_id() ?: $item->get_product_id();
 				$product    = \wc_get_product( $product_id );
 
 				// 如果不是可變訂閱商品，就不處理
-				if ( 'variable-subscription' === $product->get_type() ) {
-					$variation_id   = $item->get_variation_id();
-					$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
-					$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
-					$subscription->save();
-					$linked_site_ids[] = $linked_site_id;
-				} elseif ( 'subscription' === $product->get_type() ) {
+				if ( \in_array( $product->get_type(), [ 'subscription', 'subscription_variation' ] ) ) {
 					$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
+					$host_type      = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
 					$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+
+					// 如果沒有 host_type，使用預設值
+					if ( empty( $host_type ) ) {
+						$host_type = LinkedSites::DEFAULT_HOST_TYPE;
+					}
+
 					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
 					$subscription->save();
 				} else {
@@ -92,10 +106,8 @@ final class SiteSync {
 					continue;
 				}
 
-				$host_position = empty( $host_position ) ? LinkedSites::DEFAULT_HOST_POSITION : $host_position;
-
-				$response_obj = Fetch::site_sync(
-				[
+				// 根據 host_type 判斷是否為 WPCD (舊架構) 或是 PowerCloud (新架構) 開站
+				$site_sync_params = [
 					'site_url'        => \site_url(),
 					'site_id'         => $linked_site_id,
 					'host_position'   => $host_position,
@@ -109,8 +121,15 @@ final class SiteSync {
 						'phone'      => $parent_order->get_billing_phone(),
 					],
 					'subscription_id' => $subscription->get_id(),
-				]
-				);
+				];
+
+				// 根據 host_type 選擇對應的 API
+				if ( 'wpcd' === $host_type ) {
+					// 舊架構：使用 Fetch::site_sync
+					$response_obj = Fetch::site_sync( $site_sync_params );
+				} else {
+					$response_obj = FetchPowerCloud::site_sync( $site_sync_params );
+				}
 
 				$responses[] = [
 					'status'  => $response_obj?->status,

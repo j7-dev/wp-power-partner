@@ -18,6 +18,9 @@ use J7\WpUtils\Classes\WP;
 final class Main {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
+	const POWERCLOUD_API_KEY_TRANSIENT_KEY = 'power_partner_powercloud_api_key';
+	const POWERCLOUD_API_KEY_CACHE_TIME   = 30 * 24 * HOUR_IN_SECONDS; // 30 天
+
 	/**
 	 * Constructor.
 	 */
@@ -151,6 +154,18 @@ final class Main {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'post_settings_callback' ],
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			]
+		);
+
+		\register_rest_route(
+			Plugin::$kebab,
+			'powercloud-api-key',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'post_powercloud_api_key_callback' ],
 				'permission_callback' => function () {
 					return \current_user_can( 'manage_options' );
 				},
@@ -595,8 +610,6 @@ final class Main {
 				$subject = Token::replace( $subject, $tokens );
 				$body    = Token::replace( $body, $tokens );
 
-
-
 				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
 				$result = \wp_mail(
@@ -734,22 +747,22 @@ final class Main {
 		if (in_array($_SERVER['REMOTE_ADDR'], $fixed_ips, true)) {
 			return true;
 		}
-        
+
         // 內網
         if($this->in_ip( '10.0.0.0', '10.255.255.255')){
             return true;
         }
-        
+
         // 內網
         if($this->in_ip( '172.16.0.0', '172.31.255.255')){
             return true;
         }
-        
+
         // 內網
         if($this->in_ip( '192.168.0.0', '192.168.255.255')){
             return true;
         }
-        
+
         // 以前的版本
         return $this->in_ip( '61.220.44.0', '61.220.44.10');
 	}
@@ -772,5 +785,37 @@ final class Main {
 
 		// 檢查發起請求的 IP 是否在允許的範圍內
 		return ( $request_ip_long >= $from_ip_long && $request_ip_long <= $to_ip_long );
+	}
+
+
+	/**
+	 * Post powercloud API key callback
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function post_powercloud_api_key_callback( $request ): \WP_REST_Response {
+		$body_params = $request->get_json_params() ?? [];
+		$api_key     = \sanitize_text_field( $body_params['api_key'] ?? '' );
+
+		if ( empty( $api_key ) ) {
+			return new \WP_REST_Response(
+				[
+					'status'  => 400,
+					'message' => 'api_key is required',
+				],
+				400
+			);
+		}
+
+		\set_transient( self::POWERCLOUD_API_KEY_TRANSIENT_KEY, $api_key, self::POWERCLOUD_API_KEY_CACHE_TIME );
+
+		return new \WP_REST_Response(
+			[
+				'status'  => 200,
+				'message' => 'update powercloud api key success',
+			],
+			200
+		);
 	}
 }
