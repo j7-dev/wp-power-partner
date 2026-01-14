@@ -61,7 +61,7 @@ final class SiteSync {
 				Plugin::logger( "訂閱 #{$subscription->get_id()} 的父訂單不是 WC_Order 實例", 'error' );
 				return;
 			}
-
+			/** @var \WC_Order */
 			$parent_order_id = $parent_order->get_id();
 
 			// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發

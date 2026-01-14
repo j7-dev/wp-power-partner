@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query'
 
 import { Button, Form, Input, Alert, notification } from 'antd'
-import { powerCloudAxios } from '@/api'
+import { powerCloudAxios, axios } from '@/api'
 import { EPowercloudIdentityStatusEnum, powercloudIdentityAtom } from '@/pages/AdminApp/Atom/powercloud.atom'
 import { globalLoadingAtom } from '@/pages/AdminApp/Atom/atom'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { TAccountInfo } from '@/pages/AdminApp/types'
-import { renderHTML } from '@/utils'
+import { renderHTML, kebab } from '@/utils'
 
 const Login = () => {
 	const [form] = Form.useForm()
@@ -34,32 +34,48 @@ const Login = () => {
 	const onFinish = () => {
 		const values: TAccountInfo = form.getFieldsValue()
 		powercloudLogin(values, {
-			onSuccess: (res) => {
+			onSuccess: async (res) => {
+				const apiKey = res?.data?.apiKey
+				
 				setIdentity({
 					status: EPowercloudIdentityStatusEnum.LOGGED_IN,
 					message: '',
-					apiKey: res?.data?.apiKey,
+					apiKey: apiKey,
+				})
+
+				// 保存 apiKey 到 WordPress usermeta
+				try {
+					await axios.post(`/${kebab}/powercloud-api-key`, {
+						api_key: apiKey,
+					})
+					console.log('API key saved to WordPress usermeta successfully')
+				} catch (error: any) {
+					console.error('Failed to save API key to WordPress:', error)
+					notification.warning({
+						message: '登入成功，但保存 API Key 到 WordPress 失敗',
+						description: error?.response?.data?.message || error?.message || '請稍後再試',
+					})
+				}
+			},
+			onError: (err) => {
+				notification.error({
+					message: err?.message || '登入失敗',
+					description: renderHTML(JSON.stringify(err || '')),
 				})
 			},
-            onError: (err) => {
-                notification.error({
-                    message: err?.message || '登入失敗',
-                    description: renderHTML(JSON.stringify(err || '')),
-                })
-            },
-        })
-    }
+		})
+	}
 
-    const isPending = isPendingPowercloudLogin
-    return (
-        <div className="w-full max-w-[20rem] relative m-auto mt-12">
-            <Alert
-                message="請輸入你在 Powercloud 的帳號密碼"
-                type="info"
-                showIcon
-                className="mb-8"
-            />
-            <Form form={form} autoComplete="off" layout="vertical">
+	const isPending = isPendingPowercloudLogin
+	return (
+		<div className="w-full max-w-[20rem] relative m-auto mt-12">
+			<Alert
+				message="請輸入你在 Powercloud 的帳號密碼"
+				type="info"
+				showIcon
+				className="mb-8"
+			/>
+			<Form form={form} autoComplete="off" layout="vertical">
 				<Form.Item<TAccountInfo>
 					label="E-mail"
 					name="email"
@@ -114,7 +130,7 @@ const Logout = () => {
 
 const index = () => {
 	const powercloudIdentity = useAtomValue(powercloudIdentityAtom)
-	if(powercloudIdentity.status === EPowercloudIdentityStatusEnum.UN_LOGIN) return <Login />
+	if (powercloudIdentity.status === EPowercloudIdentityStatusEnum.UN_LOGIN) return <Login />
 	return <Logout />
 
 }

@@ -790,6 +790,7 @@ final class Main {
 
 	/**
 	 * Post powercloud API key callback
+	 * Save PowerCloud API Key to transient (save to MySQL wp_options table)
 	 *
 	 * @param \WP_REST_Request $request Request object.
 	 * @return \WP_REST_Response
@@ -808,7 +809,21 @@ final class Main {
 			);
 		}
 
-		\set_transient( self::POWERCLOUD_API_KEY_TRANSIENT_KEY, $api_key, self::POWERCLOUD_API_KEY_CACHE_TIME );
+		// Get current logged in user ID
+		$user_id = \get_current_user_id();
+		if ( ! $user_id ) {
+			return new \WP_REST_Response(
+				[
+					'status'  => 401,
+					'message' => 'User not authenticated',
+				],
+				401
+			);
+		}
+
+		// Use transient to save (save to MySQL wp_options table)
+		$transient_key = self::POWERCLOUD_API_KEY_TRANSIENT_KEY . "_{$user_id}";
+		\set_transient( $transient_key, $api_key, self::POWERCLOUD_API_KEY_CACHE_TIME );
 
 		return new \WP_REST_Response(
 			[
