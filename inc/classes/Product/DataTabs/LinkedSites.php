@@ -23,12 +23,14 @@ final class LinkedSites {
 	const HOST_TYPE_FIELD_NAME     = 'power_partner_host_type'; // wpcd | powercloud
 	const HOST_POSITION_FIELD_NAME = 'power_partner_host_position';
 	const LINKED_SITE_FIELD_NAME   = 'power_partner_linked_site';
+	const OPEN_SITE_PLAN_FIELD_NAME = 'power_partner_open_site_plan';
 	const PRODUCT_TYPE_SLUG        = 'power_partner';
 	const DEFAULT_HOST_POSITION    = 'jp';
 	const DEFAULT_HOST_TYPE        = 'powercloud'; // 預設為新架構
 
 	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME = 'clear_' . Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
-
+	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME = 'clear_' . FetchPowerCloud::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
+	const CLEAR_OPEN_SITE_PLAN_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME = 'clear_' . FetchPowerCloud::OPEN_SITE_PLAN_OPTIONS_TRANSIENT_KEY;
 
 	/**
 	 * @var array<string, string> slug, name
@@ -116,7 +118,6 @@ final class LinkedSites {
 		$linked_site_value = (string) \get_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, true );
 
 		$action_url = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
-
 		\woocommerce_wp_select(
 			[
 				'id'            => self::LINKED_SITE_FIELD_NAME,
@@ -213,41 +214,17 @@ final class LinkedSites {
 		// 取得模板選項
 		$linked_site_value = (string) \get_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, true );
 		$action_url        = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+		$action_url_powercloud_template = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+		$action_url_powercloud_open_site_plan = \add_query_arg( 'action', self::CLEAR_OPEN_SITE_PLAN_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
 
 		// 舊架構的模板選項
 		$tab1_template_options = [ '' => '請選擇' ] + Fetch::get_allowed_template_options();
 
 		// 新架構的模板選項
-		// TEST ----- ▼ 印出 WC Logger 記得移除 ----- //
-		\J7\WpUtils\Classes\WC::logger(
-			'trigger 111',
-			'info',
-			[
-				'trigger 111' => 'trigger 111',
-			]
-			);
-		// TEST ---------- END ---------- //
+		$tab2_template_options = [ '' => '請選擇' ] + FetchPowerCloud::get_allowed_template_options();
 
-		$tab2_template_options = [ '' => '請選擇' ];
-		$template_result_123   = [];
-		try {
-			// code...
-			$template_result_123 = FetchPowerCloud::get_allowed_template_options();
-		} catch ( \Throwable $th ) {
-			Plugin::logger("失敗 {$th->getMessage()}", 'error');
-		}
-		// $tab2_template_options = [ '' => '請選擇' ] + Fetch::get_allowed_template_options();
-		$tab2_template_options = $tab2_template_options + $template_result_123;
-
-		// TEST ----- ▼ 印出 WC Logger 記得移除 ----- //
-		\J7\WpUtils\Classes\WC::logger(
-			'trigger 222',
-			'info',
-			[
-				'trigger 222' => 'trigger 222',
-			]
-			);
-		// TEST ---------- END ---------- //
+		// 新架構開站方案選擇
+		$tab_open_site_plan_options = ['' => '請選擇'] + FetchPowerCloud::get_open_site_plan_options();
 
 		// Tab 1 內容 (舊架構 - wpcd)
 		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" id="tab1-' . \esc_attr( $loop ) . '">';
@@ -324,9 +301,32 @@ final class LinkedSites {
 			[
 				'label'         => '只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。',
 				'wrapper_class' => 'form-field',
-				'message'       => '<br /><a href="' . $action_url . '"><button type="button" class="button" style="height: 38px; margin-top: 2px;">清除快取</button></a>',
+				'message'       => '<br /><a href="' . $action_url_powercloud_template . '"><button type="button" class="button" style="height: 38px; margin-top: 2px;">清除快取</button></a>',
 			]
 		);
+        
+		// 開站方案選擇
+		\woocommerce_wp_select(
+			[
+				'id'                => self::OPEN_SITE_PLAN_FIELD_NAME . '[' . $loop . ']',
+				'label'             => '開站方案',
+				'wrapper_class'     => 'form-field',	
+				'desc_tip'          => false,
+				'description'       => '如果想要更多開站方案，請聯繫站長路可',
+				'value'             => $linked_site_value,
+				'options'           => $tab_open_site_plan_options,
+				'custom_attributes' => ( 'tab2' === $active_tab ? [] : [ 'disabled' => 'disabled' ] ),
+			]
+		);
+
+		\woocommerce_wp_note(
+			[
+				'label'         => '只有當站長幫你調整開站方案後，才有需要清除快取，否則無須清除。',
+				'wrapper_class' => 'form-field',
+				'message'       => '<br /><a href="' . $action_url_powercloud_open_site_plan . '"><button type="button" class="button" style="height: 38px; margin-top: 2px;">清除快取</button></a>',
+			]
+		);
+
 		echo '</div>';
 
 		echo '</div>'; // .power-partner-tabs-container
