@@ -24,19 +24,6 @@ final class SiteSync {
 	/** Constructor */
 	public function __construct() {
 		\add_action( Action::INITIAL_PAYMENT_COMPLETE->get_action_hook(), [ $this, 'site_sync_by_subscription' ], 1, 2 );
-
-		// TEST ----- ▼ 測試特定 hook 記得刪除 ----- //
-		\add_action(
-			'init',
-			function () {
-				if (isset($_GET['test'])) {
-					$subscription = \wcs_get_subscription( 174 );
-					$this->site_sync_by_subscription( $subscription, [] );
-					// $this->site_sync_by_subscription($subscription, [] );
-				}
-			}
-			);
-		// TEST ---------- END ---------- //
 	}
 
 
@@ -87,14 +74,14 @@ final class SiteSync {
 
 				// 如果不是可變訂閱商品，就不處理
 				if ( \in_array( $product->get_type(), [ 'subscription', 'subscription_variation' ] ) ) {
-					$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
-					$host_type      = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
-					$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-
+					$host_position = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
+					$host_type     = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
 					// 如果沒有 host_type，使用預設值
 					if ( empty( $host_type ) ) {
 						$host_type = LinkedSites::DEFAULT_HOST_TYPE;
 					}
+
+					$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 
 					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
 					$subscription->save();
@@ -124,11 +111,21 @@ final class SiteSync {
 				];
 
 				// 根據 host_type 選擇對應的 API
-				if ( 'wpcd' === $host_type ) {
+				// wpcd 為舊架構
+				if ( $host_type === LinkedSites::WPCD_HOST_TYPE ) {
 					// 舊架構：使用 Fetch::site_sync
 					$response_obj = Fetch::site_sync( $site_sync_params );
-				} else {
-					$response_obj = FetchPowerCloud::site_sync( $site_sync_params );
+				}
+
+				// powercloud 為新架構（新架構是默認Host Type)
+				if ( $host_type === LinkedSites::DEFAULT_HOST_TYPE ) {
+
+					$open_site_plan_id   = \get_post_meta( $product_id, LinkedSites::OPEN_SITE_PLAN_FIELD_NAME, true );
+					$template_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+
+					// 新架構：使用 FetchPowerCloud::site_sync
+					$response_obj = FetchPowerCloud::site_sync( $site_sync_params , $open_site_plan_id, $template_site_id );
+
 				}
 
 				$responses[] = [

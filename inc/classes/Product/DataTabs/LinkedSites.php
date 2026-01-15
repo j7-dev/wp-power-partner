@@ -20,17 +20,18 @@ use J7\PowerPartner\Plugin;
 final class LinkedSites {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
-	const HOST_TYPE_FIELD_NAME     = 'power_partner_host_type'; // wpcd | powercloud
-	const HOST_POSITION_FIELD_NAME = 'power_partner_host_position';
-	const LINKED_SITE_FIELD_NAME   = 'power_partner_linked_site';
+	const HOST_TYPE_FIELD_NAME      = 'power_partner_host_type'; // wpcd | powercloud
+	const HOST_POSITION_FIELD_NAME  = 'power_partner_host_position';
+	const LINKED_SITE_FIELD_NAME    = 'power_partner_linked_site';
 	const OPEN_SITE_PLAN_FIELD_NAME = 'power_partner_open_site_plan';
-	const PRODUCT_TYPE_SLUG        = 'power_partner';
-	const DEFAULT_HOST_POSITION    = 'jp';
-	const DEFAULT_HOST_TYPE        = 'powercloud'; // 預設為新架構
+	const PRODUCT_TYPE_SLUG         = 'power_partner';
+	const DEFAULT_HOST_POSITION     = 'jp';
+	const DEFAULT_HOST_TYPE         = 'powercloud'; // 預設為新架構
+	const WPCD_HOST_TYPE            = 'wpcd';
 
-	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME = 'clear_' . Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
+	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME            = 'clear_' . Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
 	const CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME = 'clear_' . FetchPowerCloud::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY;
-	const CLEAR_OPEN_SITE_PLAN_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME = 'clear_' . FetchPowerCloud::OPEN_SITE_PLAN_OPTIONS_TRANSIENT_KEY;
+	const CLEAR_OPEN_SITE_PLAN_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME   = 'clear_' . FetchPowerCloud::OPEN_SITE_PLAN_OPTIONS_TRANSIENT_KEY;
 
 	/**
 	 * @var array<string, string> slug, name
@@ -212,9 +213,10 @@ final class LinkedSites {
 		echo '</div>';
 
 		// 取得模板選項
-		$linked_site_value = (string) \get_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, true );
-		$action_url        = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
-		$action_url_powercloud_template = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+		$linked_site_value                    = (string) \get_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, true );
+		$open_site_plan_value                 = (string) \get_post_meta( $variation_id, self::OPEN_SITE_PLAN_FIELD_NAME, true );
+		$action_url                           = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+		$action_url_powercloud_template       = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
 		$action_url_powercloud_open_site_plan = \add_query_arg( 'action', self::CLEAR_OPEN_SITE_PLAN_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
 
 		// 舊架構的模板選項
@@ -224,7 +226,7 @@ final class LinkedSites {
 		$tab2_template_options = [ '' => '請選擇' ] + FetchPowerCloud::get_allowed_template_options();
 
 		// 新架構開站方案選擇
-		$tab_open_site_plan_options = ['' => '請選擇'] + FetchPowerCloud::get_open_site_plan_options();
+		$tab_open_site_plan_options = [ '' => '請選擇' ] + FetchPowerCloud::get_open_site_plan_options();
 
 		// Tab 1 內容 (舊架構 - wpcd)
 		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" id="tab1-' . \esc_attr( $loop ) . '">';
@@ -304,16 +306,16 @@ final class LinkedSites {
 				'message'       => '<br /><a href="' . $action_url_powercloud_template . '"><button type="button" class="button" style="height: 38px; margin-top: 2px;">清除快取</button></a>',
 			]
 		);
-        
+
 		// 開站方案選擇
 		\woocommerce_wp_select(
 			[
 				'id'                => self::OPEN_SITE_PLAN_FIELD_NAME . '[' . $loop . ']',
 				'label'             => '開站方案',
-				'wrapper_class'     => 'form-field',	
+				'wrapper_class'     => 'form-field',
 				'desc_tip'          => false,
 				'description'       => '如果想要更多開站方案，請聯繫站長路可',
-				'value'             => $linked_site_value,
+				'value'             => $open_site_plan_value,
 				'options'           => $tab_open_site_plan_options,
 				'custom_attributes' => ( 'tab2' === $active_tab ? [] : [ 'disabled' => 'disabled' ] ),
 			]
@@ -397,6 +399,11 @@ final class LinkedSites {
 		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) ) {
 			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) );
 			\update_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
+		}
+
+		if ( isset( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ][ $loop ] ) ) {
+			$open_site_plan = \sanitize_text_field( \wp_unslash( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ][ $loop ] ) );
+			\update_post_meta( $variation_id, self::OPEN_SITE_PLAN_FIELD_NAME, $open_site_plan );
 		}
 	}
 
@@ -495,8 +502,10 @@ final class LinkedSites {
 					// 更新隱藏的 host_type 欄位和 select 欄位
 					\$wrapper.find('.host-type-field').prop('disabled', true);
 					\$wrapper.find('select[name*=\"linked_site\"]').prop('disabled', true);
+					\$wrapper.find('select[name*=\"open_site_plan\"]').prop('disabled', true);
 					\$wrapper.find('#' + tabId + ' .host-type-field').prop('disabled', false);
 					\$wrapper.find('#' + tabId + ' select[name*=\"linked_site\"]').prop('disabled', false);
+					\$wrapper.find('#' + tabId + ' select[name*=\"open_site_plan\"]').prop('disabled', false);
 				});
 
 				// 當 radio 改變時，切換到對應的 tab 並確保同步
@@ -522,8 +531,10 @@ final class LinkedSites {
 						// 更新隱藏的 host_type 欄位和 select 欄位
 						\$wrapper.find('.host-type-field').prop('disabled', true);
 						\$wrapper.find('select[name*=\"linked_site\"]').prop('disabled', true);
+						\$wrapper.find('select[name*=\"open_site_plan\"]').prop('disabled', true);
 						\$tabContent.find('.host-type-field').prop('disabled', false);
 						\$tabContent.find('select[name*=\"linked_site\"]').prop('disabled', false);
+						\$tabContent.find('select[name*=\"open_site_plan\"]').prop('disabled', false);
 					}
 				});
 
@@ -533,8 +544,10 @@ final class LinkedSites {
 					var \$activeTab = \$wrapper.find('.power-partner-tab-content.active');
 					\$wrapper.find('.host-type-field').prop('disabled', true);
 					\$wrapper.find('select[name*=\"linked_site\"]').prop('disabled', true);
+					\$wrapper.find('select[name*=\"open_site_plan\"]').prop('disabled', true);
 					\$activeTab.find('.host-type-field').prop('disabled', false);
 					\$activeTab.find('select[name*=\"linked_site\"]').prop('disabled', false);
+					\$activeTab.find('select[name*=\"open_site_plan\"]').prop('disabled', false);
 				});
 			});
 		})(jQuery);
