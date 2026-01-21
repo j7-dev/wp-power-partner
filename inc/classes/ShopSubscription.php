@@ -97,7 +97,6 @@ final class ShopSubscription {
 	 * @return array
 	 */
 	public static function get_linked_site_ids( $subscription_id ): array {
-		self::compatible_linked_site_ids( $subscription_id );
 
 		$subscription = \wcs_get_subscription( $subscription_id );
 
@@ -113,43 +112,6 @@ final class ShopSubscription {
 		}
 
 		return is_array( $linked_site_ids ) ? array_unique( $linked_site_ids ) : [];
-	}
-
-	/**
-	 * 這邊是為了處理舊的資料，舊的資料是直接存一個 array
-	 *
-	 * @deprecated version 2.0.0
-	 * @param int $subscription_id subscription id
-	 * @return void
-	 */
-	public static function compatible_linked_site_ids( $subscription_id ): void {
-		$subscription = \wcs_get_subscription( $subscription_id );
-
-		if ( ! $subscription ) {
-			return;
-		}
-
-		$old_meta_data = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, true );
-		if ( is_array( $old_meta_data ) ) {
-			foreach ( $old_meta_data as $old_site_id ) {
-				$subscription->add_meta_data( SiteSync::LINKED_SITE_IDS_META_KEY, $old_site_id );
-			}
-			$subscription->save();
-		}
-		$to_delete_mids = [];
-
-		$meta_data = $subscription->get_meta( SiteSync::LINKED_SITE_IDS_META_KEY, false );
-		foreach ( $meta_data as $meta ) {
-			$meta_id = $meta->__get( 'id' );
-			$value   = $meta->__get( 'value' );
-			if ( is_array( $value ) ) {
-				$to_delete_mids[] = $meta_id;
-			}
-		}
-
-		foreach ( $to_delete_mids as $mid ) {
-			Base::delete_post_meta_by_mid( $mid );
-		}
 	}
 
 	/**
