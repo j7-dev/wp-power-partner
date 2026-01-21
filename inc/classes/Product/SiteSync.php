@@ -74,21 +74,14 @@ final class SiteSync {
 				$product    = \wc_get_product( $product_id );
 
 				// 如果不是可變訂閱商品，就不處理
-				if ( \in_array( $product->get_type(), [ 'subscription', 'subscription_variation' ] ) ) {
-					$host_position = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
-					$host_type     = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
-					// 如果沒有 host_type，使用預設值
-					if ( empty( $host_type ) ) {
-						$host_type = LinkedSites::DEFAULT_HOST_TYPE;
-					}
-
-					// linked_site_id => 模板站ID
+				if ( 'variable-subscription' === $product->get_type() ) {
+					$variation_id   = $item->get_variation_id();
+					$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
+					$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+					$linked_site_ids[] = $linked_site_id;
+				} elseif ( 'subscription' === $product->get_type() ) {
+					$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
 					$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-
-					// 只有在 linked_site_id 不為空時才保存
-					if ( ! empty( $linked_site_id ) ) {
-						$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
-					}
 				} else {
 					continue;
 				}
