@@ -17,9 +17,10 @@ final class SiteSync {
 	const PRODUCT_TYPE_NAME = 'Power Partner 產品';
 
 	const CREATE_SITE_RESPONSES_META_KEY = 'pp_create_site_responses';
+	const CREATE_SITE_RESPONSES_ITEM_META_KEY = '_pp_create_site_responses_item'; // 加上下劃線前綴，隱藏在前端顯示
 
 	// the site id linked in cloud site
-	const LINKED_SITE_IDS_META_KEY = 'pp_linked_site_ids';
+	const LINKED_SITE_IDS_META_KEY = 'pp_linked_site_ids'; // pp === Power Partner
 
 	/** Constructor */
 	public function __construct() {
@@ -81,10 +82,13 @@ final class SiteSync {
 						$host_type = LinkedSites::DEFAULT_HOST_TYPE;
 					}
 
+					// linked_site_id => 模板站ID
 					$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 
-					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
-					$subscription->save();
+					// 只有在 linked_site_id 不為空時才保存
+					if ( ! empty( $linked_site_id ) ) {
+						$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
+					}
 				} else {
 					continue;
 				}
@@ -133,7 +137,14 @@ final class SiteSync {
 					'message' => $response_obj?->message,
 					'data'    => $response_obj?->data,
 				];
+
+				// 這邊把 $responses 保存到 order item 的 meta data
+				$item->update_meta_data( self::CREATE_SITE_RESPONSES_ITEM_META_KEY, \wp_json_encode( $responses ) );
 			}
+
+			// 在所有 meta_data 添加完成後，統一保存一次
+			// 這樣可以確保所有數據都被正確保存
+			$subscription->save();
 
 			Plugin::logger(
 			"訂閱 #{$subscription->get_id()}  order_id: #{$parent_order_id}",
