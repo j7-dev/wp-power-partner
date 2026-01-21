@@ -172,6 +172,16 @@ final class Main {
 			if ( $order ) {
 				$customer_email = $order->get_billing_email();
 			}
+			$subscription_id = $order->get_meta( '_subscription_renewal' ) ?: null;
+			$new_site_id     = $body_params['NEW_SITE_ID'] ?? null;
+			if (\is_numeric($subscription_id ) && $new_site_id) {
+				ShopSubscription::update_linked_site_ids(
+					(int) $subscription_id,
+					[
+						(string) $new_site_id,
+					]
+					);
+			}
 
 			$tokens                                   = [];
 			$tokens['FIRST_NAME']                     = $customer->first_name;
@@ -593,22 +603,22 @@ final class Main {
 		if (in_array($_SERVER['REMOTE_ADDR'], $fixed_ips, true)) {
 			return true;
 		}
-        
+
         // 內網
         if($this->in_ip( '10.0.0.0', '10.255.255.255')){
             return true;
         }
-        
+
         // 內網
         if($this->in_ip( '172.16.0.0', '172.31.255.255')){
             return true;
         }
-        
+
         // 內網
         if($this->in_ip( '192.168.0.0', '192.168.255.255')){
             return true;
         }
-        
+
         // 以前的版本
         return $this->in_ip( '61.220.44.0', '61.220.44.10');
 	}

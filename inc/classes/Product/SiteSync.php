@@ -76,14 +76,10 @@ final class SiteSync {
 					$variation_id   = $item->get_variation_id();
 					$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
 					$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
-					$subscription->save();
 					$linked_site_ids[] = $linked_site_id;
 				} elseif ( 'subscription' === $product->get_type() ) {
 					$host_position  = \get_post_meta( $product_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
 					$linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-					$subscription->add_meta_data( self::LINKED_SITE_IDS_META_KEY, $linked_site_id );
-					$subscription->save();
 				} else {
 					continue;
 				}
