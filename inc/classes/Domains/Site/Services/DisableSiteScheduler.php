@@ -111,14 +111,14 @@ final class DisableSiteScheduler extends Base {
 
 				// 如果 host_type 為 WPCD 舊架構
 				if($host_type === LinkedSites::WPCD_HOST_TYPE) {
-					// linked_site_id => 模板站ID
-					// $linked_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
-					$site_id = $item->get_meta( SiteSync::CREATE_SITE_RESPONSES_ITEM_META_KEY );
-					$reason = "停用網站，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}，網站ID: {$site_id}";
-					Fetch::disable_site( $site_id, $reason );
-					$subscription->add_order_note( $reason );
-					$subscription->save();
-					Plugin::logger($reason);
+					foreach ( $linked_site_ids as $site_id ) {
+						$reason = "停用網站，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}，網站ID: {$site_id}";
+						Fetch::disable_site( $site_id, $reason );
+						$subscription->add_order_note( $reason );
+						$subscription->save();
+						Plugin::logger($reason);
+
+					}
 					continue;
 				}
 
@@ -134,17 +134,17 @@ final class DisableSiteScheduler extends Base {
 						continue;
 					}
 
-					// TEST ----- ▼ 印出 WC Logger 記得移除 ----- //
-					\J7\WpUtils\Classes\WC::logger('disable_site_scheduler', 'info', [
-						'order_id' => $order_id,
-						'product' => [
-							'id' => $product->get_id(),
-							'name' => $product->get_name(),
-							'host_type' => $host_type,
-						],
-						'powercloud_linked_website_id' => $websiteId,
-					]);
-					// TEST ---------- END ---------- //	
+					// // TEST ----- ▼ 印出 WC Logger 記得移除 ----- //
+					// \J7\WpUtils\Classes\WC::logger('disable_site_scheduler', 'info', [
+					// 	'order_id' => $order_id,
+					// 	'product' => [
+					// 		'id' => $product->get_id(),
+					// 		'name' => $product->get_name(),
+					// 		'host_type' => $host_type,
+					// 	],
+					// 	'powercloud_linked_website_id' => $websiteId,
+					// ]);
+					// // TEST ---------- END ---------- //	
 
 					// TODO: Using FetchPowerCloud::disable_site to disable the site
 					continue;

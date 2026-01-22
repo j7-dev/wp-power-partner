@@ -35,8 +35,8 @@ abstract class FetchPowerCloud {
 			);
 		}
 
-		$template_sites = \get_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
-		$template_site_url = $template_sites[$template_site_id];
+		$template_sites    = \get_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
+		$template_site_url = $template_sites[ $template_site_id ];
 
 		$customer = $props['customer'];
 
@@ -46,24 +46,24 @@ abstract class FetchPowerCloud {
 		$wp_admin_password = 'admin-' . \wp_generate_password( 16, false );
 
 		// 生成 name 和 namespace (基於 customer username 或 email)
-		$namespace = self::generate_namespace() . '-' . random_int(1000, 9999); 
+		$namespace = self::generate_namespace() . '-' . random_int(1000, 9999);
 		$name      = $namespace;
 		$domain    = $namespace . '.wpsite.pro';
 
 		// 構建請求體
 		$request_body = [
-			'packageId'  => $open_site_plan_id,
-			'name'       => $name,
-			'namespace'  => $namespace,
-			'domain'     => $domain,
-			'isWildcard' => true,
-			'mysql'      => [
+			'packageId'   => $open_site_plan_id,
+			'name'        => $name,
+			'namespace'   => $namespace,
+			'domain'      => $domain,
+			'isWildcard'  => true,
+			'mysql'       => [
 				'auth' => [
 					'rootPassword' => $db_root_password,
 					'password'     => $db_password,
 				],
 			],
-			'wordpress'  => [
+			'wordpress'   => [
 				'autoInstall' => [
 					'adminUser'     => $customer['username'] ?? 'admin',
 					'adminPassword' => $wp_admin_password,
@@ -310,7 +310,7 @@ abstract class FetchPowerCloud {
 			'penguin',
 		];
 
-		$random_adj_index   = \array_rand( $random_adjs );
+		$random_adj_index    = \array_rand( $random_adjs );
 		$random_animal_index = \array_rand( $random_animals );
 
 		return $random_adjs[ $random_adj_index ] . '-' . $random_animals[ $random_animal_index ];

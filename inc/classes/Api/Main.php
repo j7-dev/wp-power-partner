@@ -20,7 +20,7 @@ final class Main {
 
 	const POWERCLOUD_API_KEY_TRANSIENT_KEY = 'power_partner_powercloud_api_key';
 	const POWERCLOUD_API_KEY_CACHE_TIME   = 30 * 24 * HOUR_IN_SECONDS; // 30 天
-
+	
 	/**
 	 * Constructor.
 	 */
@@ -196,18 +196,21 @@ final class Main {
 			$order_id       = $body_params['REF_ORDER_ID'] ?? '0';
 			$order          = \wc_get_order( $order_id );
 			$customer_email = $customer->user_email;
+			
 			if ( $order ) {
 				$customer_email = $order->get_billing_email();
-			}
-			$subscription_id = $order->get_meta( '_subscription_renewal' ) ?: null;
-			$new_site_id     = $body_params['NEW_SITE_ID'] ?? null;
-			if (\is_numeric($subscription_id ) && $new_site_id) {
-				ShopSubscription::update_linked_site_ids(
-					(int) $subscription_id,
-					[
-						(string) $new_site_id,
-					]
+				$subscriptions = \wcs_get_subscriptions_for_order( $order->get_id() );
+				$subscription = \reset( $subscriptions ); // 取得第一個訂閱
+
+				$new_site_id     = $body_params['NEW_SITE_ID'] ?? null;
+				if ($subscription && $new_site_id) {
+					ShopSubscription::update_linked_site_ids(
+						(int) $subscription->get_id(),
+						[
+							(string) $new_site_id,
+						]
 					);
+				}
 			}
 
 			$tokens                                   = [];
@@ -747,8 +750,11 @@ final class Main {
 	 *
 	 * @return bool
 	 */
-	public function check_ip_permission(): bool {
-
+	public function check_ip_permission(): bool
+	{
+		if ('local' === \wp_get_environment_type()) {
+			return true;
+		}
 		// 103.153.176.121 = 黃亦主機對外  199.99.88.1 = 黃亦主機打黃亦主機
 		// 163.61.60.80 = 是方主機對外  是方主機打是方主機
 		$fixed_ips = [ '103.153.176.121', '199.99.88.1', '163.61.60.80' ];
