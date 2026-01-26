@@ -10,6 +10,7 @@ use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\ShopSubscription;
 use J7\PowerPartner\Product\DataTabs\LinkedSites;
 use J7\PowerPartner\Product\SiteSync;
+use J7\PowerPartner\Api\FetchPowerCloud;
 
 /**
  * 排程禁用網站
@@ -87,7 +88,9 @@ final class DisableSiteScheduler extends Base {
 		// }
 
 		// 從訂閱的父訂單獲取產品資訊，取得 host_type
+		/** @var \WC_Order $parent_order */
 		$parent_order = $subscription->get_parent();
+		$current_user_id = $parent_order->get_customer_id();
 		$host_type = LinkedSites::DEFAULT_HOST_TYPE; // 預設值
 
 		if ( $parent_order instanceof \WC_Order ) {
@@ -125,28 +128,37 @@ final class DisableSiteScheduler extends Base {
 				// 如果 host_type 為 PowerCloud 新架構
 				if($host_type === LinkedSites::DEFAULT_HOST_TYPE) {
 					$websiteId = null;
-					$jsonString = $item->get_meta( SiteSync::CREATE_SITE_RESPONSES_ITEM_META_KEY );
-					$dataArray = json_decode($jsonString, true);
-	
-					if (json_last_error() === JSON_ERROR_NONE && isset($dataArray[0]['data']['websiteId'])) {
-						$websiteId = $dataArray[0]['data']['websiteId'];
-					} else {
+					$order_item = $item->get_meta( SiteSync::CREATE_SITE_RESPONSES_ITEM_META_KEY );
+
+					// get websiteId from order_item
+					if ( ! empty( $order_item ) ) {
+						$responses = json_decode( $order_item, true );
+						if ( is_array( $responses ) && ! empty( $responses ) ) {
+							// 取第一個 response 的 data.websiteId
+							$first_response = $responses[0];
+							if ( isset( $first_response['data']['websiteId'] ) ) {
+								$websiteId = $first_response['data']['websiteId'];
+							}
+						}
+					}
+
+					if ( empty( $websiteId ) ) {
+						Plugin::logger(
+							"訂閱 #{$subscription_id} 的訂單項目 #{$item->get_id()} 找不到 websiteId",
+							'error',
+							[
+								'order_item' => $order_item,
+								'item_id'    => $item->get_id(),
+							]
+						);
 						continue;
 					}
 
-					// // TEST ----- ▼ 印出 WC Logger 記得移除 ----- //
-					// \J7\WpUtils\Classes\WC::logger('disable_site_scheduler', 'info', [
-					// 	'order_id' => $order_id,
-					// 	'product' => [
-					// 		'id' => $product->get_id(),
-					// 		'name' => $product->get_name(),
-					// 		'host_type' => $host_type,
-					// 	],
-					// 	'powercloud_linked_website_id' => $websiteId,
-					// ]);
-					// // TEST ---------- END ---------- //	
-
-					// TODO: Using FetchPowerCloud::disable_site to disable the site
+					$reason = "停用網站，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}，websiteId: {$websiteId}";
+					FetchPowerCloud::disable_site( (string)$current_user_id, $websiteId );
+					$subscription->add_order_note( $reason );
+					$subscription->save();
+					Plugin::logger( $reason, 'info' );
 					continue;
 				}
 

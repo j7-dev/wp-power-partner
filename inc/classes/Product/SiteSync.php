@@ -74,7 +74,8 @@ final class SiteSync {
 				$product    = \wc_get_product( $product_id );
 
 				// 如果不是可變訂閱商品，就不處理
-				if ( 'variable-subscription' === $product->get_type() ) {
+				// linked_site_id 是模板站 ID
+				if ( 'subscription_variation' === $product->get_type() ) {
 					$variation_id   = $item->get_variation_id();
 					$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
 					$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
@@ -89,6 +90,8 @@ final class SiteSync {
 				if ( empty( $linked_site_id ) ) {
 					continue;
 				}
+
+				$host_type = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
 
 				// 根據 host_type 判斷是否為 WPCD (舊架構) 或是 PowerCloud (新架構) 開站
 				$site_sync_params = [

@@ -6,6 +6,7 @@ namespace J7\PowerPartner\Api;
 
 use J7\PowerPartner\Bootstrap;
 use J7\PowerPartner\Api\Main;
+use J7\PowerPartner\Plugin;
 
 /** Class FetchPowerCloud */
 abstract class FetchPowerCloud {
@@ -120,7 +121,31 @@ abstract class FetchPowerCloud {
 	/**
 	 * 發 API 關站 disable
 	 */
-	public static function disable_site() {}
+	public static function disable_site( string $current_user_id, string $websiteId ) {
+		$powercloud_api_key = \get_transient( Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id );
+
+		$args     = [
+			'method'  => 'PATCH',
+			'headers' => [
+				'Content-Type' => 'application/json',
+				'X-API-Key'    => $powercloud_api_key,
+			],
+			'timeout' => 600,
+		];
+
+		$response = wp_remote_request(Bootstrap::instance()->powercloud_api . "/wordpress/{$websiteId}/stop", $args);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( $response->get_error_message() );
+			return;
+		}
+
+		Plugin::logger('response', 'info', [
+			'response' => $response,
+		]);
+		
+
+	}
 
 	/**
 	 * 取得經銷商允許的模板站（新架構 PowerCloud）
