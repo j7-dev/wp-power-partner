@@ -77,16 +77,6 @@ final class DisableSiteScheduler extends Base {
 		$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
 		$order_id        = $subscription->get_parent_id();
 
-		// // disable 訂單網站
-		// foreach ( $linked_site_ids as $site_id ) {
-		// 	$reason = "停用網站，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}，網站ID: {$site_id}";
-
-		// 	Fetch::disable_site( $site_id, $reason );
-		// 	$subscription->add_order_note( $reason );
-		// 	$subscription->save();
-		// 	Plugin::logger($reason);
-		// }
-
 		// 從訂閱的父訂單獲取產品資訊，取得 host_type
 		/** @var \WC_Order $parent_order */
 		$parent_order = $subscription->get_parent();

@@ -119,7 +119,7 @@ abstract class FetchPowerCloud {
 
 
 	/**
-	 * 發 API 關站 disable
+	 * 發 API disable 暫停 wordpress 網站
 	 */
 	public static function disable_site( string $current_user_id, string $websiteId ) {
 		$powercloud_api_key = \get_transient( Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id );
@@ -134,6 +134,35 @@ abstract class FetchPowerCloud {
 		];
 
 		$response = wp_remote_request(Bootstrap::instance()->powercloud_api . "/wordpress/{$websiteId}/stop", $args);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( $response->get_error_message() );
+			return;
+		}
+
+		Plugin::logger('response', 'info', [
+			'response' => $response,
+		]);
+		
+
+	}
+
+	/**
+	 * 發 API enable 啟用 wordpress 網站
+	 */
+	public static function enable_site( string $current_user_id, string $websiteId ) {
+		$powercloud_api_key = \get_transient( Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id );
+
+		$args     = [
+			'method'  => 'PATCH',
+			'headers' => [
+				'Content-Type' => 'application/json',
+				'X-API-Key'    => $powercloud_api_key,
+			],
+			'timeout' => 600,
+		];
+
+		$response = wp_remote_request(Bootstrap::instance()->powercloud_api . "/wordpress/{$websiteId}/start", $args);
 
 		if ( is_wp_error( $response ) ) {
 			error_log( $response->get_error_message() );

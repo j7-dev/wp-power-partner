@@ -39,14 +39,15 @@ abstract class Base {
 			case 'local': // local 辦公室
 				$username       = 'powerpartner';
 				$psw            = '7t4T WpSr HgZL Auyl TtOw USyG';
+				// $base_url       = 'http://cloud.local';
 				$base_url       = 'http://cloud.local';
 				$powercloud_api = 'http://localhost:5000'; // local powercloud api
 				break;
 			case 'staging': // staging 線上測試站
 				$username       = 'powerpartner';
-				$psw            = '9Nve BO2G oe8y B19G SDNd v68Q';
-				$base_url       = 'https://cloud-staging.wpsite.pro';
-				$powercloud_api = 'https://api.wpsite.pro'; // staging powercloud api
+				$psw            = 'BU6g 9DOh G6xw gXQo gi6u hRGw';
+				$base_url       = 'https://test1.powerhouse.cloud';
+				$powercloud_api = 'http://localhost:5000'; // staging powercloud api
 				break;
 			default: // PROD
 				$username       = 'powerpartner';
