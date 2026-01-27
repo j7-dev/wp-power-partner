@@ -9,7 +9,6 @@ use J7\PowerPartner\Domains\Site\Services\DisableSiteScheduler;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 use J7\PowerPartner\Domains\Email\Services\SubscriptionEmailScheduler;
 use J7\PowerPartner\Domains\Site\Core\DisableHooks;
-use J7\PowerPartner\Domains\Email\Core\SubscriptionEmailHooks;
 
 
 /**
