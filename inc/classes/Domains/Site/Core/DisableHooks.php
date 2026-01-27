@@ -10,6 +10,8 @@ use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 use J7\PowerPartner\Product\DataTabs\LinkedSites;
 use J7\PowerPartner\Product\SiteSync;
 use J7\PowerPartner\Api\FetchPowerCloud;
+use J7\PowerPartner\ShopSubscription;
+use J7\PowerPartner\Api\Fetch;
 
 /**
  * 註冊 Disable Site 相關的 action hook
@@ -40,10 +42,10 @@ final class DisableHooks {
 	 * @return void
 	 */
 	public function schedule_disable_site( $subscription, $args ): void {
-		// $power_partner_settings    = \get_option( 'power_partner_settings', [] );
-		// $disable_site_after_n_days = (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' );
-		// $timestamp                 = time() + ( 86400 * $disable_site_after_n_days );
-		$timestamp                 = time() + 1; // 測試用, 記得移除或註解
+		$power_partner_settings    = \get_option( 'power_partner_settings', [] );
+		$disable_site_after_n_days = (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' );
+		$timestamp                 = time() + ( 86400 * $disable_site_after_n_days );
+		// $timestamp                 = time() + 1; // 測試用, 記得移除 -----
 
 
 		$disable_site_scheduler = new DisableSiteScheduler( $subscription );
@@ -83,21 +85,18 @@ final class DisableHooks {
 		$current_user_id = $parent_order->get_customer_id();
 		$items        = $parent_order->get_items();
 
+		$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
+
+		// WPCD 的數據放在 subscription 的 meta data
+		foreach ( $linked_site_ids as $site_id ) {
+			Fetch::enable_site( $site_id );
+		}
+
+		// PowerCloud 的數據放在 order item 的 meta data
 		foreach ( $items as $item ) {
 			/** @var \WC_Order_Item_Product $item */
 			$product_id = $item->get_variation_id() ?: $item->get_product_id();
 			$host_type = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
-
-			// 根據 host_type 選擇對應的 API
-			// wpcd 為舊架構
-			if ( $host_type === LinkedSites::WPCD_HOST_TYPE ) {
-				// TEST ----- ▼ 印出 WC Logger 記得移除 ----- //
-				\J7\WpUtils\Classes\WC::logger('wpcd', 'info', [
-					'product_id' => $product_id,
-					'host_type' => $host_type,
-				]);
-				// TEST ---------- END ---------- //
-			}
 
 			// powercloud 為新架構（新架構是默認Host Type)
 			if ( $host_type === LinkedSites::DEFAULT_HOST_TYPE ) {

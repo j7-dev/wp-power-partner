@@ -752,7 +752,7 @@ final class Main {
 	 */
 	public function check_ip_permission(): bool
 	{
-		if ('local' === \wp_get_environment_type()) {
+		if ('local' === \wp_get_environment_type() || 'staging' === \wp_get_environment_type()) {
 			return true;
 		}
 		// 103.153.176.121 = 黃亦主機對外  199.99.88.1 = 黃亦主機打黃亦主機
