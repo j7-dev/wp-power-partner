@@ -131,37 +131,25 @@ final class ShopSubscription {
 
 		$old_linked_site_ids = self::get_linked_site_ids( $subscription_id );
 
-		// 創建 $old_linked_site_ids 的新排序副本
-		$new_old_linked_site_ids = array_values( array_map( 'intval', $old_linked_site_ids ) );
-		sort( $new_old_linked_site_ids );
-
-		// 創建 $linked_site_ids 的新排序副本
-		$new_linked_site_ids = array_values( array_map( 'intval', $linked_site_ids ) );
-		sort( $new_linked_site_ids );
-
-		if ( $new_old_linked_site_ids === $new_linked_site_ids ) {
+		// 檢查是否有變更
+		if ( self::is_same_site_ids( $old_linked_site_ids, $linked_site_ids ) ) {
 			return false;
 		}
 
-		$to_add_sites    = array_diff( $linked_site_ids, $old_linked_site_ids );
-		$to_delete_sites = array_diff( $old_linked_site_ids, $linked_site_ids );
+		// 刪除所有舊的 meta（使用 delete_meta_data 會刪除所有相同 key 的值）
+		$subscription->delete_meta_data( SiteSync::LINKED_SITE_IDS_META_KEY );
 
-		foreach ( $to_add_sites as $to_add_site ) {
-			$subscription->add_meta_data( SiteSync::LINKED_SITE_IDS_META_KEY, $to_add_site );
+		// 添加新的 meta（每個 site_id 一筆）
+		foreach ( $linked_site_ids as $site_id ) {
+			$subscription->add_meta_data( SiteSync::LINKED_SITE_IDS_META_KEY, $site_id, false );
 		}
 
-		foreach ( $to_delete_sites as $to_delete_site ) {
-			$mid = array_search( $to_delete_site, $old_linked_site_ids );
-			if ( $mid ) {
-				Base::delete_post_meta_by_mid( $mid );
-			}
-		}
-
+		// 記錄變更
 		$subscription->add_order_note(
 			\sprintf(
-				/* translators: %s: linked site ids */
+				/* translators: %1$s: old linked site ids, %2$s: new linked site ids */
 				__( '更新了此訂閱的連結的網站 id: %1$s -> %2$s', 'power_partner' ),
-				\implode( ', ', $old_linked_site_ids ),
+				\implode( ', ', array_values( $old_linked_site_ids ) ),
 				\implode( ', ', $linked_site_ids )
 			)
 		);
@@ -169,6 +157,24 @@ final class ShopSubscription {
 		$subscription->save();
 
 		return true;
+	}
+
+	/**
+	 * Check if two site id arrays are the same
+	 * 檢查兩個 site id 陣列是否相同
+	 *
+	 * @param array $old_ids Old site ids
+	 * @param array $new_ids New site ids
+	 * @return bool
+	 */
+	private static function is_same_site_ids( array $old_ids, array $new_ids ): bool {
+		$normalized_old_ids = array_values( array_map( 'intval', $old_ids ) );
+		sort( $normalized_old_ids );
+
+		$normalized_new_ids = array_values( array_map( 'intval', $new_ids ) );
+		sort( $normalized_new_ids );
+
+		return $normalized_old_ids === $normalized_new_ids;
 	}
 
 	/**
