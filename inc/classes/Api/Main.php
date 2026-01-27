@@ -196,39 +196,7 @@ final class Main {
 			$tokens['SITEUSERNAME']                   = $body_params['SITEUSERNAME'];
 			$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
 
-			// 取得 site_sync 的 email 模板
-			$email_service = EmailService::instance();
-			$emails        = $email_service->get_emails( 'site_sync' );
-
-			$success_emails = [];
-			$failed_emails  = [];
-			foreach ( $emails as $email ) {
-				// 取得 subject
-				$subject = $email->subject;
-				$subject = empty( $subject ) ? $email_service->default->subject : $subject;
-
-				// 取得 message
-				$body = $email->body;
-				$body = empty( $body ) ? $email_service->default->body : $body;
-
-				// Replace tokens in email..
-				$subject = Token::replace( $subject, $tokens );
-				$body    = Token::replace( $body, $tokens );
-
-				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
-				$result        = \wp_mail(
-					$customer_email,
-					$subject,
-					\wpautop( $body ),
-					$email_headers
-				);
-
-				if ( $result ) {
-					$success_emails[] = $email->action_name;
-				} else {
-					$failed_emails[] = $email->action_name;
-				}
-			}
+			[$success_emails, $failed_emails] = EmailService::send_mail( $customer_email, $tokens );
 
 			return \rest_ensure_response(
 				[

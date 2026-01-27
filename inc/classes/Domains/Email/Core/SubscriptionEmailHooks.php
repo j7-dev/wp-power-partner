@@ -11,6 +11,7 @@ use J7\PowerPartner\Domains\Subscription\Utils\Base as SubscriptionUtils;
 use J7\PowerPartner\Domains\Email\Services\SubscriptionEmailScheduler;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 use J7\Powerhouse\Domains\Subscription\Utils\Base as PowerhouseSubscriptionUtils;
+use J7\PowerPartner\Utils\Token;
 
 
 /**
@@ -222,5 +223,50 @@ final class SubscriptionEmailHooks {
 			$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
 			$subscription_email_scheduler->unschedule($email->action_name, $email->unique);
 		}
+	}
+
+	/**
+	 * Send mail
+	 *
+	 * @param string $to 收件者
+	 * @param array  $tokens 取代字串
+	 * @return array{0:array<string>,1:array<string>} 成功與失敗的 email action names
+	 */
+	public static function send_mail( string $to, array $tokens ): array {
+		// 取得 site_sync 的 email 模板
+		$email_service = self::instance();
+		$emails        = $email_service->get_emails( 'site_sync' );
+
+		$success_emails = [];
+		$failed_emails  = [];
+		foreach ( $emails as $email ) {
+			// 取得 subject
+			$subject = $email->subject;
+			$subject = empty( $subject ) ? $email_service->default->subject : $subject;
+
+			// 取得 message
+			$body = $email->body;
+			$body = empty( $body ) ? $email_service->default->body : $body;
+
+			// Replace tokens in email..
+			$subject = Token::replace( $subject, $tokens );
+			$body    = Token::replace( $body, $tokens );
+
+			$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+			$result        = \wp_mail(
+				$to,
+				$subject,
+				\wpautop( $body ),
+				$email_headers
+			);
+
+			if ( $result ) {
+				$success_emails[] = $email->action_name;
+			} else {
+				$failed_emails[] = $email->action_name;
+			}
+		}
+
+		return [ $success_emails, $failed_emails ];
 	}
 }
