@@ -6,6 +6,7 @@ namespace J7\PowerPartner\Product;
 
 use J7\PowerPartner\Plugin;
 use J7\PowerPartner\Api\Fetch;
+use J7\PowerPartner\Api\FetchPowerCloud;
 use J7\PowerPartner\Product\DataTabs\LinkedSites;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
 
@@ -16,9 +17,10 @@ final class SiteSync {
 	const PRODUCT_TYPE_NAME = 'Power Partner 產品';
 
 	const CREATE_SITE_RESPONSES_META_KEY = 'pp_create_site_responses';
+	const CREATE_SITE_RESPONSES_ITEM_META_KEY = '_pp_create_site_responses_item'; // 加上下劃線前綴，隱藏在前端顯示
 
 	// the site id linked in cloud site
-	const LINKED_SITE_IDS_META_KEY = 'pp_linked_site_ids';
+	const LINKED_SITE_IDS_META_KEY = 'pp_linked_site_ids'; // pp === Power Partner
 
 	/** Constructor */
 	public function __construct() {
@@ -47,7 +49,7 @@ final class SiteSync {
 				Plugin::logger( "訂閱 #{$subscription->get_id()} 的父訂單不是 WC_Order 實例", 'error' );
 				return;
 			}
-
+			/** @var \WC_Order */
 			$parent_order_id = $parent_order->get_id();
 
 			// 確保只有一筆訂單 (parent order) 才會觸發 site sync，續訂不觸發
@@ -68,11 +70,12 @@ final class SiteSync {
 
 			foreach ( $items as $item ) {
 				/** @var \WC_Order_Item_Product $item */
-				$product_id = $item->get_product_id();
+				$product_id = $item->get_variation_id() ?: $item->get_product_id();
 				$product    = \wc_get_product( $product_id );
 
 				// 如果不是可變訂閱商品，就不處理
-				if ( 'variable-subscription' === $product->get_type() ) {
+				// linked_site_id 是模板站 ID
+				if ( 'subscription_variation' === $product->get_type() ) {
 					$variation_id   = $item->get_variation_id();
 					$host_position  = \get_post_meta( $variation_id, LinkedSites::HOST_POSITION_FIELD_NAME, true );
 					$linked_site_id = \get_post_meta( $variation_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
@@ -88,10 +91,10 @@ final class SiteSync {
 					continue;
 				}
 
-				$host_position = empty( $host_position ) ? LinkedSites::DEFAULT_HOST_POSITION : $host_position;
+				$host_type = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
 
-				$response_obj = Fetch::site_sync(
-				[
+				// 根據 host_type 判斷是否為 WPCD (舊架構) 或是 PowerCloud (新架構) 開站
+				$site_sync_params = [
 					'site_url'        => \site_url(),
 					'site_id'         => $linked_site_id,
 					'host_position'   => $host_position,
@@ -105,15 +108,39 @@ final class SiteSync {
 						'phone'      => $parent_order->get_billing_phone(),
 					],
 					'subscription_id' => $subscription->get_id(),
-				]
-				);
+				];
+
+				// 根據 host_type 選擇對應的 API
+				// wpcd 為舊架構
+				if ( $host_type === LinkedSites::WPCD_HOST_TYPE ) {
+					// 舊架構：使用 Fetch::site_sync
+					$response_obj = Fetch::site_sync( $site_sync_params );
+				}
+
+				// powercloud 為新架構（新架構是默認Host Type)
+				if ( $host_type === LinkedSites::DEFAULT_HOST_TYPE ) {
+
+					$open_site_plan_id   = \get_post_meta( $product_id, LinkedSites::OPEN_SITE_PLAN_FIELD_NAME, true );
+					$template_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
+
+					// 新架構：使用 FetchPowerCloud::site_sync
+					$response_obj = FetchPowerCloud::site_sync( $site_sync_params , $open_site_plan_id, $template_site_id );
+
+				}
 
 				$responses[] = [
 					'status'  => $response_obj?->status,
 					'message' => $response_obj?->message,
 					'data'    => $response_obj?->data,
 				];
+
+				// 這邊把 $responses 保存到 order item 的 meta data
+				$item->update_meta_data( self::CREATE_SITE_RESPONSES_ITEM_META_KEY, \wp_json_encode( $responses ) );
 			}
+
+			// 在所有 meta_data 添加完成後，統一保存一次
+			// 這樣可以確保所有數據都被正確保存
+			$subscription->save();
 
 			Plugin::logger(
 			"訂閱 #{$subscription->get_id()}  order_id: #{$parent_order_id}",
