@@ -47,7 +47,7 @@ abstract class Base {
 				$username       = 'powerpartner';
 				$psw            = 'BU6g 9DOh G6xw gXQo gi6u hRGw';
 				$base_url       = 'https://test1.powerhouse.cloud';
-				$powercloud_api = 'http://localhost:5000'; // staging powercloud api
+				$powercloud_api = 'https://api.wpsite.pro'; // staging powercloud api
 				break;
 			default: // PROD
 				$username       = 'powerpartner';
