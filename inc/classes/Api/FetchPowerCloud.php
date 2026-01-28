@@ -101,9 +101,18 @@ abstract class FetchPowerCloud {
 				'data'    => $response_body,
 			];
 
+			$wordpress_obj = (object) [
+				'domain' => $domain,
+				'name' => $name,
+				'namespace' => $namespace,
+				'wp_admin_user'     => $customer['username'] ?? 'admin',
+				'wp_admin_email'    => $customer['email'] ?? 'admin@example.com',
+				'wp_admin_password' => $wp_admin_password,
+			];
+
 			\do_action( 'pp_after_site_sync_powercloud', $response_obj, $props );
 
-			return $response_obj;
+			return [$response_obj, $wordpress_obj];
 		} catch ( \Throwable $th ) {
 			ob_start();
 			print_r( $response );

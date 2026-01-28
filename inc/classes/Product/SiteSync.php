@@ -9,6 +9,8 @@ use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\Api\FetchPowerCloud;
 use J7\PowerPartner\Product\DataTabs\LinkedSites;
 use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
+use J7\PowerPartner\Domains\Email\Core\SubscriptionEmailHooks as EmailService;
+use J7\PowerPartner\Utils\Token;
 
 /** Class SiteSync */
 final class SiteSync {
@@ -25,6 +27,8 @@ final class SiteSync {
 	/** Constructor */
 	public function __construct() {
 		\add_action( Action::INITIAL_PAYMENT_COMPLETE->get_action_hook(), [ $this, 'site_sync_by_subscription' ], 1, 2 );
+
+		\add_action('powerhouse_delay_send_email', [ $this, 'send_email' ], 10, 2);
 	}
 
 
@@ -124,7 +128,36 @@ final class SiteSync {
 					$template_site_id = \get_post_meta( $product_id, LinkedSites::LINKED_SITE_FIELD_NAME, true );
 
 					// 新架構：使用 FetchPowerCloud::site_sync
-					$response_obj = FetchPowerCloud::site_sync( $site_sync_params , $open_site_plan_id, $template_site_id );
+					[$response_obj, $wordpress_obj] = FetchPowerCloud::site_sync( $site_sync_params , $open_site_plan_id, $template_site_id );
+
+
+					// 發送 email 給用戶，告知網站已建立成功
+					if ( $response_obj?->status === 201 ) {
+						$order_token = Token::get_order_tokens( $parent_order );
+
+						// 拿到 email payloads
+						$email_payloads = \array_merge( $order_token, [
+							'CUSTOMER_ID' => $parent_order->get_customer_id(),
+							'REF_ORDER_ID' => $parent_order_id,
+							'WORDPRESSAPPWCSITESACCOUNTPAGE' => '',
+							'IPV4' => '163.61.60.30',
+							'DOMAIN' => 'https://' . $wordpress_obj->domain,
+							'FRONTURL' => 'https://' . $wordpress_obj->domain,
+							'ADMINURL' => 'https://' . $wordpress_obj->domain . '/wp-admin',
+							'SITEUSERNAME' => $wordpress_obj->wp_admin_email,
+							'SITEPASSWORD' => $wordpress_obj->wp_admin_password,
+							'NEW_SITE_ID' => '',
+						] );
+
+						$subscription->update_meta_data( 'email_payloads_tmp', $email_payloads );
+						$subscription->save();
+
+						\as_schedule_single_action( \time() + 240, 'powerhouse_delay_send_email', [
+							'to' => $wordpress_obj->wp_admin_email,
+							'subscription_id' => $subscription->get_id(),
+						] );
+
+					}
 
 				}
 
@@ -212,5 +245,29 @@ final class SiteSync {
 		}
 
 		return $related_order_ids;
+	}
+
+	/**
+	 * 延遲寄送 email
+	 *
+	 * @param string $to 收件者
+	 * @param int|string $subscription_id 訂閱 ID
+	 * @return void
+	 */
+	public function send_email( string $to, int|string $subscription_id ):void {
+		$subscription = \wcs_get_subscription( $subscription_id );
+		if ( ! $subscription ) {
+			return;
+		}
+
+		$email_payloads = $subscription->get_meta( 'email_payloads_tmp' );
+		if ( ! $email_payloads ) {
+			return;
+		}
+
+		EmailService::send_mail( $to, $email_payloads );
+
+		$subscription->delete_meta_data( 'email_payloads_tmp' );
+		$subscription->save();
 	}
 }
