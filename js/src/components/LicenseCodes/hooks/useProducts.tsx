@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { cloudAxios } from '@/api'
 import { useAtomValue } from 'jotai'
-import { identityAtom } from '@/pages/AdminApp/atom'
+import { identityAtom } from '@/pages/AdminApp/Atom/atom'
 
 type TProduct = {
 	slug: string

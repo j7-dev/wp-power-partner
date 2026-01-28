@@ -46,7 +46,7 @@ final class SubscriptionEmailHooks {
 		SubscriptionEmailScheduler::register();
 
 		// 網站訂閱創建後
-		// \add_action('pp_site_sync_by_subscription', [ $this, 'schedule_site_sync_email' ], 10, 1);
+		\add_action('pp_site_sync_by_subscription', [ $this, 'schedule_site_sync_email' ], 10, 1);
 
 		// 以下六個時機點，用監聽的 hook 來發信，且只發一次，如果有修改要取消排程，重新排程
 		$mapper = [

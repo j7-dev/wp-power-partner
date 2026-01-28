@@ -8,6 +8,9 @@ use J7\PowerPartner\Plugin;
 use J7\Powerhouse\Domains\AsSchedulerHandler\Shared\Base;
 use J7\PowerPartner\Api\Fetch;
 use J7\PowerPartner\ShopSubscription;
+use J7\PowerPartner\Product\DataTabs\LinkedSites;
+use J7\PowerPartner\Product\SiteSync;
+use J7\PowerPartner\Api\FetchPowerCloud;
 
 /**
  * 排程禁用網站
@@ -73,14 +76,83 @@ final class DisableSiteScheduler extends Base {
 
 		$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
 		$order_id        = $subscription->get_parent_id();
-		// disable 訂單網站
-		foreach ( $linked_site_ids as $site_id ) {
-			$reason = "停用網站，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}，網站ID: {$site_id}";
 
-			Fetch::disable_site( $site_id, $reason );
-			$subscription->add_order_note( $reason );
-			$subscription->save();
-			Plugin::logger($reason);
+		// 從訂閱的父訂單獲取產品資訊，取得 host_type
+		/** @var \WC_Order $parent_order */
+		$parent_order = $subscription->get_parent();
+		$current_user_id = $parent_order->get_customer_id();
+		$host_type = LinkedSites::DEFAULT_HOST_TYPE; // 預設值
+
+		if ( $parent_order instanceof \WC_Order ) {
+			$items = $parent_order->get_items();
+			foreach ( $items as $item ) {
+				/** @var \WC_Order_Item_Product $item */
+				// item->get_id()
+				$product_id = $item->get_variation_id() ?: $item->get_product_id();
+				/** @var \WC_Product $product */
+				$product    = \wc_get_product( $product_id );
+
+				if ( ! $product || ! \in_array( $product->get_type(), [ 'subscription', 'subscription_variation' ], true ) ) {
+					continue;
+				}
+
+				// 從product獲取 host_type
+				$host_type = \get_post_meta( $product_id, LinkedSites::HOST_TYPE_FIELD_NAME, true );
+				if ( empty( $host_type ) ) {
+					$host_type = LinkedSites::DEFAULT_HOST_TYPE;
+				}
+
+				// 如果 host_type 為 WPCD 舊架構
+				if($host_type === LinkedSites::WPCD_HOST_TYPE) {
+					foreach ( $linked_site_ids as $site_id ) {
+						$reason = "停用網站，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}，網站ID: {$site_id}";
+						Fetch::disable_site( $site_id, $reason );
+						$subscription->add_order_note( $reason );
+						$subscription->save();
+						Plugin::logger($reason);
+
+					}
+					continue;
+				}
+
+				// 如果 host_type 為 PowerCloud 新架構
+				if($host_type === LinkedSites::DEFAULT_HOST_TYPE) {
+					$websiteId = null;
+					$order_item = $item->get_meta( SiteSync::CREATE_SITE_RESPONSES_ITEM_META_KEY );
+
+					// get websiteId from order_item
+					if ( ! empty( $order_item ) ) {
+						$responses = json_decode( $order_item, true );
+						if ( is_array( $responses ) && ! empty( $responses ) ) {
+							// 取第一個 response 的 data.websiteId
+							$first_response = $responses[0];
+							if ( isset( $first_response['data']['websiteId'] ) ) {
+								$websiteId = $first_response['data']['websiteId'];
+							}
+						}
+					}
+
+					if ( empty( $websiteId ) ) {
+						Plugin::logger(
+							"訂閱 #{$subscription_id} 的訂單項目 #{$item->get_id()} 找不到 websiteId",
+							'error',
+							[
+								'order_item' => $order_item,
+								'item_id'    => $item->get_id(),
+							]
+						);
+						continue;
+					}
+
+					$reason = "停用網站，訂閱ID: {$subscription_id}，上層訂單號碼: {$order_id}，websiteId: {$websiteId}";
+					FetchPowerCloud::disable_site( (string)$current_user_id, $websiteId );
+					$subscription->add_order_note( $reason );
+					$subscription->save();
+					Plugin::logger( $reason, 'info' );
+					continue;
+				}
+
+			}
 		}
 	}
 

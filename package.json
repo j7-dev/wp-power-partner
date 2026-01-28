@@ -1,7 +1,7 @@
 {
 	"name": "power-partner",
 	"private": true,
-	"version": "3.1.8",
+	"version": "3.1.14",
 	"type": "module",
 	"scripts": {
 		"bootstrap": "composer install --no-interaction",
@@ -13,7 +13,7 @@
 		"lint": "pnpm eslint ./js/src/*.{ts,tsx} --ext .ts,.tsx && phpcbf",
 		"lint:fix": "pnpm eslint ./js/src/*.{ts,tsx} --fix && phpcbf",
 		"release": "env-cmd -f ../../.env release-it patch --ci --verbose --config ./release/.release-it.cjs",
-		"release:build-only": "env-cmd -f ../../.env release-it patch --ci --verbose --config ./release/.release-it.cjs --build-only",
+		"release:build-only": "release-it patch --ci --verbose --config ./release/.release-it.cjs --build-only",
 		"release:patch": "env-cmd -f ../../.env release-it patch --ci --verbose --config ./release/.release-it.cjs",
 		"release:minor": "env-cmd -f ../../.env release-it minor --ci --verbose --config ./release/.release-it.cjs",
 		"release:major": "env-cmd -f ../../.env release-it major --ci --verbose --config ./release/.release-it.cjs",
@@ -32,6 +32,9 @@
 		"@power/eslint-config": "workspace:*",
 		"@power/tailwind-config": "workspace:*",
 		"@power/typescript-config": "workspace:*",
-		"@tanstack/react-query-devtools": "^5.81.5"
+		"@rollup/plugin-terser": "^0.4.4",
+		"@tanstack/react-query-devtools": "^5.81.5",
+		"rollup-plugin-terser": "^7.0.2",
+		"vite-plugin-optimizer": "^1.4.3"
 	}
 }

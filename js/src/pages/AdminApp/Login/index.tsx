@@ -1,6 +1,6 @@
 import { Button, Form, Input, notification, Alert } from 'antd'
 import { cloudAxios, axios } from '@/api'
-import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
+import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/Atom/atom'
 import { useSetAtom } from 'jotai'
 import { renderHTML, encrypt, LOCALSTORAGE_ACCOUNT_KEY } from '@/utils'
 import { TAccountInfo, TIdentity } from '@/pages/AdminApp/types'

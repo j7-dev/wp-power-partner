@@ -38,7 +38,6 @@
 		"dealerdirect/phpcodesniffer-composer-installer": "@stable",
 		"phpcompatibility/php-compatibility": "@stable",
 		"phpstan/phpstan": "@stable",
-		"php-stubs/woocommerce-stubs": "@stable",
 		"php-stubs/wordpress-stubs": "@stable",
 		"phpstan/extension-installer": "@stable"
 	},

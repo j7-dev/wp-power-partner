@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { cloudAxios, axios } from '@/api'
-import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
+import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/Atom/atom'
 import { useSetAtom } from 'jotai'
 import { notification } from 'antd'
 import { renderHTML, LOCALSTORAGE_ACCOUNT_KEY, decrypt } from '@/utils'

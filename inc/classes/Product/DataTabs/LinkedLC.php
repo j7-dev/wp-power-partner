@@ -63,12 +63,12 @@ final class LinkedLC {
 		// render 商品 & 授權碼數量選擇器
 		printf(
 		/*html*/"
-			<div class='flex items-center py-4 show_if_subscription hidden'>
+			<div class='flex hidden items-center py-4 show_if_subscription'>
 				<div class='w-[150px] pl-3 mt-2 self-start'>關聯授權碼</div>
 				<div class='%1\$s'>
 					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>
 				</div>
-				<a href='%5\$s' class='button self-start ml-2'>清除快取</a>
+				<a href='%5\$s' class='self-start ml-2 button'>清除快取</a>
 			</div>
 			",
 		'w-[calc((100%-180px)/2)]',
@@ -118,7 +118,7 @@ final class LinkedLC {
 		// 商品 & 授權碼數量選擇器
 		printf(
 		/*html*/"
-			<div class='clear-both show_if_variable-subscription hidden'>
+			<div class='hidden clear-both show_if_variable-subscription'>
 				<div class=''>關聯授權碼</div>
 				<div class='%1\$s'>
 					<div class='%2\$s' data-field_name='%3\$s' data-default_linked_lc_products='%4\$s'></div>

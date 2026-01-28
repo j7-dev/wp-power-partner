@@ -37,26 +37,31 @@ abstract class Base {
 			// $psw      = '5NTw cqYl uhJU pixF Myj6 rBuA';
 			// $base_url = 'https://cloud.local';
 			case 'local': // local 辦公室
-				$username = $is_home ? 'j7.dev.gg' : 'powerpartner';
-				$psw      = $is_home ? '5NTw cqYl uhJU pixF Myj6 rBuA' : 'WDdk K7nm SSNr AwGy Dhab sipK';
-				$base_url = $is_home ? 'http://cloud.local' : 'http://cloud.local';
+				$username       = 'powerpartner';
+				$psw            = '7t4T WpSr HgZL Auyl TtOw USyG';
+				// $base_url       = 'http://cloud.local';
+				$base_url       = 'http://cloud.local';
+				$powercloud_api = 'http://localhost:5000'; // local powercloud api
 				break;
 			case 'staging': // staging 線上測試站
-				$username = 'powerpartner';
-				$psw      = '9Nve BO2G oe8y B19G SDNd v68Q';
-				$base_url = 'https://cloud-staging.wpsite.pro';
+				$username       = 'powerpartner';
+				$psw            = 'BU6g 9DOh G6xw gXQo gi6u hRGw';
+				$base_url       = 'https://test1.powerhouse.cloud';
+				$powercloud_api = 'https://api.wpsite.pro'; // staging powercloud api
 				break;
 			default: // PROD
-				$username = 'powerpartner';
-				$psw      = 'uJsk Gu3S pwUG r6ia P9zy Xjrj';
-				$base_url = 'https://cloud.luke.cafe';
+				$username       = 'powerpartner';
+				$psw            = 'uJsk Gu3S pwUG r6ia P9zy Xjrj';
+				$base_url       = 'https://cloud.luke.cafe';
+				$powercloud_api = 'https://api.wpsite.pro'; // production powercloud api
 				break;
 		}
 
-		$bootstrap->username = $username;
-		$bootstrap->psw      = $psw;
-		$bootstrap->base_url = $base_url;
-		$bootstrap->t        = base64_encode( "$username:$psw" );
+		$bootstrap->username      = $username;
+		$bootstrap->psw           = $psw;
+		$bootstrap->base_url      = $base_url;
+		$bootstrap->powercloud_api = $powercloud_api;
+		$bootstrap->t             = base64_encode( "$username:$psw" );
 	}
 
 	/**

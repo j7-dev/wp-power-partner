@@ -106,6 +106,44 @@ abstract class Fetch {
 	}
 
 	/**
+	 * 發 API 啟用 wordpress 網站
+	 *
+	 * @param string $site_id 網站 ID
+	 * @return array|\WP_Error — The response or WP_Error on failure.
+	 */
+	public static function enable_site( string $site_id ) {
+		$args     = [
+			'body'    => \wp_json_encode(
+				[	
+					'site_id'    => $site_id,
+					'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
+				]
+			),
+			'headers' => [
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
+			],
+			'timeout' => 600,
+		];
+		$response = \wp_remote_post( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/v2/enable-site', $args );
+
+		try {
+			$response_obj = json_decode( $response['body'] );
+			return $response_obj;
+		} catch ( \Throwable $th ) {
+			ob_start();
+			print_r( $response );
+			return \rest_ensure_response(
+				[
+					'status'  => 500,
+					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
+					'data'    => null,
+				]
+			);
+		}
+	}
+
+	/**
 	 * 取得經銷商允許的模板站
 	 * 會先判斷 transient 是否有資料，如果沒有則發 API 取得
 	 *

@@ -13,7 +13,7 @@ import { DataType } from '../types'
 import dayjs from 'dayjs'
 import { NotificationInstance } from 'antd/es/notification/interface'
 import SubscriptionSelector from './SubscriptionSelector'
-import { identityAtom } from '@/pages/AdminApp/atom'
+import { identityAtom } from '@/pages/AdminApp/Atom/atom'
 import { useAtomValue } from 'jotai'
 
 const { Item } = Form

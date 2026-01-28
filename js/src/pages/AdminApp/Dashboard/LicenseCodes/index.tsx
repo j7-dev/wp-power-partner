@@ -1,4 +1,4 @@
-import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/atom'
+import { identityAtom, globalLoadingAtom } from '@/pages/AdminApp/Atom/atom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 import { currentUserId } from '@/utils'

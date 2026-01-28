@@ -48,21 +48,23 @@ export class LinkedLCProductSelector {
 	renderRow(item: TLC, index: number) {
 		const NAME = this._field_name
 		return /*html*/`
-		<div data-index="${index}" class="lc-row flex gap-x-2 mb-2 items-center">
-			<select class="flex-1" name="${NAME}[${index}][product_slug]">
+		<div data-index="${index}" class="lc-row" style="display: flex; gap: 0.5em; margin-bottom: 0.75em; padding: 0.75em; background: #f9f9f9; border-radius: 4px; border: 1px solid #c3c4c7; align-items: center;">
+			<select name="${NAME}[${index}][product_slug]" style="flex: 1; min-width: 0; height: 32px; padding: 0 8px; border: 1px solid #8c8f94; border-radius: 3px; background: #fff;">
 			${avlProducts.map((product) => /*html*/ `
 				<option value="${product.slug}" ${product.slug === item.product_slug ? 'selected' : ''}>${product.label}</option>
 			`).join('')}
 		</select>
-		<input type="number" min="0" max="100" step="1" class="!w-20" placeholder="數量" value="${item.quantity}" name="${NAME}[${index}][quantity]" />
-		<button event="remove" type="button" class="button">移除</button>
+		<input type="number" min="0" max="100" step="1" placeholder="數量" value="${item.quantity}" name="${NAME}[${index}][quantity]" style="width: 80px; height: 32px; padding: 0 8px; text-align: center; border: 1px solid #8c8f94; border-radius: 3px; background: #fff;" />
+		<button event="remove" type="button" class="button" style="white-space: nowrap; height: 32px; line-height: 30px; padding: 0 12px;">移除</button>
 	</div>
 `}
 
 	render() {
 		this.$el.html(/*html*/ `
-			${this._list.map((item, index) => this.renderRow(item, index)).join('')}
-			<button type="button" event="add" class="button button-primary w-full"> + 新增</button>
+			<div style="margin-bottom: 1em;">
+				${this._list.map((item, index) => this.renderRow(item, index)).join('')}
+			</div>
+			<button type="button" event="add" class="button button-primary" style="width: 100%; margin-top: 0.5em; height: 36px; line-height: 34px;">+ 新增</button>
 		`)
 
 
