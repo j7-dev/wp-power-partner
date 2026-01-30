@@ -3,7 +3,7 @@ import {
     identityAtom,
     globalLoadingAtom,
     defaultIdentity,
-} from '@/pages/AdminApp/atom'
+} from '@/pages/AdminApp/Atom/atom'
 import {useAtom} from 'jotai'
 import {
     UserOutlined,

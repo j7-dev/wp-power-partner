@@ -18,6 +18,9 @@ use J7\WpUtils\Classes\WP;
 final class Main {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
+	const POWERCLOUD_API_KEY_TRANSIENT_KEY = 'power_partner_powercloud_api_key';
+	const POWERCLOUD_API_KEY_CACHE_TIME   = 30 * 24 * HOUR_IN_SECONDS; // 30 天
+	
 	/**
 	 * Constructor.
 	 */
@@ -69,6 +72,18 @@ final class Main {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'clear_template_sites_cache_callback' ],
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			]
+		);
+
+		\register_rest_route(
+			Plugin::$kebab,
+			'send-site-credentials-email',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'send_site_credentials_email_callback' ],
 				'permission_callback' => function () {
 					return \current_user_can( 'manage_options' );
 				},
@@ -144,6 +159,18 @@ final class Main {
 				},
 			]
 		);
+
+		\register_rest_route(
+			Plugin::$kebab,
+			'powercloud-api-key',
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'post_powercloud_api_key_callback' ],
+				'permission_callback' => function () {
+					return \current_user_can( 'manage_options' );
+				},
+			]
+		);
 	}
 
 	/**
@@ -169,17 +196,20 @@ final class Main {
 			$order_id       = $body_params['REF_ORDER_ID'] ?? '0';
 			$order          = \wc_get_order( $order_id );
 			$customer_email = $customer->user_email;
+			
 			if ( $order ) {
-				$customer_email  = $order->get_billing_email();
-				$subscription_id = $order->get_meta( '_subscription_renewal' ) ?: null;
+				$customer_email = $order->get_billing_email();
+				$subscriptions = \wcs_get_subscriptions_for_order( $order->get_id() );
+				$subscription = \reset( $subscriptions ); // 取得第一個訂閱
+
 				$new_site_id     = $body_params['NEW_SITE_ID'] ?? null;
-				if (\is_numeric($subscription_id ) && $new_site_id) {
+				if ($subscription && $new_site_id) {
 					ShopSubscription::update_linked_site_ids(
-					(int) $subscription_id,
-					[
-						(string) $new_site_id,
-					]
-						);
+						(int) $subscription->get_id(),
+						[
+							(string) $new_site_id,
+						]
+					);
 				}
 			}
 
@@ -472,6 +502,132 @@ final class Main {
 		}
 	}
 
+	/**
+	 * 發送站點帳號密碼郵件
+	 * 供前端手動開站後調用
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function send_site_credentials_email_callback( $request ): \WP_REST_Response {
+
+		try {
+			$body_params = $request->get_json_params() ?? [];
+
+			// 獲取當前用戶
+			$current_user_id = \get_current_user_id();
+			$current_user    = \get_user_by( 'id', $current_user_id );
+
+			if ( ! $current_user ) {
+				return new \WP_REST_Response(
+					[
+						'status'  => 500,
+						'message' => '找不到當前用戶',
+					],
+					500
+				);
+			}
+
+			// 獲取郵件相關資訊
+			$admin_email = $body_params['adminEmail'] ?? $current_user->user_email;
+			$domain      = $body_params['domain'] ?? '';
+			$front_url   = $body_params['frontUrl'] ?? "https://{$domain}";
+			$admin_url   = $body_params['adminUrl'] ?? "https://{$domain}/wp-admin";
+			$username    = $body_params['username'] ?? 'admin';
+			$password    = $body_params['password'] ?? '';
+			$ip          = $body_params['ip'] ?? '';
+
+			if ( empty( $domain ) || empty( $password ) ) {
+				return new \WP_REST_Response(
+					[
+						'status'  => 400,
+						'message' => '缺少必要參數：domain 或 password',
+					],
+					400
+				);
+			}
+
+			// 準備 Token
+			$tokens                 = [];
+			$tokens['FIRST_NAME']   = $current_user->first_name ?: '網站使用者';
+			$tokens['LAST_NAME']    = $current_user->last_name ?: '';
+			$tokens['NICE_NAME']    = $current_user->user_nicename ?: '';
+			$tokens['EMAIL']        = $admin_email;
+			$tokens['DOMAIN']       = $domain;
+			$tokens['FRONTURL']     = $front_url;
+			$tokens['ADMINURL']     = $admin_url;
+			$tokens['SITEUSERNAME'] = $username;
+			$tokens['SITEPASSWORD'] = $password;
+			$tokens['IPV4']         = $ip;
+
+			// 取得 site_sync 的 email 模板
+			$email_service = EmailService::instance();
+			$emails        = $email_service->get_emails( 'site_sync' );
+
+			if ( empty( $emails ) ) {
+				return new \WP_REST_Response(
+					[
+						'status'  => 404,
+						'message' => '找不到郵件模板，請先設定 action_name 為 site_sync 的郵件模板',
+					],
+					404
+				);
+			}
+
+			$success_emails = [];
+			$failed_emails  = [];
+
+			foreach ( $emails as $email ) {
+				// 取得 subject
+				$subject = $email->subject;
+				$subject = empty( $subject ) ? $email_service->default->subject : $subject;
+
+				// 取得 message
+				$body = $email->body;
+				$body = empty( $body ) ? $email_service->default->body : $body;
+
+				// Replace tokens in email
+				$subject = Token::replace( $subject, $tokens );
+				$body    = Token::replace( $body, $tokens );
+
+				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+
+				$result = \wp_mail(
+					$admin_email,
+					$subject,
+					\wpautop( $body ),
+					$email_headers
+				);
+
+				if ( $result ) {
+					$success_emails[] = $email->action_name;
+				} else {
+					$failed_emails[] = $email->action_name;
+				}
+			}
+
+			return new \WP_REST_Response(
+				[
+					'status'  => 200,
+					'message' => '郵件發送完成',
+					'data'    => [
+						'to'             => $admin_email,
+						'success_emails' => $success_emails,
+						'failed_emails'  => $failed_emails,
+					],
+				],
+				200
+			);
+		} catch ( \Throwable $th ) {
+			return new \WP_REST_Response(
+				[
+					'status'  => 500,
+					'message' => '郵件發送失敗: ' . $th->getMessage(),
+				],
+				500
+			);
+		}
+	}
 
 	/**
 	 * 更新設定
@@ -561,8 +717,11 @@ final class Main {
 	 *
 	 * @return bool
 	 */
-	public function check_ip_permission(): bool {
-
+	public function check_ip_permission(): bool
+	{
+		if ('local' === \wp_get_environment_type() || 'staging' === \wp_get_environment_type()) {
+			return true;
+		}
 		// 103.153.176.121 = 黃亦主機對外  199.99.88.1 = 黃亦主機打黃亦主機
 		// 163.61.60.80 = 是方主機對外  是方主機打是方主機
 		$fixed_ips = [ '103.153.176.121', '199.99.88.1', '163.61.60.80' ];
@@ -609,5 +768,52 @@ final class Main {
 
 		// 檢查發起請求的 IP 是否在允許的範圍內
 		return ( $request_ip_long >= $from_ip_long && $request_ip_long <= $to_ip_long );
+	}
+
+
+	/**
+	 * Post powercloud API key callback
+	 * Save PowerCloud API Key to transient (save to MySQL wp_options table)
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function post_powercloud_api_key_callback( $request ): \WP_REST_Response {
+		$body_params = $request->get_json_params() ?? [];
+		$api_key     = \sanitize_text_field( $body_params['api_key'] ?? '' );
+
+		if ( empty( $api_key ) ) {
+			return new \WP_REST_Response(
+				[
+					'status'  => 400,
+					'message' => 'api_key is required',
+				],
+				400
+			);
+		}
+
+		// Get current logged in user ID
+		$user_id = \get_current_user_id();
+		if ( ! $user_id ) {
+			return new \WP_REST_Response(
+				[
+					'status'  => 401,
+					'message' => 'User not authenticated',
+				],
+				401
+			);
+		}
+
+		// Use transient to save (save to MySQL wp_options table)
+		$transient_key = self::POWERCLOUD_API_KEY_TRANSIENT_KEY . "_{$user_id}";
+		\set_transient( $transient_key, $api_key, self::POWERCLOUD_API_KEY_CACHE_TIME );
+
+		return new \WP_REST_Response(
+			[
+				'status'  => 200,
+				'message' => 'update powercloud api key success',
+			],
+			200
+		);
 	}
 }
