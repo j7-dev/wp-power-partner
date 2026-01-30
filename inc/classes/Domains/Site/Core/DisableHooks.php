@@ -48,7 +48,6 @@ final class DisableHooks
         $power_partner_settings    = \get_option('power_partner_settings', []);
         $disable_site_after_n_days = (int) ( $power_partner_settings['power_partner_disable_site_after_n_days'] ?? '7' );
         $timestamp                 = time() + ( 86400 * $disable_site_after_n_days );
-        // $timestamp                 = time() + 1; // 測試用, 記得移除 -----
 
         $disable_site_scheduler = new DisableSiteScheduler($subscription);
         $disable_site_scheduler->maybe_unschedule('', true);

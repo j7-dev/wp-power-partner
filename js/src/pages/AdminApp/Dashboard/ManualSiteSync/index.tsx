@@ -1,43 +1,17 @@
-import { axios, powerCloudAxios, usePowerCloudAxiosWithApiKey } from '@/api'
-import { identityAtom } from '@/pages/AdminApp/Atom/atom'
-import {
-	allowed_template_options,
-	host_positions,
-	is_kiwissec,
-	kebab,
-} from '@/utils'
-import {
-	CloudOutlined,
-	GlobalOutlined,
-	LoadingOutlined,
-} from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-	Button,
-	Card,
-	Col,
-	Empty,
-	Form,
-	Input,
-	Row,
-	Select,
-	Spin,
-	Tabs,
-	Tag,
-	notification,
-} from 'antd'
-import { TabsProps } from 'antd/lib'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect, useRef } from 'react'
-import {
-	EPowercloudIdentityStatusEnum,
-	powercloudIdentityAtom,
-} from '../../Atom/powercloud.atom'
-import { TabKeyEnum, setTabAtom } from '../../Atom/tab.atom'
-import { generateRandomPassword } from '@/utils/functions/password'
-import { generateRandomWpsiteProConfig } from '@/utils/functions/wordpress'
-import { AxiosResponse } from 'axios'
-import { atom } from 'jotai'
+import {axios, powerCloudAxios, usePowerCloudAxiosWithApiKey} from '@/api'
+import {identityAtom} from '@/pages/AdminApp/Atom/atom'
+import {allowed_template_options, host_positions, is_kiwissec, kebab,} from '@/utils'
+import {CloudOutlined, GlobalOutlined, LoadingOutlined,} from '@ant-design/icons'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {Button, Card, Col, Empty, Form, Input, notification, Row, Select, Spin, Tabs, Tag,} from 'antd'
+import {TabsProps} from 'antd/lib'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {useEffect, useRef} from 'react'
+import {EPowercloudIdentityStatusEnum, powercloudIdentityAtom,} from '../../Atom/powercloud.atom'
+import {setTabAtom, TabKeyEnum} from '../../Atom/tab.atom'
+import {generateRandomPassword} from '@/utils/functions/password'
+import {generateRandomWpsiteProConfig} from '@/utils/functions/wordpress'
+import {AxiosResponse} from 'axios'
 
 const { Item } = Form
 
@@ -441,7 +415,7 @@ const Powercloud = () => {
 		!powercloudIdentity.apiKey
 	) {
 		return (
-			<Button variant="link" danger onClick={handleRedirectToPowercloudAuth}>
+			<Button color="primary" variant="link" onClick={handleRedirectToPowercloudAuth}>
 				登入新架構
 			</Button>
 		)
