@@ -59,6 +59,7 @@ final class LinkedSites {
 		\add_action( 'woocommerce_save_product_variation', [ $this, 'save_variable_subscription' ], 20, 2 );
 
 		\add_action( 'admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ] );
+		 \add_action('admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ]);
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_tab_scripts' ], 20 );
 	}
