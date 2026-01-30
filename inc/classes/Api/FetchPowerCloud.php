@@ -102,9 +102,9 @@ abstract class FetchPowerCloud {
 			];
 
 			$wordpress_obj = (object) [
-				'domain' => $domain,
-				'name' => $name,
-				'namespace' => $namespace,
+				'domain'            => $domain,
+				'name'              => $name,
+				'namespace'         => $namespace,
 				'wp_admin_user'     => $customer['username'] ?? 'admin',
 				'wp_admin_email'    => $customer['email'] ?? 'admin@example.com',
 				'wp_admin_password' => $wp_admin_password,
@@ -112,14 +112,14 @@ abstract class FetchPowerCloud {
 
 			\do_action( 'pp_after_site_sync_powercloud', $response_obj, $props );
 
-			return [$response_obj, $wordpress_obj];
+			return [ $response_obj, $wordpress_obj ];
 		} catch ( \Throwable $th ) {
 			ob_start();
 			print_r( $response );
 			return \rest_ensure_response(
 				[
 					'status'  => 500,
-					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
+					'message' => 'json_decode($response[body]) Error ' . $th->getMessage() . ', the $response is ' . ob_get_clean(),
 					'data'    => null,
 				]
 			);
@@ -128,12 +128,12 @@ abstract class FetchPowerCloud {
 
 
 	/**
-	 * 發 API disable 暫停 wordpress 網站
+	 * 發 API disable 暫停 WordPress 網站
 	 */
 	public static function disable_site( string $current_user_id, string $websiteId ) {
 		$powercloud_api_key = \get_transient( Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id );
 
-		$args     = [
+		$args = [
 			'method'  => 'PATCH',
 			'headers' => [
 				'Content-Type' => 'application/json',
@@ -145,24 +145,35 @@ abstract class FetchPowerCloud {
 		$response = wp_remote_request(Bootstrap::instance()->powercloud_api . "/wordpress/{$websiteId}/stop", $args);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( $response->get_error_message() );
+			Plugin::logger(
+				"disable_site error: {$response->get_error_message()}",
+				'error',
+				[
+					'current_user_id' => $current_user_id,
+					'websiteId'       => $websiteId,
+				]
+			);
 			return;
 		}
 
-		Plugin::logger('response', 'info', [
-			'response' => $response,
-		]);
-		
-
+		Plugin::logger(
+				'disable_site success',
+				'info',
+				[
+					'current_user_id' => $current_user_id,
+					'websiteId'       => $websiteId,
+					'response'        => $response,
+				]
+			);
 	}
 
 	/**
-	 * 發 API enable 啟用 wordpress 網站
+	 * 發 API enable 啟用 WordPress 網站
 	 */
 	public static function enable_site( string $current_user_id, string $websiteId ) {
 		$powercloud_api_key = \get_transient( Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id );
 
-		$args     = [
+		$args = [
 			'method'  => 'PATCH',
 			'headers' => [
 				'Content-Type' => 'application/json',
@@ -174,15 +185,26 @@ abstract class FetchPowerCloud {
 		$response = wp_remote_request(Bootstrap::instance()->powercloud_api . "/wordpress/{$websiteId}/start", $args);
 
 		if ( is_wp_error( $response ) ) {
-			error_log( $response->get_error_message() );
+			Plugin::logger(
+			'enable_site error: ' . $response->get_error_message(),
+			'error',
+			[
+				'current_user_id' => $current_user_id,
+				'websiteId'       => $websiteId,
+			]
+			);
 			return;
 		}
 
-		Plugin::logger('response', 'info', [
-			'response' => $response,
-		]);
-		
-
+		Plugin::logger(
+			'enable_site success',
+			'info',
+			[
+				'current_user_id' => $current_user_id,
+				'websiteId'       => $websiteId,
+				'response'        => $response,
+			]
+			);
 	}
 
 	/**

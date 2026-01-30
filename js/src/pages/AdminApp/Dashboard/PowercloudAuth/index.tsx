@@ -4,7 +4,7 @@ import { Button, Form, Input, Alert, notification } from 'antd'
 import { powerCloudAxios, axios } from '@/api'
 import { EPowercloudIdentityStatusEnum, powercloudIdentityAtom } from '@/pages/AdminApp/Atom/powercloud.atom'
 import { globalLoadingAtom } from '@/pages/AdminApp/Atom/atom'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { TAccountInfo } from '@/pages/AdminApp/types'
 import { renderHTML, kebab } from '@/utils'
 
@@ -36,7 +36,7 @@ const Login = () => {
 		powercloudLogin(values, {
 			onSuccess: async (res) => {
 				const apiKey = res?.data?.apiKey
-				
+
 				setIdentity({
 					status: EPowercloudIdentityStatusEnum.LOGGED_IN,
 					message: '',
@@ -48,7 +48,6 @@ const Login = () => {
 					await axios.post(`/${kebab}/powercloud-api-key`, {
 						api_key: apiKey,
 					})
-					console.log('API key saved to WordPress usermeta successfully')
 				} catch (error: any) {
 					console.error('Failed to save API key to WordPress:', error)
 					notification.warning({
@@ -112,7 +111,7 @@ const Login = () => {
 }
 
 const Logout = () => {
-	const [_, setPowercloudIdentity] = useAtom(powercloudIdentityAtom)
+	const setPowercloudIdentity = useSetAtom(powercloudIdentityAtom)
 
 	const handleLogout = () => {
 		setPowercloudIdentity({
