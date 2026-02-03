@@ -12,6 +12,7 @@ abstract class Fetch {
 	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = 'power_partner_allowed_template_options';
 	// phpstan:ignore
 	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME = 7 * 24 * HOUR_IN_SECONDS;
+
 	/**
 	 * 發 API 開站
 	 *
@@ -32,7 +33,13 @@ abstract class Fetch {
 	 *     subscription_id?: int,
 	 * } $props 開站所需的參數
 	 *
-	 * @return array<string, mixed>|\WP_Error — The response or WP_Error on failure.
+	 * @return object{
+	 * status: int,
+	 * message: string,
+	 * data: mixed,
+	 * }
+	 *
+	 * @throws \Exception When the request fails.
 	 */
 	public static function site_sync( array $props ) {
 		$args     = [
@@ -45,23 +52,15 @@ abstract class Fetch {
 		];
 		$response = \wp_remote_post( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/site-sync', $args );
 
-		try {
-			$response_obj = json_decode( $response['body'] );
-
-			\do_action( 'pp_after_site_sync', $response_obj );
-
-			return $response_obj;
-		} catch ( \Throwable $th ) {
-			ob_start();
-			print_r( $response );
-			return \rest_ensure_response(
-				[
-					'status'  => 500,
-					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
-					'data'    => null,
-				]
-			);
+		if (\is_wp_error($response)) {
+			throw new \Exception("開站失敗: {$response->get_error_message()}");
 		}
+
+		$response_obj = json_decode( $response['body'] );
+
+		\do_action( 'pp_after_site_sync', $response_obj );
+
+		return $response_obj;
 	}
 
 
@@ -106,7 +105,7 @@ abstract class Fetch {
 	}
 
 	/**
-	 * 發 API 啟用 wordpress 網站
+	 * 發 API 啟用 WordPress 網站
 	 *
 	 * @param string $site_id 網站 ID
 	 * @return array|\WP_Error — The response or WP_Error on failure.
@@ -114,7 +113,7 @@ abstract class Fetch {
 	public static function enable_site( string $site_id ) {
 		$args     = [
 			'body'    => \wp_json_encode(
-				[	
+				[
 					'site_id'    => $site_id,
 					'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
 				]

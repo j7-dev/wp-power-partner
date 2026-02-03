@@ -19,8 +19,8 @@ final class Main {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
 	const POWERCLOUD_API_KEY_TRANSIENT_KEY = 'power_partner_powercloud_api_key';
-	const POWERCLOUD_API_KEY_CACHE_TIME   = 30 * 24 * HOUR_IN_SECONDS; // 30 天
-	
+	const POWERCLOUD_API_KEY_CACHE_TIME    = 30 * 24 * HOUR_IN_SECONDS; // 30 天
+
 	/**
 	 * Constructor.
 	 */
@@ -196,13 +196,13 @@ final class Main {
 			$order_id       = $body_params['REF_ORDER_ID'] ?? '0';
 			$order          = \wc_get_order( $order_id );
 			$customer_email = $customer->user_email;
-			
+
 			if ( $order ) {
 				$customer_email = $order->get_billing_email();
-				$subscriptions = \wcs_get_subscriptions_for_order( $order->get_id() );
-				$subscription = \reset( $subscriptions ); // 取得第一個訂閱
+				$subscriptions  = \wcs_get_subscriptions_for_order( $order->get_id() );
+				$subscription   = \reset( $subscriptions ); // 取得第一個訂閱
 
-				$new_site_id     = $body_params['NEW_SITE_ID'] ?? null;
+				$new_site_id = $body_params['NEW_SITE_ID'] ?? null;
 				if ($subscription && $new_site_id) {
 					ShopSubscription::update_linked_site_ids(
 						(int) $subscription->get_id(),
@@ -659,14 +659,16 @@ final class Main {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function manual_site_sync_callback( $request ) {
-		$body_params   = $request->get_json_params() ?? [];
-		$site_id       = $body_params['site_id'];
-		$host_position = $body_params['host_position'];
-		$partner_id    = \get_option( Plugin::$snake . '_partner_id', '0' );
-		$customer_id   = \get_current_user_id();
-		$customer      = \get_user_by( 'id', $customer_id );
+		try {
 
-		$response_obj = Fetch::site_sync(
+			$body_params   = $request->get_json_params() ?? [];
+			$site_id       = $body_params['site_id'];
+			$host_position = $body_params['host_position'];
+			$partner_id    = \get_option( Plugin::$snake . '_partner_id', '0' );
+			$customer_id   = \get_current_user_id();
+			$customer      = \get_user_by( 'id', $customer_id );
+
+			$response_obj = Fetch::site_sync(
 			[
 				'site_url'      => \site_url(),
 				'site_id'       => $site_id,
@@ -681,16 +683,27 @@ final class Main {
 					'phone'      => $customer->billing_phone ?? '',
 				],
 			]
-		);
+			);
 
-		return new \WP_REST_Response(
+			return new \WP_REST_Response(
 			[
 				'status'  => $response_obj->status,
 				'message' => $response_obj->message,
 				'data'    => $response_obj->data,
 			],
 			200
-		);
+			);
+
+		} catch (\Throwable $th) {
+			Plugin::logger(
+			"手動開站建立網站失敗: {$th->getMessage()}",
+			'error',
+			[
+				'params' => $request->get_params(),
+			],
+			5
+			);
+		}
 	}
 
 	/**
@@ -717,8 +730,7 @@ final class Main {
 	 *
 	 * @return bool
 	 */
-	public function check_ip_permission(): bool
-	{
+	public function check_ip_permission(): bool {
 		if ('local' === \wp_get_environment_type() || 'staging' === \wp_get_environment_type()) {
 			return true;
 		}
