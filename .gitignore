@@ -36,4 +36,13 @@ release/*
 
 /vendor/
 
+# PHPUnit
+.phpunit.result.cache
+
+# PromptX 本地記憶體（開發工具，勿提交）
+.promptx/
+
+# WordPress 測試環境目錄
+wp-content/
+
 composer.lock
