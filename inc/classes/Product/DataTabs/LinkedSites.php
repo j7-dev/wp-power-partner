@@ -76,24 +76,145 @@ final class LinkedSites {
 		$host_position_value = \get_post_meta( $product_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
 
-		echo '<div class="hidden options_group subscription_pricing show_if_subscription">';
+		$host_type_value = \get_post_meta( $product_id, self::HOST_TYPE_FIELD_NAME, true );
+		if ( empty( $host_type_value ) ) {
+			$host_type_value = self::DEFAULT_HOST_TYPE;
+		}
+
+		$tab1_options = [
+			'jp'        => '日本',
+			'tw'        => '台灣',
+			'us_west'   => '美西',
+			'uk_london' => '英國倫敦',
+			'sg'        => '新加坡',
+			'hk'        => '香港',
+			'canada'    => '加拿大',
+		];
+
+		$tab2_options = [
+			'tw' => '台灣',
+		];
+
+		$active_tab = ( 'wpcd' === $host_type_value ) ? 'tab1' : 'tab2';
 
 		$partner_id = \get_option( Connect::PARTNER_ID_OPTION_NAME );
 
+		echo '<div class="hidden options_group subscription_pricing show_if_subscription">';
+
 		if ( ! empty( $partner_id ) ) {
+			echo '<div class="power-partner-host-tabs-wrapper">';
+			echo '<div class="power-partner-tabs-container">';
+
+			echo '<div class="power-partner-tab-buttons">';
+			echo '<button type="button" class="power-partner-tab-button' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" data-tab="tab2-subscription">新架構</button>';
+			echo '<button type="button" class="power-partner-tab-button' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" data-tab="tab1-subscription">舊架構</button>';
+			echo '</div>';
+
+			$linked_site_value                    = (string) \get_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, true );
+			$open_site_plan_value                 = (string) \get_post_meta( $product_id, self::OPEN_SITE_PLAN_FIELD_NAME, true );
+			$action_url                           = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+			$action_url_powercloud_template       = \add_query_arg( 'action', self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+			$action_url_powercloud_open_site_plan = \add_query_arg( 'action', self::CLEAR_OPEN_SITE_PLAN_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, \admin_url( 'admin-post.php?' ) );
+
+			$tab1_template_options      = [ '' => '請選擇' ] + Fetch::get_allowed_template_options();
+			$tab2_template_options      = [ '' => '請選擇' ] + FetchPowerCloud::get_allowed_template_options();
+			$tab_open_site_plan_options = [ '' => '請選擇' ] + FetchPowerCloud::get_open_site_plan_options();
+
+			// Tab 1 內容 (舊架構 - wpcd)
+			echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" id="tab1-subscription">';
+			echo '<input type="hidden" name="' . \esc_attr( self::HOST_TYPE_FIELD_NAME ) . '" value="wpcd" class="host-type-field" data-tab="tab1-subscription">';
 			\woocommerce_wp_radio(
 				[
-					'id'            => self::HOST_POSITION_FIELD_NAME,
+					'id'            => self::HOST_POSITION_FIELD_NAME . '-tab1',
+					'name'          => self::HOST_POSITION_FIELD_NAME,
 					'label'         => '主機種類',
 					'wrapper_class' => 'form-field [&_ul]:!flex [&_ul]:gap-x-4',
 					'desc_tip'      => true,
 					'description'   => '不同地區的主機，預設為日本',
-					'options'       => $this->host_positions,
-					'value'         => $host_position_value,
+					'options'       => $tab1_options,
+					'value'         => ( isset( $tab1_options[ $host_position_value ] ) ) ? $host_position_value : '',
 				]
 			);
+			\woocommerce_wp_select(
+				[
+					'id'                => self::LINKED_SITE_FIELD_NAME . '-tab1',
+					'name'              => self::LINKED_SITE_FIELD_NAME,
+					'label'             => '連結的網站 id',
+					'wrapper_class'     => 'form-field',
+					'desc_tip'          => false,
+					'description'       => '如果想要更多模板站，請聯繫站長路可',
+					'value'             => $linked_site_value,
+					'options'           => $tab1_template_options,
+					'custom_attributes' => ( 'tab1' === $active_tab ? [] : [ 'disabled' => 'disabled' ] ),
+				]
+			);
+			\woocommerce_wp_note(
+				[
+					'label'         => '只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。',
+					'wrapper_class' => 'form-field',
+					'message'       => '<br /><a href="' . $action_url . '"><button type="button" class="button" style="height: 38px; margin-top: 2px;">清除快取</button></a>',
+				]
+			);
+			echo '</div>';
 
-			self::render_linked_site_subscription( $product_id );
+			// Tab 2 內容 (新架構 - powercloud)
+			echo '<div class="power-partner-tab-content' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" id="tab2-subscription">';
+			echo '<input type="hidden" name="' . \esc_attr( self::HOST_TYPE_FIELD_NAME ) . '" value="powercloud" class="host-type-field" data-tab="tab2-subscription">';
+			\woocommerce_wp_radio(
+				[
+					'id'            => self::HOST_POSITION_FIELD_NAME . '-tab2',
+					'name'          => self::HOST_POSITION_FIELD_NAME,
+					'label'         => '主機種類',
+					'wrapper_class' => 'form-field [&_ul]:!flex [&_ul]:gap-x-4',
+					'desc_tip'      => true,
+					'description'   => '不同地區的主機，預設為台灣',
+					'options'       => $tab2_options,
+					'value'         => ( isset( $tab2_options[ $host_position_value ] ) ) ? $host_position_value : 'tw',
+				]
+			);
+			\woocommerce_wp_select(
+				[
+					'id'                => self::LINKED_SITE_FIELD_NAME . '-tab2',
+					'name'              => self::LINKED_SITE_FIELD_NAME,
+					'label'             => '連結的網站 id',
+					'wrapper_class'     => 'form-field',
+					'desc_tip'          => false,
+					'description'       => '如果想要更多模板站，請聯繫站長路可',
+					'value'             => $linked_site_value,
+					'options'           => $tab2_template_options,
+					'custom_attributes' => ( 'tab2' === $active_tab ? [] : [ 'disabled' => 'disabled' ] ),
+				]
+			);
+			\woocommerce_wp_note(
+				[
+					'label'         => '只有當站長幫你調整模板站後，才有需要清除快取，否則無須清除。',
+					'wrapper_class' => 'form-field',
+					'message'       => '<br /><a href="' . $action_url_powercloud_template . '"><button type="button" class="button" style="height: 38px; margin-top: 2px;">清除快取</button></a>',
+				]
+			);
+			\woocommerce_wp_select(
+				[
+					'id'                => self::OPEN_SITE_PLAN_FIELD_NAME,
+					'label'             => '開站方案',
+					'wrapper_class'     => 'form-field',
+					'desc_tip'          => false,
+					'description'       => '如果想要更多開站方案，請聯繫站長路可',
+					'value'             => $open_site_plan_value,
+					'options'           => $tab_open_site_plan_options,
+					'custom_attributes' => ( 'tab2' === $active_tab ? [] : [ 'disabled' => 'disabled' ] ),
+				]
+			);
+			\woocommerce_wp_note(
+				[
+					'label'         => '只有當站長幫你調整開站方案後，才有需要清除快取，否則無須清除。',
+					'wrapper_class' => 'form-field',
+					'message'       => '<br /><a href="' . $action_url_powercloud_open_site_plan . '"><button type="button" class="button" style="height: 38px; margin-top: 2px;">清除快取</button></a>',
+				]
+			);
+			echo '</div>';
+
+			echo '</div>'; // .power-partner-tabs-container
+			echo '</div>'; // .power-partner-host-tabs-wrapper
 		} else {
 			\woocommerce_wp_note(
 				[
@@ -152,9 +273,22 @@ final class LinkedSites {
 			\update_post_meta( $product_id, self::HOST_POSITION_FIELD_NAME, $host_position );
 		}
 
+		// 保存 host_type
+		if ( isset( $_POST[ self::HOST_TYPE_FIELD_NAME ] ) ) {
+			$host_type = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_TYPE_FIELD_NAME ] ) );
+			if ( in_array( $host_type, [ 'wpcd', 'powercloud' ], true ) ) {
+				\update_post_meta( $product_id, self::HOST_TYPE_FIELD_NAME, $host_type );
+			}
+		}
+
 		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) ) {
 			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) );
 			\update_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
+		}
+
+		if ( isset( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ] ) ) {
+			$open_site_plan = \sanitize_text_field( \wp_unslash( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ] ) );
+			\update_post_meta( $product_id, self::OPEN_SITE_PLAN_FIELD_NAME, $open_site_plan );
 		}
 	}
 
@@ -282,7 +416,7 @@ final class LinkedSites {
 				'desc_tip'      => true,
 				'description'   => '不同地區的主機，預設為台灣',
 				'options'       => $tab2_options,
-				'value'         => ( isset( $tab2_options[ $host_position_value ] ) ) ? $host_position_value : '',
+				'value'         => ( isset( $tab2_options[ $host_position_value ] ) ) ? $host_position_value : 'tw',
 			]
 		);
 
