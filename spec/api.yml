@@ -1,0 +1,795 @@
+openapi: 3.0.3
+info:
+  title: Power Partner REST API
+  description: |
+    Power Partner 外掛的 REST API，提供開站、訂閱管理、Email 模板、授權碼管理等功能。
+
+    ## 錯誤碼對應規則
+    - **400** = 前置（參數）Rules 驗證失敗
+    - **401** = 使用者未認證
+    - **403** = 前置（狀態）Rules 不符（權限不足或 IP 不在白名單）
+    - **404** = 資源找不到
+    - **500** = 伺服器內部錯誤
+
+    ## 認證
+    - 管理端 API 需要 WordPress 登入 Cookie 加上 `X-WP-Nonce` Header
+    - IP 白名單 API 需要從 cloud.luke.cafe 主機 IP 發出請求
+    - Public API 不需要認證
+  version: "3.2.4"
+
+servers:
+  - url: /wp-json/power-partner
+
+tags:
+  - name: Settings
+    description: 外掛設定管理
+  - name: Email
+    description: Email 模板管理
+  - name: Partner
+    description: 合作夥伴連結管理
+  - name: SiteSync
+    description: 開站與網站管理
+  - name: Subscription
+    description: 訂閱管理
+  - name: LicenseCode
+    description: 授權碼管理
+  - name: User
+    description: 使用者查詢
+
+components:
+  securitySchemes:
+    wpNonce:
+      type: apiKey
+      in: header
+      name: X-WP-Nonce
+
+  schemas:
+    EmailTemplate:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 信件唯一識別 key
+        enabled:
+          type: string
+          enum: ["0", "1"]
+          description: 是否啟用
+        action_name:
+          type: string
+          description: "觸發動作名稱: site_sync, subscription_failed, subscription_success, trial_end, next_payment, end 等"
+        subject:
+          type: string
+          description: 信件主旨（支援 ##TOKEN## 替換）
+        body:
+          type: string
+          description: 信件內容 HTML（支援 ##TOKEN## 替換）
+        days:
+          type: string
+          description: 延遲天數
+        operator:
+          type: string
+          enum: [after, before]
+          description: 在指定日期之後或之前
+
+    SettingsPayload:
+      type: object
+      properties:
+        power_partner_disable_site_after_n_days:
+          type: integer
+          description: 訂閱失敗後幾天關站
+          default: 7
+        emails:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmailTemplate"
+
+    SubscriptionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          description: "WooCommerce 訂閱狀態: wc-active, wc-cancelled, wc-on-hold 等"
+        post_title:
+          type: string
+        post_date:
+          type: string
+          format: date-time
+        linked_site_ids:
+          type: array
+          items:
+            type: string
+
+    AppSubscriptionMapping:
+      type: object
+      properties:
+        app_id:
+          type: string
+        subscription_ids:
+          type: array
+          items:
+            type: integer
+
+    CustomerSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        user_login:
+          type: string
+        user_email:
+          type: string
+        display_name:
+          type: string
+
+    NextPaymentResult:
+      type: object
+      properties:
+        id:
+          type: string
+        time:
+          type: integer
+          description: UNIX timestamp of next payment
+
+    GenericResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+
+paths:
+  /settings:
+    post:
+      tags: [Settings]
+      summary: 更新外掛設定
+      operationId: SaveSettings
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsPayload"
+      responses:
+        "200":
+          description: 設定更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "403":
+          description: 權限不足
+
+  /emails:
+    get:
+      tags: [Email]
+      summary: 取得所有 Email 模板
+      operationId: GetEmails
+      security:
+        - wpNonce: []
+      responses:
+        "200":
+          description: Email 模板列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmailTemplate"
+        "403":
+          description: 權限不足
+
+    post:
+      tags: [Email]
+      summary: 儲存 Email 模板（deprecated，建議用 SaveSettings）
+      operationId: SaveEmails
+      deprecated: true
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [emails]
+              properties:
+                emails:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/EmailTemplate"
+      responses:
+        "200":
+          description: 儲存成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "500":
+          description: emails 不是陣列
+
+  /partner-id:
+    get:
+      tags: [Partner]
+      summary: 取得合作夥伴 ID
+      operationId: GetPartnerId
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      partner_id:
+                        type: string
+
+    post:
+      tags: [Partner]
+      summary: 設定合作夥伴連結
+      operationId: SetPartnerId
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partner_id]
+              properties:
+                partner_id:
+                  type: string
+                encrypted_account_info:
+                  type: string
+                allowed_template_options:
+                  type: object
+                  additionalProperties:
+                    type: string
+      responses:
+        "200":
+          description: 設定成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "403":
+          description: 權限不足
+
+    delete:
+      tags: [Partner]
+      summary: 刪除合作夥伴連結
+      operationId: DeletePartnerId
+      security:
+        - wpNonce: []
+      responses:
+        "200":
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "403":
+          description: 權限不足
+
+  /account-info:
+    get:
+      tags: [Partner]
+      summary: 取得加密的合作夥伴帳號資訊
+      operationId: GetAccountInfo
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      encrypted_account_info:
+                        type: string
+
+  /customer-notification:
+    post:
+      tags: [SiteSync]
+      summary: WPCD 開站完成後回調 — 發送帳密 Email 給客戶
+      operationId: CustomerNotification
+      description: |
+        僅接受白名單 IP 呼叫（cloud.luke.cafe 主機）。
+        開站完成後，系統將網站帳密資訊以 Email 發給客戶。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [CUSTOMER_ID]
+              properties:
+                CUSTOMER_ID:
+                  type: string
+                REF_ORDER_ID:
+                  type: string
+                NEW_SITE_ID:
+                  type: string
+                IPV4:
+                  type: string
+                DOMAIN:
+                  type: string
+                FRONTURL:
+                  type: string
+                ADMINURL:
+                  type: string
+                SITEUSERNAME:
+                  type: string
+                SITEPASSWORD:
+                  type: string
+                WORDPRESSAPPWCSITESACCOUNTPAGE:
+                  type: string
+      responses:
+        "200":
+          description: 通知發送成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      to:
+                        type: string
+                      success_emails:
+                        type: array
+                        items:
+                          type: string
+                      failed_emails:
+                        type: array
+                        items:
+                          type: string
+        "403":
+          description: IP 不在白名單
+        "500":
+          description: 缺少 customer id 或發送失敗
+
+  /link-site:
+    post:
+      tags: [SiteSync]
+      summary: WPCD 開站後回調 — 綁定 site ID 到訂閱
+      operationId: LinkSite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subscription_id, site_id]
+              properties:
+                subscription_id:
+                  type: string
+                site_id:
+                  type: string
+      responses:
+        "200":
+          description: 綁定成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "403":
+          description: IP 不在白名單
+        "500":
+          description: 綁定失敗
+
+  /manual-site-sync:
+    post:
+      tags: [SiteSync]
+      summary: 管理員手動開站（WPCD 舊架構）
+      operationId: ManualSiteSync
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                site_id:
+                  type: string
+                  description: 模板站 ID
+                host_position:
+                  type: string
+                  description: 主機地區
+      responses:
+        "200":
+          description: 開站請求成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "403":
+          description: 權限不足
+        "500":
+          description: 開站失敗
+
+  /send-site-credentials-email:
+    post:
+      tags: [SiteSync]
+      summary: 手動發送站點帳密 Email
+      operationId: SendSiteCredentialsEmail
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domain, password]
+              properties:
+                domain:
+                  type: string
+                password:
+                  type: string
+                adminEmail:
+                  type: string
+                frontUrl:
+                  type: string
+                adminUrl:
+                  type: string
+                username:
+                  type: string
+                  default: admin
+                ip:
+                  type: string
+      responses:
+        "200":
+          description: Email 發送完成
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: 缺少必要參數 domain 或 password
+        "404":
+          description: 找不到 site_sync Email 模板
+        "500":
+          description: 發送失敗
+
+  /clear-template-sites-cache:
+    post:
+      tags: [SiteSync]
+      summary: 清除模板站快取
+      operationId: ClearTemplateSitesCache
+      security:
+        - wpNonce: []
+      responses:
+        "200":
+          description: 快取已清除
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "403":
+          description: 權限不足
+
+  /subscriptions:
+    get:
+      tags: [Subscription]
+      summary: 取得指定用戶的訂閱列表
+      operationId: GetSubscriptions
+      security:
+        - wpNonce: []
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 訂閱列表
+          headers:
+            X-WP-Total:
+              schema:
+                type: string
+            X-WP-TotalPages:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionSummary"
+        "403":
+          description: 權限不足
+        "500":
+          description: 缺少 user_id 參數
+
+  /change-subscription:
+    post:
+      tags: [Subscription]
+      summary: 重新綁定網站到指定訂閱
+      operationId: ChangeSubscription
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subscription_id, site_id, linked_site_ids]
+              properties:
+                subscription_id:
+                  type: string
+                site_id:
+                  type: string
+                linked_site_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: 綁定成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "403":
+          description: 權限不足
+        "500":
+          description: 缺少參數或綁定失敗
+
+  /apps:
+    get:
+      tags: [Subscription]
+      summary: 根據網站 ID 查詢對應的訂閱 ID
+      operationId: GetApps
+      parameters:
+        - name: app_ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: 網站與訂閱的對應關係
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppSubscriptionMapping"
+
+  /powercloud-api-key:
+    post:
+      tags: [Settings]
+      summary: 儲存 PowerCloud API Key
+      operationId: SavePowerCloudApiKey
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key]
+              properties:
+                api_key:
+                  type: string
+      responses:
+        "200":
+          description: 儲存成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: api_key 為空
+        "401":
+          description: 使用者未登入
+        "403":
+          description: 權限不足
+
+  /customers-by-search:
+    get:
+      tags: [User]
+      summary: 搜尋客戶（by ID 或關鍵字）
+      operationId: GetCustomersBySearch
+      security:
+        - wpNonce: []
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 搜尋結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        display_name:
+                          type: string
+        "400":
+          description: 缺少 id 或 search 參數
+        "403":
+          description: 權限不足
+        "404":
+          description: 找不到客戶
+
+  /customers:
+    get:
+      tags: [User]
+      summary: 根據 user_ids 取得客戶資訊
+      operationId: GetCustomers
+      parameters:
+        - name: user_ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: 客戶列表
+          headers:
+            X-WP-Total:
+              schema:
+                type: string
+            X-WP-TotalPages:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerSummary"
+        "500":
+          description: 缺少 user_ids
+
+  /license-codes/update:
+    post:
+      tags: [LicenseCode]
+      summary: 更新授權碼（狀態、綁定訂閱等）
+      operationId: UpdateLicenseCodes
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, post_status]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                post_status:
+                  type: string
+                domain:
+                  type: string
+                product_slug:
+                  type: string
+                post_author:
+                  type: integer
+                subscription_id:
+                  type: integer
+                customer_id:
+                  type: integer
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+        "403":
+          description: 權限不足
+        "500":
+          description: 更新失敗
+
+  /license-codes:
+    delete:
+      tags: [LicenseCode]
+      summary: 刪除授權碼
+      operationId: DeleteLicenseCodes
+      security:
+        - wpNonce: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        "200":
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                type: object
+        "403":
+          description: 權限不足
+        "500":
+          description: 刪除失敗
+
+  /subscriptions/next-payment:
+    get:
+      tags: [Subscription]
+      summary: 取得訂閱下次付款日
+      operationId: GetSubscriptionsNextPayment
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: 下次付款時間列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NextPaymentResult"
+        "400":
+          description: ids 不是陣列

@@ -1,0 +1,170 @@
+// Power Partner — Entity Relationship Model
+// Version: 3.2.4 | Date: 2026-03-11
+//
+// Power Partner 不使用自訂 DB table，所有資料存於 WordPress / WooCommerce 原生表。
+// 此 ERM 描述的是邏輯實體與它們在 wp_options / wp_postmeta 中的儲存方式。
+
+Enum host_type {
+  powercloud [note: '新架構，預設值，使用 api.wpsite.pro']
+  wpcd [note: '舊架構，使用 cloud.luke.cafe']
+}
+
+Enum host_position {
+  jp [note: '日本']
+  tw [note: '台灣']
+  us_west [note: '美西']
+  uk_london [note: '英國倫敦']
+  sg [note: '新加坡']
+  hk [note: '香港']
+  canada [note: '加拿大']
+}
+
+Enum subscription_status {
+  active [note: '已啟用 — 網站正常運作']
+  cancelled [note: '已取消 — 觸發關站排程']
+  on_hold [note: '保留 — 觸發關站排程']
+  pending_cancel [note: '待取消 — 觸發關站排程']
+  expired [note: '已過期 — 自然結束，不觸發關站']
+}
+
+Enum email_operator {
+  after [note: '指定日期之後']
+  before [note: '指定日期之前']
+}
+
+Enum email_enabled {
+  enabled [note: '值為 1']
+  disabled [note: '值為 0']
+}
+
+// ─────────────────────────────────────────────
+// wp_options 儲存的設定
+// ─────────────────────────────────────────────
+
+Table wp_options_settings [headercolor: #3498db] {
+  option_name varchar [pk, default: 'power_partner_settings', note: 'wp_options key']
+  disable_site_after_n_days int [default: 7, note: '訂閱失敗後幾天關站']
+  emails json [note: 'Email 模板陣列，見 email_template']
+
+  Note: '''
+    外掛主要設定，存在 wp_options 表中。
+    key = power_partner_settings
+  '''
+}
+
+Table wp_options_partner [headercolor: #3498db] {
+  partner_id varchar [note: 'wp_options key = power_partner_partner_id']
+  account_info text [note: 'wp_options key = power_partner_account_info，加密資料']
+
+  Note: '''
+    合作夥伴連結資訊。
+    partner_id 來自 cloud.luke.cafe。
+  '''
+}
+
+// ─────────────────────────────────────────────
+// Email 模板（邏輯結構，實際存於 settings.emails JSON）
+// ─────────────────────────────────────────────
+
+Table email_template [headercolor: #e67e22] {
+  key varchar [pk, note: '前端 render 用的唯一 key']
+  enabled email_enabled [note: '是否啟用']
+  action_name varchar [note: '觸發動作: site_sync / subscription_failed / subscription_success / trial_end / next_payment / end 等']
+  subject text [note: '信件主旨，支援 ##TOKEN##']
+  body text [note: '信件內容 HTML，支援 ##TOKEN##']
+  days varchar [note: '延遲天數']
+  operator email_operator [note: '在指定日期之後或之前']
+
+  Note: '''
+    Email 模板定義。實際存於 power_partner_settings.emails JSON 陣列中。
+    每個模板綁定一個 action_name 決定觸發時機。
+  '''
+}
+
+// ─────────────────────────────────────────────
+// WooCommerce 商品 post_meta（開站 & 授權碼設定）
+// ─────────────────────────────────────────────
+
+Table product_site_sync_meta [headercolor: #2ecc71] {
+  product_id int [pk, note: 'WC Product 或 Variation ID']
+  power_partner_host_type host_type [note: '主機架構類型']
+  power_partner_host_position host_position [note: '主機地區']
+  power_partner_linked_site varchar [note: '模板站 ID']
+  power_partner_open_site_plan varchar [note: 'PowerCloud 開站方案 ID']
+
+  Note: '''
+    儲存於 wp_postmeta，每個 subscription / subscription_variation 商品的開站設定。
+  '''
+}
+
+Table product_lc_meta [headercolor: #2ecc71] {
+  product_id int [pk, note: 'WC Product 或 Variation ID']
+  linked_lc_products json [note: '關聯授權碼商品 [{product_slug, quantity}]']
+
+  Note: '''
+    儲存於 wp_postmeta，每個商品關聯的授權碼設定。
+  '''
+}
+
+// ─────────────────────────────────────────────
+// WooCommerce 訂閱 post_meta
+// ─────────────────────────────────────────────
+
+Table subscription_meta [headercolor: #9b59b6] {
+  subscription_id int [pk, note: 'shop_subscription post ID']
+  pp_linked_site_ids varchar [note: '多值 meta — 連結的雲端網站 ID']
+  is_power_partner_site_sync varchar [note: '標記為 PP 開站訂閱，值為 1']
+  lc_id varchar [note: '多值 meta — 綁定的授權碼 ID']
+  linked_lc_products json [note: '此訂閱的授權碼商品設定']
+  email_payloads_tmp json [note: 'PowerCloud 開站後暫存的 Email payload（發信後刪除）']
+
+  Note: '''
+    儲存於 wp_postmeta，WooCommerce 訂閱的 Power Partner 相關 meta。
+    pp_linked_site_ids 和 lc_id 都是多值 meta（同 key 多筆 row）。
+  '''
+}
+
+// ─────────────────────────────────────────────
+// WooCommerce 訂單 post_meta
+// ─────────────────────────────────────────────
+
+Table order_meta [headercolor: #e74c3c] {
+  order_id int [pk, note: 'WC Order ID']
+  pp_create_site_responses text [note: '開站 API 回應 JSON']
+
+  Note: '''
+    儲存於 wp_postmeta（或 WC HPOS order_meta），父訂單的開站結果。
+  '''
+}
+
+Table order_item_meta [headercolor: #e74c3c] {
+  order_item_id int [pk, note: 'WC Order Item ID']
+  _pp_create_site_responses_item text [note: '開站 API 回應 JSON（含 PowerCloud websiteId）']
+
+  Note: '''
+    儲存於 wp_woocommerce_order_itemmeta，每個訂單項目的開站結果。
+    前綴下劃線使其在前端隱藏。
+  '''
+}
+
+// ─────────────────────────────────────────────
+// Transients（快取）
+// ─────────────────────────────────────────────
+
+Table transients [headercolor: #95a5a6] {
+  key varchar [pk]
+  ttl varchar [note: '過期時間']
+  description varchar
+
+  Note: '''
+    存於 wp_options 的暫存資料（transient）。
+  '''
+}
+
+// ─────────────────────────────────────────────
+// Relationships（邏輯關聯）
+// ─────────────────────────────────────────────
+
+Ref: subscription_meta.subscription_id > order_meta.order_id [note: '訂閱的父訂單']
+Ref: subscription_meta.pp_linked_site_ids - product_site_sync_meta.power_partner_linked_site [note: '訂閱連結的網站來自商品設定的模板站']
+Ref: subscription_meta.lc_id - product_lc_meta.linked_lc_products [note: '訂閱的授權碼來自商品設定的 LC 商品']
