@@ -89,8 +89,11 @@ final class LinkedLC {
 		// phpcs:disable
 		if ( isset( $_POST[ self::FIELD_NAME ] ) ) {
 			$linked_lc_products = $_POST[ self::FIELD_NAME ];
-			$formatted_linked_lc_products = self::format_linked_lc_products($linked_lc_products);
-			\update_post_meta( $product_id, self::FIELD_NAME, $formatted_linked_lc_products );
+			if ( is_array( $linked_lc_products ) ) {
+				/** @var array<array{product_slug: string, quantity: string}> $linked_lc_products */
+				$formatted_linked_lc_products = self::format_linked_lc_products($linked_lc_products);
+				\update_post_meta( $product_id, self::FIELD_NAME, $formatted_linked_lc_products );
+			}
 		}
 		// phpcs:enable
 	}
@@ -141,10 +144,14 @@ final class LinkedLC {
 	 */
 	public static function save_variable_subscription( $variation_id, $loop ): void {
 		// phpcs:disable
-		if ( isset( $_POST[ self::FIELD_NAME ][ $loop ] ) ) {
-			$linked_lc_products = $_POST[ self::FIELD_NAME ][ $loop ];
-			$formatted_linked_lc_products = self::format_linked_lc_products($linked_lc_products);
-			\update_post_meta( $variation_id, self::FIELD_NAME, $formatted_linked_lc_products );
+		$field_data = $_POST[ self::FIELD_NAME ] ?? null;
+		if ( is_array( $field_data ) && isset( $field_data[ $loop ] ) ) {
+			$linked_lc_products = $field_data[ $loop ];
+			if ( is_array( $linked_lc_products ) ) {
+				/** @var array<array{product_slug: string, quantity: string}> $linked_lc_products */
+				$formatted_linked_lc_products = self::format_linked_lc_products($linked_lc_products);
+				\update_post_meta( $variation_id, self::FIELD_NAME, $formatted_linked_lc_products );
+			}
 		}
 		// phpcs:enable
 	}
@@ -180,9 +187,7 @@ final class LinkedLC {
 		]
 		);
 
-		if (\method_exists(Plugin::class, 'add_module_handle')) {
-			Plugin::instance()->add_module_handle(self::LC_PRODUCT_SELECTOR, 'defer');
-		}
+		Plugin::instance()->add_module_handle(self::LC_PRODUCT_SELECTOR, 'defer');
 
 		$cloud_products = self::get_cloud_products();
 
@@ -242,15 +247,15 @@ final class LinkedLC {
 			],
 		];
 
-		/** @var array<array{slug: string, label: string, rate: float}>|array{code:string, data:mixed, message:string} $data */
-		$data = (array) General::json_parse($body, $default_data_value);
-		if (isset($data['code'])) {
-			$data = [];
+		$parsed = (array) General::json_parse($body, $default_data_value);
+		if (isset($parsed['code'])) {
+			$parsed = [];
 		}
 
-		\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, $data, self::CACHE_TIME);
+		/** @var array<array{slug: string, label: string, rate: float}> $parsed */
+		\set_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY, $parsed, self::CACHE_TIME);
 
-		return $data;
+		return $parsed;
 	}
 
 
@@ -259,7 +264,7 @@ final class LinkedLC {
 	 * 避免重複
 	 *
 	 * @param array<array{product_slug: string, quantity: string}> $linked_lc_products 原始資料
-	 * @return array<array{product_slug: string, quantity: string}> 格式化後的資料
+	 * @return list<array{product_slug: string, quantity: int}> 格式化後的資料
 	 */
 	public static function format_linked_lc_products( array $linked_lc_products ): array {
 		$merged = [];
@@ -289,7 +294,7 @@ final class LinkedLC {
 	public static function clear_cloud_products_transient_callback(): void {
 		\delete_transient(self::CLOUD_PRODUCTS_TRANSIENT_KEY);
 		$current_url = \wp_get_referer();
-		\wp_safe_redirect( $current_url );
+		\wp_safe_redirect( $current_url ?: \admin_url() );
 		exit;
 	}
 }

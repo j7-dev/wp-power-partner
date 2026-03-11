@@ -37,8 +37,8 @@ abstract class Base {
 			// $psw      = '5NTw cqYl uhJU pixF Myj6 rBuA';
 			// $base_url = 'https://cloud.local';
 			case 'local': // local 辦公室
-				$username       = 'powerpartner';
-				$psw            = '7t4T WpSr HgZL Auyl TtOw USyG';
+				$username = 'powerpartner';
+				$psw      = '7t4T WpSr HgZL Auyl TtOw USyG';
 				// $base_url       = 'http://cloud.local';
 				$base_url       = 'http://cloud.local';
 				$powercloud_api = 'http://localhost:5000'; // local powercloud api
@@ -57,26 +57,27 @@ abstract class Base {
 				break;
 		}
 
-		$bootstrap->username      = $username;
-		$bootstrap->psw           = $psw;
-		$bootstrap->base_url      = $base_url;
+		$bootstrap->username       = $username;
+		$bootstrap->psw            = $psw;
+		$bootstrap->base_url       = $base_url;
 		$bootstrap->powercloud_api = $powercloud_api;
-		$bootstrap->t             = base64_encode( "$username:$psw" );
+		$bootstrap->t              = base64_encode( "$username:$psw" );
 	}
 
 	/**
 	 * Mail_to function
 	 *
-	 * @param string  $subject - email subject
-	 * @param string  $message - email message
-	 * @param integer $mix - user id | email string | email string[]
-	 * @param bool    $send_to_admin - send to admin
+	 * @param string                       $subject - email subject
+	 * @param string                       $message - email message
+	 * @param int|string|array<int,string> $mix - user id | email string | email string[]
+	 * @param bool                         $send_to_admin - send to admin
 	 * @return void
 	 */
 	public static function mail_to( string $subject, string $message, $mix = 0, $send_to_admin = true ): void {
+		/** @var array<int, string> $email */
 		$email = [];
 
-		if ( \is_email( $mix ) ) {
+		if ( is_string( $mix ) && \is_email( $mix ) ) {
 			$added_email = $mix;
 			$email       = [ ...$email, $added_email ];
 		}
@@ -85,9 +86,12 @@ abstract class Base {
 			$email = [ ...$email, ...$mix ];
 		}
 
-		if ( is_numeric( $mix ) && $mix > 0 ) {
-			$added_email = \get_user_by( 'id', $mix )->user_email;
-			$email       = [ ...$email, $added_email ];
+		if ( is_int( $mix ) && $mix > 0 ) {
+			$user = \get_user_by( 'id', $mix );
+			if ( $user ) {
+				$added_email = $user->user_email;
+				$email       = [ ...$email, $added_email ];
+			}
 		}
 
 		if ( $send_to_admin ) {
@@ -105,7 +109,7 @@ abstract class Base {
 	 * Delete post meta by meta id
 	 *
 	 * @param int $mid - meta id
-	 * @return string
+	 * @return bool
 	 */
 	public static function delete_post_meta_by_mid( $mid ) {
 		global $wpdb;

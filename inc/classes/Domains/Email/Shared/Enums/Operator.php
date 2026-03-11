@@ -8,10 +8,10 @@ namespace J7\PowerPartner\Domains\Email\Shared\Enums;
  * Operator 是否啟用
  *  */
 enum Operator: string {
-	/** @var string 指定日期後 */
+	/** 指定日期後 */
 	case AFTER = 'after';
 
-	/** @var string 指定日期前 */
+	/** 指定日期前 */
 	case BEFORE = 'before';
 
 	/** 取得運算符號， 1 或 -1 */

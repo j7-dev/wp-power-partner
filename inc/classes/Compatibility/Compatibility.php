@@ -19,7 +19,7 @@ final class Compatibility {
 	/** Constructor */
 	public function __construct() {
 		$scheduled_version = \get_option(self::OPTION_NAME);
-		if ($scheduled_version === Plugin::$version) {
+		if (is_string($scheduled_version) && $scheduled_version === Plugin::$version) {
 			return;
 		}
 
@@ -55,6 +55,7 @@ final class Compatibility {
 		 */
 
 		$previous_version = \get_option(self::OPTION_NAME, '0.0.1');
+		$previous_version = is_string($previous_version) ? $previous_version : '0.0.1';
 
 		// 3.1.0 之前版本要取消 email schedule 跟 cron 的排程
 		if (version_compare($previous_version, '3.1.0', '<=')) {
@@ -70,7 +71,7 @@ final class Compatibility {
 		// ❗不要刪除此行，註記已經執行過相容設定
 		\update_option(self::OPTION_NAME, Plugin::$version);
 		\wp_cache_flush();
-		Plugin::logger(Plugin::$version . ' 已執行兼容性設定', 'info');
+		Plugin::logger(Plugin::$version . ' 已執行兼容性設定', 'info', []);
 	}
 
 	/**
@@ -132,7 +133,7 @@ final class Compatibility {
 
 		} catch (\Throwable $th) {
 			$wpdb->query('ROLLBACK');
-			Plugin::logger('ROLLBACK 重新排程 EMAILS 失敗: ', $th->getMessage(), 'critical', [], 5);
+			Plugin::logger('ROLLBACK 重新排程 EMAILS 失敗: ' . $th->getMessage(), 'critical', [], 5);
 		}
 	}
 }

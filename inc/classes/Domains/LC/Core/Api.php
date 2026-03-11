@@ -119,7 +119,7 @@ final class Api extends ApiBase {
 			}
 			// 只刪除 lc_id 相同的 meta data
 			$subscription->delete_meta_data_value('lc_id', $lc_id);
-			$subscription->add_meta_data('lc_id', $lc_id);
+			$subscription->add_meta_data('lc_id', (string) $lc_id);
 			$subscription->save();
 		}
 
@@ -151,7 +151,7 @@ final class Api extends ApiBase {
 			'meta_value'     => $lc_id,
 		];
 		$query = new \WP_Query($args);
-		return $query->posts;
+		return array_map(static fn( $post ): int => $post instanceof \WP_Post ? $post->ID : (int) $post, $query->posts);
 	}
 
 	/**
@@ -170,7 +170,7 @@ final class Api extends ApiBase {
 		 * @var array{ids: array<int, int>, post_status: string, domain?: string, product_slug?: string, post_author?:int, subscription_id?:int, customer_id?:int} $body_params
 		 */
 		$body_params = WP::sanitize_text_field_deep( $body_params );
-		$lc_ids      = $body_params['ids'] ?? [];
+		$lc_ids      = $body_params['ids'];
 		foreach ($lc_ids as $lc_id) {
 			$related_subscription_ids = $this->get_related_subscriptions( (int) $lc_id);
 			foreach ($related_subscription_ids as $related_subscription_id) {
@@ -215,11 +215,7 @@ final class Api extends ApiBase {
 	public function get_subscriptions_next_payment_callback( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
 		$params = $request->get_params();
 
-		$include_required_params = WP::include_required_params($params, [ 'ids' ]);
-
-		if (true !== $include_required_params) {
-			return $include_required_params;
-		}
+		WP::include_required_params($params, [ 'ids' ]);
 
 		$subscription_ids = $params['ids'];
 		if (!is_array($subscription_ids)) {

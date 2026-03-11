@@ -31,10 +31,6 @@ final class SubscriptionEmailScheduler extends Base {
 		/** @var SubscriptionEmail 訂閱Email */
 		protected $item,
 	) {
-		if ( ! $item instanceof SubscriptionEmail ) {
-			throw new \Exception('$item 不是 SubscriptionEmail 實例');
-		}
-
 		parent::__construct( $item );
 	}
 
@@ -46,9 +42,9 @@ final class SubscriptionEmailScheduler extends Base {
 	 */
 	public static function action_callback( $args ): void {
 
-		$email_key       = $args['email_key'] ?? '';
-		$subscription_id = $args['subscription_id'] ?? 0;
-		$action_name     = $args['action_name'] ?? '';
+		$email_key       = $args['email_key'];
+		$subscription_id = $args['subscription_id'];
+		$action_name     = $args['action_name'];
 
 		if (!$email_key || !$subscription_id) {
 			Plugin::logger(  'send_email 找不到 email_key 或 subscription_id', 'error', $args );
@@ -87,7 +83,7 @@ final class SubscriptionEmailScheduler extends Base {
 
 		$tokens = array_merge( Token::get_order_tokens( $last_order ), Token::get_subscription_tokens( $subscription ) );
 
-		$admin_email = \get_option('admin_email');
+		$admin_email = (string) \get_option('admin_email');
 		$headers     = [];
 		$headers[]   = 'Content-Type: text/html; charset=UTF-8';
 		$headers[]   = "Bcc: {$admin_email}";

@@ -43,7 +43,8 @@
 		"php-stubs/wordpress-stubs": "@stable",
 		"phpstan/extension-installer": "@stable",
 		"pestphp/pest": "^1.23",
-		"dingo-d/wp-pest": "^1.6"
+		"dingo-d/wp-pest": "^1.6",
+		"php-stubs/woocommerce-subscriptions-stubs": "^8.4"
 	},
 	"scripts": {
 		"lint": "phpcs"

@@ -36,5 +36,19 @@
 		"@tanstack/react-query-devtools": "^5.81.5",
 		"rollup-plugin-terser": "^7.0.2",
 		"vite-plugin-optimizer": "^1.4.3"
+	},
+	"dependenciesMeta": {
+		"antd-toolkit": {
+			"injected": true
+		},
+		"@power/eslint-config": {
+			"injected": true
+		},
+		"@power/tailwind-config": {
+			"injected": true
+		},
+		"@power/typescript-config": {
+			"injected": true
+		}
 	}
 }

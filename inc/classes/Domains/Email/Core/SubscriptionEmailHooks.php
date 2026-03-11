@@ -31,11 +31,15 @@ final class SubscriptionEmailHooks {
 	public function __construct() {
 
 		$power_partner_settings = \get_option('power_partner_settings', []);
-		$emails_array           = is_array($power_partner_settings['emails']) ? $power_partner_settings['emails'] : [];
+		$power_partner_settings = is_array($power_partner_settings) ? $power_partner_settings : [];
+		$emails_array           = isset($power_partner_settings['emails']) && is_array($power_partner_settings['emails']) ? $power_partner_settings['emails'] : [];
 
 		$this->emails = [];
 		foreach ($emails_array as $email_data) {
-			$this->emails[] = Email::create($email_data);
+			if ( is_array( $email_data ) ) {
+				/** @var array<string, mixed> $email_data */
+				$this->emails[] = Email::create($email_data);
+			}
 		}
 
 		$this->default = (object) [
@@ -92,9 +96,9 @@ final class SubscriptionEmailHooks {
 	 * 訂閱生命週期發信，只發一次
 	 * 如果修改，就要重新排程
 	 *
-	 * @param \WC_Subscription $subscription 訂閱
-	 * @param array            $args 參數
-	 * @param Action           $action 動作
+	 * @param \WC_Subscription     $subscription 訂閱
+	 * @param array<string, mixed> $args 參數
+	 * @param Action               $action 動作
 	 * @return void
 	 */
 	public function schedule_subscription_email_once( \WC_Subscription $subscription, array $args, Action $action ): void {
@@ -109,7 +113,7 @@ final class SubscriptionEmailHooks {
 	 * Get emails
 	 * 預設只拿 enabled 的 email
 	 *
-	 * @param Action::value $action_name Action name 'subscription_failed' | 'subscription_success' | 'site_sync'
+	 * @param string $action_name Action name 'subscription_failed' | 'subscription_success' | 'site_sync'
 	 * @return array<Email>
 	 */
 	public function get_emails( string $action_name = '' ): array {
@@ -161,9 +165,9 @@ final class SubscriptionEmailHooks {
 	/**
 	 * 訂閱生命週期發信
 	 *
-	 * @param \WC_Subscription $subscription 訂閱
-	 * @param array            $args 參數
-	 * @param Action           $action 動作
+	 * @param \WC_Subscription     $subscription 訂閱
+	 * @param array<string, mixed> $args 參數
+	 * @param Action               $action 動作
 	 * @return void
 	 */
 	public function schedule_subscription_email( \WC_Subscription $subscription, array $args, Action $action ): void {
@@ -205,8 +209,8 @@ final class SubscriptionEmailHooks {
 	/**
 	 * 取消排程寄信
 	 *
-	 * @param \WC_Subscription $subscription 訂閱
-	 * @param array            $args 參數
+	 * @param \WC_Subscription     $subscription 訂閱
+	 * @param array<string, mixed> $args 參數
 	 * @return void
 	 */
 	public function unschedule_email( \WC_Subscription $subscription, $args ): void {
@@ -221,15 +225,15 @@ final class SubscriptionEmailHooks {
 		foreach ($emails as $email) {
 			$subscription_email           = new SubscriptionEmail($email, $subscription);
 			$subscription_email_scheduler = new SubscriptionEmailScheduler($subscription_email);
-			$subscription_email_scheduler->unschedule($email->action_name, $email->unique);
+			$subscription_email_scheduler->unschedule($email->action_name);
 		}
 	}
 
 	/**
 	 * Send mail
 	 *
-	 * @param string $to 收件者
-	 * @param array  $tokens 取代字串
+	 * @param string               $to 收件者
+	 * @param array<string, mixed> $tokens 取代字串
 	 * @return array{0:array<string>,1:array<string>} 成功與失敗的 email action names
 	 */
 	public static function send_mail( string $to, array $tokens ): array {

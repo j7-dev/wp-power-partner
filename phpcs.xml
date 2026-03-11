@@ -56,8 +56,15 @@
 	<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
 	<exclude name="PHPCompatibility.Variables.ForbiddenThisUseContexts.OutsideObjectContext"/>
 	<exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>
+	<exclude name="WordPress.NamingConventions.ValidHookName.UseUnderscores"/>
+	<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
+	<exclude name="WordPress.NamingConventions.ValidVariableName.PropertyNotSnakeCase"/>
+	<exclude name="WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase"/>
+	<exclude name="Squiz.Commenting.FunctionCommentThrowTag.Missing"/>
     </rule>
 
+    <exclude-pattern>*/stubs/*</exclude-pattern>
+    <exclude-pattern>*/wp-sqlite-db/*</exclude-pattern>
     <exclude-pattern>.idea/*</exclude-pattern>
     <exclude-pattern>js/*</exclude-pattern>
     <exclude-pattern>./release/*</exclude-pattern>

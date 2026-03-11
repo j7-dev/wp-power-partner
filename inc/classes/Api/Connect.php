@@ -115,7 +115,7 @@ final class Connect {
 	/**
 	 * Callback of get_partner_id API
 	 *
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function get_partner_id_callback() {
 
@@ -147,10 +147,10 @@ final class Connect {
 	 *
 	 * @param \WP_REST_Request $request Request object.
 	 *
-	 * @return WP_REST_Response|WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function set_partner_id_callback( $request ) {
-		$body_params              = $request->get_json_params() ?? [];
+		$body_params              = $request->get_json_params();
 		$partner_id               = $body_params['partner_id'] ?? '';
 		$encrypted_account_info   = $body_params['encrypted_account_info'] ?? '';
 		$allowed_template_options = $body_params['allowed_template_options'] ?? [];
@@ -181,7 +181,7 @@ final class Connect {
 	/**
 	 * Callback of delete_partner_id API
 	 *
-	 * @return WP_REST_Response|WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function delete_partner_id_callback() {
 		\delete_option( self::PARTNER_ID_OPTION_NAME );
@@ -200,7 +200,7 @@ final class Connect {
 	/**
 	 * Callback of get_account_info API
 	 *
-	 * @return WP_REST_Response|WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function get_account_info_callback() {
 		$encrypted_account_info = \get_option( Plugin::$snake . '_account_info' );

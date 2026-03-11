@@ -59,7 +59,7 @@ final class LinkedSites {
 		\add_action( 'woocommerce_save_product_variation', [ $this, 'save_variable_subscription' ], 20, 2 );
 
 		\add_action( 'admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ] );
-		 \add_action('admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ]);
+		\add_action('admin_post_' . self::CLEAR_ALLOWED_TEMPLATE_OPTIONS_POWERCLOUD_TRANSIENT_ACTION_NAME, [ $this, 'clear_allowed_template_options_transient_callback' ]);
 
 		\add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_tab_scripts' ], 20 );
 	}
@@ -73,10 +73,10 @@ final class LinkedSites {
 	public function custom_field_subscription(): void {
 		global $post;
 		$product_id          = $post->ID;
-		$host_position_value = \get_post_meta( $product_id, self::HOST_POSITION_FIELD_NAME, true );
+		$host_position_value = (string) \get_post_meta( $product_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
 
-		$host_type_value = \get_post_meta( $product_id, self::HOST_TYPE_FIELD_NAME, true );
+		$host_type_value = (string) \get_post_meta( $product_id, self::HOST_TYPE_FIELD_NAME, true );
 		if ( empty( $host_type_value ) ) {
 			$host_type_value = self::DEFAULT_HOST_TYPE;
 		}
@@ -269,25 +269,25 @@ final class LinkedSites {
 	public function save_subscription( $product_id ): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST[ self::HOST_POSITION_FIELD_NAME ] ) ) {
-			$host_position = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ] ) );
+			$host_position = \sanitize_text_field( (string) \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ] ) );
 			\update_post_meta( $product_id, self::HOST_POSITION_FIELD_NAME, $host_position );
 		}
 
 		// 保存 host_type
 		if ( isset( $_POST[ self::HOST_TYPE_FIELD_NAME ] ) ) {
-			$host_type = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_TYPE_FIELD_NAME ] ) );
+			$host_type = \sanitize_text_field( (string) \wp_unslash( $_POST[ self::HOST_TYPE_FIELD_NAME ] ) );
 			if ( in_array( $host_type, [ 'wpcd', 'powercloud' ], true ) ) {
 				\update_post_meta( $product_id, self::HOST_TYPE_FIELD_NAME, $host_type );
 			}
 		}
 
 		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) ) {
-			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) );
+			$linked_site = \sanitize_text_field( (string) \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) );
 			\update_post_meta( $product_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
 		}
 
 		if ( isset( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ] ) ) {
-			$open_site_plan = \sanitize_text_field( \wp_unslash( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ] ) );
+			$open_site_plan = \sanitize_text_field( (string) \wp_unslash( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ] ) );
 			\update_post_meta( $product_id, self::OPEN_SITE_PLAN_FIELD_NAME, $open_site_plan );
 		}
 	}
@@ -305,11 +305,11 @@ final class LinkedSites {
 	 */
 	public function custom_field_variable_subscription( $loop, $variation_data, $variation ): void { // phpcs:ignore
 		$variation_id        = $variation->ID;
-		$host_position_value = \get_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, true );
+		$host_position_value = (string) \get_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, true );
 		$host_position_value = empty( $host_position_value ) ? self::DEFAULT_HOST_POSITION : $host_position_value;
 
 		// 取得 host_type，如果沒有則根據 host_position 判斷
-		$host_type_value = \get_post_meta( $variation_id, self::HOST_TYPE_FIELD_NAME, true );
+		$host_type_value = (string) \get_post_meta( $variation_id, self::HOST_TYPE_FIELD_NAME, true );
 		if ( empty( $host_type_value ) ) {
 			// 如果沒有保存的 host_type，使用預設值
 			$host_type_value = self::DEFAULT_HOST_TYPE;
@@ -338,13 +338,13 @@ final class LinkedSites {
 		// tab1 = 舊架構 (wpcd), tab2 = 新架構 (powercloud)
 		$active_tab = ( 'wpcd' === $host_type_value ) ? 'tab1' : 'tab2';
 
-		echo '<div class="hidden form-row form-row-full show_if_variable-subscription power-partner-host-tabs-wrapper" data-loop="' . \esc_attr( $loop ) . '">';
+		echo '<div class="hidden form-row form-row-full show_if_variable-subscription power-partner-host-tabs-wrapper" data-loop="' . \esc_attr( (string) $loop ) . '">';
 		echo '<div class="power-partner-tabs-container">';
 
 		// Tab 按鈕
 		echo '<div class="power-partner-tab-buttons">';
-		echo '<button type="button" class="power-partner-tab-button' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" data-tab="tab2-' . \esc_attr( $loop ) . '">新架構</button>';
-		echo '<button type="button" class="power-partner-tab-button' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" data-tab="tab1-' . \esc_attr( $loop ) . '">舊架構</button>';
+		echo '<button type="button" class="power-partner-tab-button' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" data-tab="tab2-' . \esc_attr( (string) $loop ) . '">新架構</button>';
+		echo '<button type="button" class="power-partner-tab-button' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" data-tab="tab1-' . \esc_attr( (string) $loop ) . '">舊架構</button>';
 		echo '</div>';
 
 		// 取得模板選項
@@ -364,9 +364,9 @@ final class LinkedSites {
 		$tab_open_site_plan_options = [ '' => '請選擇' ] + FetchPowerCloud::get_open_site_plan_options();
 
 		// Tab 1 內容 (舊架構 - wpcd)
-		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" id="tab1-' . \esc_attr( $loop ) . '">';
+		echo '<div class="power-partner-tab-content' . ( 'tab1' === $active_tab ? ' active' : '' ) . '" id="tab1-' . \esc_attr( (string) $loop ) . '">';
 		// 隱藏的 host_type 欄位
-		echo '<input type="hidden" name="' . \esc_attr( $host_type_field_id ) . '" value="wpcd" class="host-type-field" data-tab="tab1-' . \esc_attr( $loop ) . '">';
+		echo '<input type="hidden" name="' . \esc_attr( $host_type_field_id ) . '" value="wpcd" class="host-type-field" data-tab="tab1-' . \esc_attr( (string) $loop ) . '">';
 		\woocommerce_wp_radio(
 			[
 				'id'            => $field_id . '-tab1',
@@ -404,9 +404,9 @@ final class LinkedSites {
 		echo '</div>';
 
 		// Tab 2 內容 (新架構 - powercloud)
-		echo '<div class="power-partner-tab-content' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" id="tab2-' . \esc_attr( $loop ) . '">';
+		echo '<div class="power-partner-tab-content' . ( 'tab2' === $active_tab ? ' active' : '' ) . '" id="tab2-' . \esc_attr( (string) $loop ) . '">';
 		// 隱藏的 host_type 欄位
-		echo '<input type="hidden" name="' . \esc_attr( $host_type_field_id ) . '" value="powercloud" class="host-type-field" data-tab="tab2-' . \esc_attr( $loop ) . '">';
+		echo '<input type="hidden" name="' . \esc_attr( $host_type_field_id ) . '" value="powercloud" class="host-type-field" data-tab="tab2-' . \esc_attr( (string) $loop ) . '">';
 		\woocommerce_wp_radio(
 			[
 				'id'            => $field_id . '-tab2',
@@ -517,28 +517,29 @@ final class LinkedSites {
 	 */
 	public function save_variable_subscription( $variation_id, $loop ): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		if ( isset( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) ) {
-			$host_position = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ][ $loop ] ) );
-			\update_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, $host_position );
+		$host_positions_raw = isset( $_POST[ self::HOST_POSITION_FIELD_NAME ] ) ? \map_deep( \wp_unslash( $_POST[ self::HOST_POSITION_FIELD_NAME ] ), 'sanitize_text_field' ) : null;
+		if ( is_array( $host_positions_raw ) && isset( $host_positions_raw[ $loop ] ) ) {
+			\update_post_meta( $variation_id, self::HOST_POSITION_FIELD_NAME, (string) $host_positions_raw[ $loop ] );
 		}
 
 		// 保存 host_type
-		if ( isset( $_POST[ self::HOST_TYPE_FIELD_NAME ][ $loop ] ) ) {
-			$host_type = \sanitize_text_field( \wp_unslash( $_POST[ self::HOST_TYPE_FIELD_NAME ][ $loop ] ) );
+		$host_types_raw = isset( $_POST[ self::HOST_TYPE_FIELD_NAME ] ) ? \map_deep( \wp_unslash( $_POST[ self::HOST_TYPE_FIELD_NAME ] ), 'sanitize_text_field' ) : null;
+		if ( is_array( $host_types_raw ) && isset( $host_types_raw[ $loop ] ) ) {
+			$host_type = (string) $host_types_raw[ $loop ];
 			// 驗證 host_type 值
 			if ( in_array( $host_type, [ 'wpcd', 'powercloud' ], true ) ) {
 				\update_post_meta( $variation_id, self::HOST_TYPE_FIELD_NAME, $host_type );
 			}
 		}
 
-		if ( isset( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) ) {
-			$linked_site = \sanitize_text_field( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ][ $loop ] ) );
-			\update_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, $linked_site );
+		$linked_sites_raw = isset( $_POST[ self::LINKED_SITE_FIELD_NAME ] ) ? \map_deep( \wp_unslash( $_POST[ self::LINKED_SITE_FIELD_NAME ] ), 'sanitize_text_field' ) : null;
+		if ( is_array( $linked_sites_raw ) && isset( $linked_sites_raw[ $loop ] ) ) {
+			\update_post_meta( $variation_id, self::LINKED_SITE_FIELD_NAME, (string) $linked_sites_raw[ $loop ] );
 		}
 
-		if ( isset( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ][ $loop ] ) ) {
-			$open_site_plan = \sanitize_text_field( \wp_unslash( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ][ $loop ] ) );
-			\update_post_meta( $variation_id, self::OPEN_SITE_PLAN_FIELD_NAME, $open_site_plan );
+		$open_site_plans_raw = isset( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ] ) ? \map_deep( \wp_unslash( $_POST[ self::OPEN_SITE_PLAN_FIELD_NAME ] ), 'sanitize_text_field' ) : null;
+		if ( is_array( $open_site_plans_raw ) && isset( $open_site_plans_raw[ $loop ] ) ) {
+			\update_post_meta( $variation_id, self::OPEN_SITE_PLAN_FIELD_NAME, (string) $open_site_plans_raw[ $loop ] );
 		}
 	}
 

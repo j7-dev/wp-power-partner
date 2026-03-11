@@ -113,7 +113,7 @@ final class LifeCycle {
 		/** @var \WC_Order $parent_order */
 		$parent_order = $subscription->get_parent();
 
-		/** @var array<int, array{product_slug:string, quantity:string}> $linked_lc_products */
+		/** @var array<int, array{product_slug:string, quantity:string}> $all_linked_lc_products */
 		$all_linked_lc_products = [];
 
 		/** @var array<int, \WC_Order_Item_Product> $items */
@@ -153,6 +153,7 @@ final class LifeCycle {
 		$api_instance = CloudApi::instance();
 
 		foreach ($all_linked_lc_products as $linked_lc_product) {
+			/** @var array<string, mixed> $params */
 			$params                    = $linked_lc_product;
 			$params['post_author']     = $partner_id;
 			$params['subscription_id'] = $subscription->get_id();
@@ -169,13 +170,15 @@ final class LifeCycle {
 			}
 
 			$body = \wp_remote_retrieve_body($response);
+			/** @var array<string, mixed> $data */
 			$data = General::json_parse($body, []);
 
+			$data_inner = is_array($data['data'] ?? null) ? $data['data'] : [];
 			/**
 			 * @var array<int, array{id: int, status: string, code: string, type: string, subscription_id: int, customer_id: int, expire_date: int, domain: string, product_slug: string, download_url: string, product_name: string}> $license_codes
 			 */
-			$license_codes = $data['data']['license_codes'] ?? [];
-			if (is_array($license_codes)) {
+			$license_codes = is_array($data_inner['license_codes'] ?? null) ? $data_inner['license_codes'] : [];
+			if (!empty($license_codes)) {
 				foreach ($license_codes as $license_code) {
 					$all_lc_ids[] = $license_code['id'];
 				}
@@ -190,7 +193,7 @@ final class LifeCycle {
 		$subscription->update_meta_data(LinkedLC::FIELD_NAME, $all_linked_lc_products);
 
 		foreach ($all_lc_ids as $lc_id) {
-			$subscription->add_meta_data('lc_id', $lc_id);
+			$subscription->add_meta_data('lc_id', (string) $lc_id);
 		}
 		$subscription->save();
 	}
@@ -224,7 +227,9 @@ final class LifeCycle {
 		$subject = "您的《{$product_name}》授權碼已開通 - " . \get_bloginfo('name');
 
 		$message  = "{$display_name} 您好:<br><br>";
-		$message .= "您在 {$subscription->get_date_created()->date('Y-m-d')} 訂購的授權碼 (訂閱編號 #{$subscription->get_id()}) 已經開通，以下是您的授權碼:<br><br>";
+		$date_created = $subscription->get_date_created();
+		$date_str     = $date_created ? $date_created->date('Y-m-d') : '';
+		$message     .= "您在 {$date_str} 訂購的授權碼 (訂閱編號 #{$subscription->get_id()}) 已經開通，以下是您的授權碼:<br><br>";
 
 		$message .= "產品: {$product_name}<br><br>";
 		if ($download_url) {

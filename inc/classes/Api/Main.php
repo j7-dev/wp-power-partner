@@ -178,11 +178,11 @@ final class Main {
 	 * 發 Email 通知客戶
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function post_customer_notification_callback( $request ) {
 		try {
-			$body_params = $request->get_json_params() ?? [];
+			$body_params = $request->get_json_params();
 			$customer_id = $body_params['CUSTOMER_ID'] ?? '0';
 			$customer    = \get_user_by( 'id', $customer_id );
 			if ( ! $customer || empty( $customer_id ) ) {
@@ -197,7 +197,7 @@ final class Main {
 			$order          = \wc_get_order( $order_id );
 			$customer_email = $customer->user_email;
 
-			if ( $order ) {
+			if ( $order instanceof \WC_Order ) {
 				$customer_email = $order->get_billing_email();
 				$subscriptions  = \wcs_get_subscriptions_for_order( $order->get_id() );
 				$subscription   = \reset( $subscriptions ); // 取得第一個訂閱
@@ -253,7 +253,7 @@ final class Main {
 	 * Post link site callback
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function post_link_site_callback( $request ) {
 		/**
@@ -262,7 +262,7 @@ final class Main {
 		 * @param string $subscription_id
 		 * @param string $site_id
 		 */
-		$body_params     = $request->get_json_params() ?? [];
+		$body_params     = $request->get_json_params();
 		$subscription_id = $body_params['subscription_id'] ?? '';
 		$site_id         = $body_params['site_id'] ?? '';
 		$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
@@ -350,11 +350,11 @@ final class Main {
 	 * 將網站綁定到指定的訂閱(還有上層訂單)上
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function post_change_subscription_callback( $request ) {
 		try {
-			$body_params     = $request->get_json_params() ?? [];
+			$body_params     = $request->get_json_params();
 			$subscription_id = $body_params['subscription_id'] ?? '';
 			$site_id         = $body_params['site_id'] ?? '';
 			$linked_site_ids = $body_params['linked_site_ids'] ?? [];
@@ -422,7 +422,7 @@ final class Main {
 	 * @return \WP_REST_Response
 	 */
 	public function get_apps_callback( $request ): \WP_REST_Response {
-		$params  = $request->get_query_params() ?? [];
+		$params  = $request->get_query_params();
 		$app_ids = $params['app_ids'] ?? [];
 
 		$apps = [];
@@ -459,6 +459,7 @@ final class Main {
 	 */
 	public function get_emails_callback(): \WP_REST_Response {
 		$power_partner_settings = \get_option( 'power_partner_settings', [] );
+		$power_partner_settings = is_array($power_partner_settings) ? $power_partner_settings : [];
 		$emails                 = $power_partner_settings['emails'] ?? [];
 
 		return new \WP_REST_Response(
@@ -476,10 +477,11 @@ final class Main {
 	 * @return \WP_REST_Response
 	 */
 	public function post_emails_callback( $request ): \WP_REST_Response {
-		$body_params = $request->get_json_params() ?? [];
-		$emails      = $body_params['emails'];
+		$body_params = $request->get_json_params();
+		$emails      = $body_params['emails'] ?? null;
 
 		$power_partner_settings = \get_option( 'power_partner_settings', [] );
+		$power_partner_settings = is_array($power_partner_settings) ? $power_partner_settings : [];
 		if ( is_array( $emails ) ) {
 			$power_partner_settings['emails'] = $emails;
 			\update_option( 'power_partner_settings', $power_partner_settings);
@@ -512,7 +514,7 @@ final class Main {
 	public function send_site_credentials_email_callback( $request ): \WP_REST_Response {
 
 		try {
-			$body_params = $request->get_json_params() ?? [];
+			$body_params = $request->get_json_params();
 
 			// 獲取當前用戶
 			$current_user_id = \get_current_user_id();
@@ -636,7 +638,7 @@ final class Main {
 	 * @return \WP_REST_Response
 	 */
 	public function post_settings_callback( $request ): \WP_REST_Response {
-		$body_params = $request->get_json_params() ?? [];
+		$body_params = $request->get_json_params();
 		$body_params = WP::sanitize_text_field_deep( $body_params, true, [ 'emails' ] );
 
 		\update_option( 'power_partner_settings', $body_params );
@@ -656,15 +658,15 @@ final class Main {
 	 * 手動開站
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function manual_site_sync_callback( $request ) {
 		try {
 
-			$body_params   = $request->get_json_params() ?? [];
-			$site_id       = $body_params['site_id'];
-			$host_position = $body_params['host_position'];
-			$partner_id    = \get_option( Plugin::$snake . '_partner_id', '0' );
+			$body_params   = $request->get_json_params();
+			$site_id       = (string) ( $body_params['site_id'] ?? '' );
+			$host_position = (string) ( $body_params['host_position'] ?? '' );
+			$partner_id    = (string) \get_option( Plugin::$snake . '_partner_id', '0' );
 			$customer_id   = \get_current_user_id();
 			$customer      = \get_user_by( 'id', $customer_id );
 
@@ -676,11 +678,11 @@ final class Main {
 				'partner_id'    => $partner_id,
 				'customer'      => [
 					'id'         => $customer_id,
-					'first_name' => $customer->first_name ?? 'admin',
-					'last_name'  => $customer->last_name ?? '',
-					'username'   => $customer->user_login ?? 'admin',
-					'email'      => $customer->user_email ?? '',
-					'phone'      => $customer->billing_phone ?? '',
+					'first_name' => $customer ? $customer->first_name : 'admin',
+					'last_name'  => $customer ? $customer->last_name : '',
+					'username'   => $customer ? $customer->user_login : 'admin',
+					'email'      => $customer ? $customer->user_email : '',
+					'phone'      => $customer ? (string) \get_user_meta( $customer_id, 'billing_phone', true ) : '',
 				],
 			]
 			);
@@ -703,6 +705,14 @@ final class Main {
 			],
 			5
 			);
+
+			return new \WP_REST_Response(
+				[
+					'status'  => 500,
+					'message' => '手動開站建立網站失敗: ' . $th->getMessage(),
+				],
+				500
+			);
 		}
 	}
 
@@ -710,7 +720,7 @@ final class Main {
 	 * Clear template sites cache callback
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function clear_template_sites_cache_callback( $request ) {
 
@@ -773,7 +783,7 @@ final class Main {
 	 */
 	private function in_ip( string $from_ip, string $to_ip ): bool {
 		// phpcs:ignore
-		$request_ip_long = sprintf('%u', ip2long($_SERVER['REMOTE_ADDR']));
+		$request_ip_long = sprintf('%u', ip2long((string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0')));
 		// 將起始和結束 IP 轉換為長整型
 		$from_ip_long = sprintf( '%u', ip2long( $from_ip ) );
 		$to_ip_long   = sprintf( '%u', ip2long( $to_ip ) );
@@ -791,7 +801,7 @@ final class Main {
 	 * @return \WP_REST_Response
 	 */
 	public function post_powercloud_api_key_callback( $request ): \WP_REST_Response {
-		$body_params = $request->get_json_params() ?? [];
+		$body_params = $request->get_json_params();
 		$api_key     = \sanitize_text_field( $body_params['api_key'] ?? '' );
 
 		if ( empty( $api_key ) ) {

@@ -40,6 +40,9 @@ final class Deprecated {
 	 */
 	public function process_expire_lcs( array $lc_ids, int $subscription_id ): void {
 		$subscription = \wcs_get_subscription($subscription_id);
+		if ( ! $subscription ) {
+			return;
+		}
 
 		$action_id = $subscription->get_meta('power_partner_lc_expire_action_id');
 		// 如果沒有 action_id 就不處理
@@ -58,13 +61,13 @@ final class Deprecated {
 		);
 		$is_error     = \is_wp_error($response);
 		if ($is_error) {
-			$subscription->add_order_note("站長路可《過期》授權碼 ❌失敗: \n{$response->get_error_message()}");
+			$subscription->add_order_note("站長路可《過期》授權碼 失敗: \n{$response->get_error_message()}");
 			return;
 		}
 
 		$body = \wp_remote_retrieve_body($response);
 		$data = General::json_parse($body, []);
 
-		$subscription->add_order_note("站長路可《過期》授權碼 ✅成功: \n" . \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
+		$subscription->add_order_note("站長路可《過期》授權碼 成功: \n" . (string) \wp_json_encode($data, JSON_UNESCAPED_UNICODE));
 	}
 }

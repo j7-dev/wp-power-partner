@@ -37,10 +37,6 @@ final class ExpireHandler extends Base {
 		/** @var \WC_Subscription 訂閱 */
 		protected $item,
 	) {
-		if ( ! $item instanceof \WC_Subscription ) {
-			throw new \Exception('$item 不是 \WC_Subscription 實例');
-		}
-
 		parent::__construct( $item );
 	}
 
@@ -53,7 +49,9 @@ final class ExpireHandler extends Base {
 		$subscription    = $this->item;
 		$subscription_id = $subscription->get_id();
 		$lc_ids          = \get_post_meta($subscription_id, 'lc_id', false);
-		$this->lc_ids    = is_array($lc_ids) ? $lc_ids : [];
+		/** @var array<int|string> $filtered_lc_ids */
+		$filtered_lc_ids = is_array($lc_ids) ? $lc_ids : [];
+		$this->lc_ids    = $filtered_lc_ids;
 
 		return [
 			'lc_ids'          => $this->lc_ids,
@@ -68,10 +66,13 @@ final class ExpireHandler extends Base {
 	 * @return void
 	 */
 	public static function action_callback( $args ): void {
-		$lc_ids          = $args['lc_ids'] ?? [];
-		$subscription_id = $args['subscription_id'] ?? 0;
+		$lc_ids          = $args['lc_ids'];
+		$subscription_id = $args['subscription_id'];
 
 		$subscription = \wcs_get_subscription($subscription_id);
+		if ( ! $subscription ) {
+			return;
+		}
 
 		// 發API停用授權碼
 		// 訂閱失敗，發API停用授權碼
@@ -84,26 +85,26 @@ final class ExpireHandler extends Base {
 		);
 		$is_error     = \is_wp_error($response);
 		if ($is_error) {
-			$subscription->add_order_note("站長路可《過期》授權碼 ❌失敗: \n{$response->get_error_message()}");
+			$subscription->add_order_note("站長路可《過期》授權碼 失敗: \n{$response->get_error_message()}");
 			return;
 		}
 
 		$body = \wp_remote_retrieve_body($response);
 		$data = General::json_parse($body, []);
 
-		$subscription->add_order_note("站長路可《過期》授權碼 ✅成功: \n" . WP::array_to_html($data));
+		$subscription->add_order_note("站長路可《過期》授權碼 成功: \n" . WP::array_to_html( is_array($data) ? $data : [] ));
 	}
 
 	/**
 	 * 單次排程後，寫入訂單備註
 	 *
-	 * @param int    $action_id 排程的 action_id
-	 * @param int    $timestamp 排程的時間
-	 * @param string $group     排程的群組
+	 * @param int|null $action_id 排程的 action_id
+	 * @param int      $timestamp 排程的時間
+	 * @param string   $group     排程的群組
 	 *
 	 * @return void
 	 */
-	public function after_schedule_single( int $action_id, int $timestamp, string $group ): void {
+	public function after_schedule_single( int|null $action_id, int $timestamp, string $group ): void {
 		if ( ! $this->lc_ids ) {
 			return;
 		}

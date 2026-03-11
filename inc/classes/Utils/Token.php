@@ -20,10 +20,10 @@ abstract class Token {
 	 * As of Version 4.2.5 of WPCD, this function also handles
 	 * replacing similar tokens in EMAIL templates.
 	 *
-	 * @param string $script The full text of the script contents.
-	 * @param array  $tokens Key-value array of tokens to replace.
+	 * @param string               $script The full text of the script contents.
+	 * @param array<string, mixed> $tokens Key-value array of tokens to replace.
 	 *
-	 * @return $string The updated script contents
+	 * @return string The updated script contents
 	 */
 	public static function replace( $script, $tokens ) {
 		$updated_script = $script;
@@ -43,7 +43,7 @@ abstract class Token {
 	 * Get order tokens
 	 *
 	 * @param \WC_Order $order Order
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public static function get_order_tokens( \WC_Order $order ): array {
 		$customer = $order->get_user();
@@ -56,16 +56,17 @@ abstract class Token {
 		$products_text = implode( ', ', $products );
 
 		$tokens                         = [];
-		$tokens['FIRST_NAME']           = $customer->first_name;
-		$tokens['LAST_NAME']            = $customer->last_name;
-		$tokens['NICE_NAME']            = $customer->user_nicename;
-		$tokens['EMAIL']                = $customer->user_email;
+		$tokens['FIRST_NAME']           = $customer ? $customer->first_name : '';
+		$tokens['LAST_NAME']            = $customer ? $customer->last_name : '';
+		$tokens['NICE_NAME']            = $customer ? $customer->user_nicename : '';
+		$tokens['EMAIL']                = $customer ? $customer->user_email : '';
 		$tokens['ORDER_ID']             = $order->get_id();
 		$tokens['ORDER_ITEMS']          = $products_text;
 		$tokens['CHECKOUT_PAYMENT_URL'] = $order->get_checkout_payment_url();
 		$tokens['VIEW_ORDER_URL']       = $order->get_view_order_url();
 		$tokens['ORDER_STATUS']         = $order->get_status();
-		$tokens['ORDER_DATE']           = $order->get_date_created()->format( 'Y-m-d' );
+		$date_created                   = $order->get_date_created();
+		$tokens['ORDER_DATE']           = $date_created ? $date_created->format( 'Y-m-d' ) : '';
 
 		return $tokens;
 	}
@@ -74,24 +75,24 @@ abstract class Token {
 	 * Get subscription tokens
 	 *
 	 * @param \WC_Subscription $subscription Subscription
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public static function get_subscription_tokens( \WC_Subscription $subscription ): array {
 
 		$order = $subscription->get_parent();
 
-		if ( ! $order ) {
+		if ( ! $order instanceof \WC_Order ) {
 			return [];
 		}
 
 		$site_responses = $order->get_meta( SiteSync::CREATE_SITE_RESPONSES_META_KEY, true );
 		$tokens         = [];
-		try {
+
+		if ( is_string( $site_responses ) && ! empty( $site_responses ) ) {
 			$site_responses_arr = \json_decode( $site_responses, true );
-			$site_info          = $site_responses_arr['data'] ?? [];
+			$site_responses_arr = is_array( $site_responses_arr ) ? $site_responses_arr : [];
+			$site_info          = isset( $site_responses_arr['data'] ) && is_array( $site_responses_arr['data'] ) ? $site_responses_arr['data'] : [];
 			$tokens['URL']      = $site_info['url'] ?? '';
-		} catch ( \Throwable $th ) {
-			\J7\WpUtils\Classes\WC::log( $th->getMessage(), 'get_subscription_tokens json_decode failed');
 		}
 
 		return $tokens;

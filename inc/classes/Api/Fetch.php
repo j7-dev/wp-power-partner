@@ -42,8 +42,12 @@ abstract class Fetch {
 	 * @throws \Exception When the request fails.
 	 */
 	public static function site_sync( array $props ) {
+		$body = \wp_json_encode( $props );
+		if ( false === $body ) {
+			throw new \Exception('開站失敗: wp_json_encode failed');
+		}
 		$args     = [
-			'body'    => \wp_json_encode( $props ),
+			'body'    => $body,
 			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
@@ -56,6 +60,7 @@ abstract class Fetch {
 			throw new \Exception("開站失敗: {$response->get_error_message()}");
 		}
 
+		/** @var object{status: int, message: string, data: mixed} $response_obj */
 		$response_obj = json_decode( $response['body'] );
 
 		\do_action( 'pp_after_site_sync', $response_obj );
@@ -69,17 +74,27 @@ abstract class Fetch {
 	 *
 	 * @param string $site_id 網站 ID
 	 * @param string $reason  停用原因
-	 * @return array|\WP_Error — The response or WP_Error on failure.
+	 * @return mixed — The response object or WP_REST_Response on failure.
 	 */
 	public static function disable_site( string $site_id, string $reason = '停用網站' ) {
-		$args     = [
-			'body'    => \wp_json_encode(
+		$body = \wp_json_encode(
+			[
+				'site_id'    => $site_id,
+				'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
+				'reason'     => $reason,
+			]
+		);
+		if ( false === $body ) {
+			return \rest_ensure_response(
 				[
-					'site_id'    => $site_id,
-					'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
-					'reason'     => $reason,
+					'status'  => 500,
+					'message' => 'wp_json_encode failed',
+					'data'    => null,
 				]
-			),
+			);
+		}
+		$args     = [
+			'body'    => $body,
 			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
@@ -88,36 +103,45 @@ abstract class Fetch {
 		];
 		$response = \wp_remote_post( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/v2/disable-site', $args );
 
-		try {
-			$response_obj = json_decode( $response['body'] );
-			return $response_obj;
-		} catch ( \Throwable $th ) {
+		if ( \is_wp_error( $response ) ) {
 			ob_start();
-			print_r( $response );
+			print_r( $response ); // phpcs:ignore
 			return \rest_ensure_response(
 				[
 					'status'  => 500,
-					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
+					'message' => 'Request Error, the $response is ' . ob_get_clean(),
 					'data'    => null,
 				]
 			);
 		}
+
+		return json_decode( $response['body'] );
 	}
 
 	/**
 	 * 發 API 啟用 WordPress 網站
 	 *
 	 * @param string $site_id 網站 ID
-	 * @return array|\WP_Error — The response or WP_Error on failure.
+	 * @return mixed — The response object or WP_REST_Response on failure.
 	 */
 	public static function enable_site( string $site_id ) {
-		$args     = [
-			'body'    => \wp_json_encode(
+		$body = \wp_json_encode(
+			[
+				'site_id'    => $site_id,
+				'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
+			]
+		);
+		if ( false === $body ) {
+			return \rest_ensure_response(
 				[
-					'site_id'    => $site_id,
-					'partner_id' => \get_option( Connect::PARTNER_ID_OPTION_NAME ),
+					'status'  => 500,
+					'message' => 'wp_json_encode failed',
+					'data'    => null,
 				]
-			),
+			);
+		}
+		$args     = [
+			'body'    => $body,
 			'headers' => [
 				'Content-Type'  => 'application/json',
 				'Authorization' => 'Basic ' . \base64_encode( Bootstrap::instance()->username . ':' . Bootstrap::instance()->psw ), // phpcs:ignore
@@ -126,20 +150,19 @@ abstract class Fetch {
 		];
 		$response = \wp_remote_post( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/v2/enable-site', $args );
 
-		try {
-			$response_obj = json_decode( $response['body'] );
-			return $response_obj;
-		} catch ( \Throwable $th ) {
+		if ( \is_wp_error( $response ) ) {
 			ob_start();
-			print_r( $response );
+			print_r( $response ); // phpcs:ignore
 			return \rest_ensure_response(
 				[
 					'status'  => 500,
-					'message' => 'json_decode($response[body]) Error, the $response is ' . ob_get_clean(),
+					'message' => 'Request Error, the $response is ' . ob_get_clean(),
 					'data'    => null,
 				]
 			);
 		}
+
+		return json_decode( $response['body'] );
 	}
 
 	/**
@@ -158,7 +181,9 @@ abstract class Fetch {
 				return [];
 			}
 
-			$template_sites = $result?->data?->list;
+			/** @var object{data?: object{list?: array<object{ID: int, post_title: string}>}}|null $result_obj */
+			$result_obj     = $result;
+			$template_sites = $result_obj->data->list ?? null;
 
 			if (!$template_sites) {
 				return [];
@@ -168,16 +193,17 @@ abstract class Fetch {
 				$allowed_template_options[ (string) $site->ID ] = $site->post_title;
 			}
 
-			\set_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY, (array) $allowed_template_options, self::ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME );
+			\set_transient( self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY, $allowed_template_options, self::ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME );
 		}
 
-		return (array) $allowed_template_options;
+		/** @var array<string, string> $allowed_template_options */
+		return $allowed_template_options;
 	}
 
 	/**
 	 * 取得合作夥伴的模板站
 	 *
-	 * @return array|null|\WP_Error — The response or WP_Error on failure.
+	 * @return mixed — The response object, null, or WP_Error on failure.
 	 */
 	public static function fetch_template_sites_by_user() {
 		$partner_id = \get_option( Connect::PARTNER_ID_OPTION_NAME );
@@ -193,20 +219,18 @@ abstract class Fetch {
 			'timeout' => 120,
 		];
 
-		$response = \wp_remote_get( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/template-sites?user_id=' . $partner_id, $args );
+		$response = \wp_remote_get( Bootstrap::instance()->base_url . '/wp-json/power-partner-server/template-sites?user_id=' . (string) $partner_id, $args );
 
-		try {
-			$response_obj = json_decode( $response['body'] );
-			return $response_obj;
-		} catch ( \Throwable $th ) {
-
+		if ( \is_wp_error( $response ) ) {
 			return new \WP_Error(
 				'fetch_template_sites_by_user_error',
-				$th->getMessage(),
+				$response->get_error_message(),
 				[
 					'status' => 500,
 				]
 			);
 		}
+
+		return json_decode( $response['body'] );
 	}
 }

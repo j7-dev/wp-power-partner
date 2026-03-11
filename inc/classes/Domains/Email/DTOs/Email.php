@@ -16,7 +16,7 @@ final class Email extends DTO {
 	/** @var string 信件 key 給前端 render 使用 */
 	public string $key;
 
-	/** @var Enums\Enabled::value 是否啟用 */
+	/** @var string 是否啟用 */
 	public string $enabled;
 
 	/** @var string 信件主旨 */
@@ -25,13 +25,13 @@ final class Email extends DTO {
 	/** @var string 信件內容 */
 	public string $body;
 
-	/** @var Enums\Action::value|'site_sync' 信件動作名稱  */
+	/** @var string 信件動作名稱 */
 	public string $action_name;
 
-	/** @var numeric-string 信件天數 */
+	/** @var string 信件天數 */
 	public string $days;
 
-	/** @var Enums\Operator::value 信件運算子 'after' | 'before' */
+	/** @var string 信件運算子 'after' | 'before' */
 	public string $operator;
 
 	/** @var bool 是否只發一次 */
@@ -60,7 +60,7 @@ final class Email extends DTO {
 	/**
 	 * 建立 Email DTO
 	 *
-	 * @param array $data 資料
+	 * @param array<string, mixed> $data 資料
 	 * @return self
 	 */
 	public static function create( $data ): self {

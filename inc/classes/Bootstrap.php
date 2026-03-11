@@ -14,11 +14,11 @@ use Kucrut\Vite;
 final class Bootstrap {
 	use \J7\WpUtils\Traits\SingletonTrait;
 
-	public $username      = ''; // phpcs:ignore
-	public $psw           = ''; // phpcs:ignore
-	public $base_url      = ''; // phpcs:ignore
-	public $powercloud_api = ''; // phpcs:ignore
-	public $t             = ''; // phpcs:ignore
+	public string $username       = ''; // phpcs:ignore
+	public string $psw           = ''; // phpcs:ignore
+	public string $base_url      = ''; // phpcs:ignore
+	public string $powercloud_api = ''; // phpcs:ignore
+	public string $t             = ''; // phpcs:ignore
 
 	/** Constructor */
 	public function __construct() {

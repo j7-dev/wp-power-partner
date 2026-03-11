@@ -59,17 +59,17 @@ final class Order {
 
 			$responses_string = $order->get_meta( SiteSync::CREATE_SITE_RESPONSES_META_KEY );
 
-			try {
-				$responses = json_decode( $responses_string, true ) ?? [];
-				$data      = $responses[0]['data'] ?? [];
-			} catch ( \Throwable $th ) {
-				$data = [];
-				echo 'json_decode($responses_string) Error';
+			$data = [];
+			if ( is_string( $responses_string ) && ! empty( $responses_string ) ) {
+				$responses = json_decode( $responses_string, true );
+				$responses = is_array( $responses ) ? $responses : [];
+				$first     = isset( $responses[0] ) && is_array( $responses[0] ) ? $responses[0] : [];
+				$data      = isset( $first['data'] ) && is_array( $first['data'] ) ? $first['data'] : [];
 			}
 
 			if ( ! empty( $data ) ) {
 				foreach ( $data as $key => $value ) {
-					echo '<span>' . esc_html( $key ) . ': ' . esc_html( $value ) . '</span><br />';
+					echo '<span>' . esc_html( (string) $key ) . ': ' . esc_html( (string) $value ) . '</span><br />';
 				}
 			}
 		}
@@ -109,17 +109,18 @@ final class Order {
 			return;
 		}
 		$responses_string = $order->get_meta( SiteSync::CREATE_SITE_RESPONSES_META_KEY );
-		try {
-			$responses = json_decode( $responses_string, true ) ?? [];
-			$data      = $responses[0]['data'] ?? [];
-		} catch ( \Throwable $th ) {
-			$data = [];
-			echo 'json_decode($responses_string) Error';
+
+		$data = [];
+		if ( is_string( $responses_string ) && ! empty( $responses_string ) ) {
+			$responses = json_decode( $responses_string, true );
+			$responses = is_array( $responses ) ? $responses : [];
+			$first     = isset( $responses[0] ) && is_array( $responses[0] ) ? $responses[0] : [];
+			$data      = isset( $first['data'] ) && is_array( $first['data'] ) ? $first['data'] : [];
 		}
 
 		if ( ! empty( $data ) ) {
 			foreach ( $data as $key => $value ) {
-				echo '<span>' . esc_html( $key ) . ': ' . esc_html( $value ) . '</span><br />';
+				echo '<span>' . esc_html( (string) $key ) . ': ' . esc_html( (string) $value ) . '</span><br />';
 			}
 		}
 	}

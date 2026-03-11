@@ -56,10 +56,10 @@ final class User {
 	 * Get customer notification callback
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response|\WP_Error
+	 * @return \WP_REST_Response
 	 */
 	public function get_customers_by_search_callback( $request ) { // phpcs:ignore
-		$params = $request->get_query_params() ?? [];
+		$params = $request->get_query_params();
 		$id     = $params['id'] ?? '0';
 		$search = $params['search'] ?? '';
 
@@ -115,6 +115,13 @@ final class User {
 				);
 			}
 		}
+
+		return \rest_ensure_response(
+			[
+				'status'  => 400,
+				'message' => 'missing id or search parameter',
+			]
+		);
 	}
 
 	/**
@@ -125,7 +132,7 @@ final class User {
 	 */
 	public function get_customers_callback( $request ): \WP_REST_Response {
 
-		$params   = $request->get_query_params() ?? [];
+		$params   = $request->get_query_params();
 		$user_ids = $params['user_ids'] ?? [];
 
 		if ( empty( $user_ids ) ) {
@@ -159,8 +166,8 @@ final class User {
 		$response = new \WP_REST_Response( $formatted_users );
 
 		// set pagination in header
-		$response->header( 'X-WP-Total', count( $formatted_users ) );
-		$response->header( 'X-WP-TotalPages', 1 );
+		$response->header( 'X-WP-Total', (string) count( $formatted_users ) );
+		$response->header( 'X-WP-TotalPages', '1' );
 
 		return $response;
 	}

@@ -28,20 +28,22 @@ final class WatchSettingHooks {
 
 		\add_action('update_option_power_partner_settings', [ $this, 'reschedule_emails' ], 10, 3);
 
-		\add_action(self::HOOK, [ __CLASS__, 'reschedule_emails' ], 10, 0);
+		\add_action(self::HOOK, [ __CLASS__, 'reschedule_all_subscription_email' ], 10, 0);
 	}
 
 	/**
 	 * 重新排程禁用網站
 	 *
-	 * @param array<string, mixed> $old_value 舊的設定值
-	 * @param array<string, mixed> $value 新的設定值
-	 * @param string               $option 設定選項
+	 * @param mixed  $old_value 舊的設定值
+	 * @param mixed  $value 新的設定值
+	 * @param string $option 設定選項
 	 * @return void
 	 */
-	public function reschedule_disable_site( $old_value, $value, $option ) {
-		$old_disable_site_after_n_days = $old_value['power_partner_disable_site_after_n_days'] ?? 7;
-		$new_disable_site_after_n_days = $value['power_partner_disable_site_after_n_days'] ?? 7;
+	public function reschedule_disable_site( $old_value, $value, $option ): void {
+		$old_value_arr                 = is_array($old_value) ? $old_value : [];
+		$value_arr                     = is_array($value) ? $value : [];
+		$old_disable_site_after_n_days = $old_value_arr['power_partner_disable_site_after_n_days'] ?? 7;
+		$new_disable_site_after_n_days = $value_arr['power_partner_disable_site_after_n_days'] ?? 7;
 
 		if ($old_disable_site_after_n_days === $new_disable_site_after_n_days) {
 			return;
@@ -66,8 +68,10 @@ final class WatchSettingHooks {
 			);
 
 			foreach ($action_ids as $action_id) {
-				$action          = $store->fetch_action($action_id);
-				$subscription_id = $action->get_args()[0]['subscription_id'] ?? null;
+				$action     = $store->fetch_action($action_id);
+				$action_args = $action->get_args();
+				$first_arg       = isset($action_args[0]) && is_array($action_args[0]) ? $action_args[0] : [];
+				$subscription_id = $first_arg['subscription_id'] ?? null;
 				if (!$subscription_id) {
 					continue;
 				}
@@ -123,19 +127,24 @@ final class WatchSettingHooks {
 			Action::WATCH_END->value,
 		];
 
-		return in_array($email['action_name'], $actions, true);
+		$action_name = $email['action_name'] ?? '';
+		return in_array($action_name, $actions, true);
 	}
 
 	/**
 	 * 格式化 emails
 	 *
 	 * @param array<string, mixed> $value 設定值
-	 * @return array<string, mixed>
+	 * @return list<array<string, mixed>>
 	 */
 	private function format_emails( array $value ): array {
-		$emails           = $value['emails'] ?? [];
+		$emails           = isset($value['emails']) && is_array($value['emails']) ? $value['emails'] : [];
 		$formatted_emails = [];
 		foreach ($emails as $email) {
+			if (!is_array($email)) {
+				continue;
+			}
+			/** @var array<string, mixed> $email */
 			if (!$this->is_in_schedule_actions($email)) {
 				continue;
 			}
@@ -209,7 +218,7 @@ final class WatchSettingHooks {
 
 		} catch (\Throwable $th) {
 			$wpdb->query('ROLLBACK');
-			Plugin::logger('ROLLBACK 重新排程 EMAILS 失敗: ', $th->getMessage(), 'critical', [], 5);
+			Plugin::logger('ROLLBACK 重新排程 EMAILS 失敗: ' . $th->getMessage(), 'critical', [], 5);
 		}
 	}
 
@@ -217,12 +226,14 @@ final class WatchSettingHooks {
 	/**
 	 * 重新排程其他 Email
 	 *
-	 * @param array<string, mixed> $old_value 舊的設定值
-	 * @param array<string, mixed> $value 新的設定值
-	 * @param string               $option 設定選項
+	 * @param mixed  $old_value 舊的設定值
+	 * @param mixed  $value 新的設定值
+	 * @param string $option 設定選項
 	 * @return void
 	 */
-	public function reschedule_emails( $old_value, $value, $option ) {
+	public function reschedule_emails( $old_value, $value, $option ): void {
+		$old_value = is_array($old_value) ? $old_value : [];
+		$value     = is_array($value) ? $value : [];
 		if (!$this->is_changed($old_value, $value)) {
 			return;
 		}
