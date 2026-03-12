@@ -1,0 +1,9 @@
+[ACTIVITY] 授權碼管理流程
+[ACTOR] Admin -> {specs/actors/Admin.md}
+[ACTOR] WooCommerce -> {specs/actors/WooCommerce.md}
+[ACTOR] CloudServer -> {specs/actors/CloudServer.md}
+
+[STEP:1] @WooCommerce 訂閱首次付款成功建立授權碼 {features/license-code/首次付款建立授權碼.feature}
+[STEP:2] @Admin 更新授權碼 {features/license-code/更新授權碼.feature}
+[STEP:3] @Admin 刪除授權碼 {features/license-code/刪除授權碼.feature}
+[STEP:4] @Admin 查詢訂閱下次付款日 {features/license-code/查詢訂閱下次付款日.feature}

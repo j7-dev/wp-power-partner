@@ -1,0 +1,11 @@
+[ACTIVITY] 合作夥伴管理流程
+[ACTOR] Admin -> {specs/actors/Admin.md}
+
+[STEP:1] @Admin 設定合作夥伴連結 {features/partner/設定合作夥伴連結.feature}
+[STEP:2] @Admin 查詢合作夥伴 ID {features/partner/查詢合作夥伴ID.feature}
+[STEP:3] @Admin 查詢帳號資訊 {features/partner/查詢帳號資訊.feature}
+[STEP:4] @Admin 刪除合作夥伴連結 {features/partner/刪除合作夥伴連結.feature}
+[STEP:5] @Admin 儲存 PowerCloud 金鑰 {features/settings/儲存PowerCloud金鑰.feature}
+[STEP:6] @Admin 儲存設定 {features/settings/儲存設定.feature}
+[STEP:7] @Admin 查詢 Email 模板 {features/email/查詢Email模板.feature}
+[STEP:8] @Admin 清除模板站快取 {features/cache/清除模板站快取.feature}

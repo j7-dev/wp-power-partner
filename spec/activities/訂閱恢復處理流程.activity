@@ -1,0 +1,20 @@
+[ACTIVITY] 訂閱恢復處理流程
+[ACTOR] WooCommerce -> {specs/actors/WooCommerce.md}
+[ACTOR] ActionScheduler -> {specs/actors/ActionScheduler.md}
+[ACTOR] CloudServer -> {specs/actors/CloudServer.md}
+[ACTOR] PowerCloud -> {specs/actors/PowerCloud.md}
+
+[STEP:1] @WooCommerce 偵測訂閱狀態從失敗狀態變回 active {features/subscription/訂閱恢復取消關站並重啟.feature}
+
+[FORK:1a]
+  [PARALLEL:1a] @ActionScheduler 取消關站排程並重新啟用網站 {features/subscription/訂閱恢復取消關站並重啟.feature}
+  [PARALLEL:1a] @ActionScheduler 取消 LC 過期排程並重新啟用授權碼 {features/license-code/訂閱恢復重啟授權碼.feature}
+  [PARALLEL:1a] @WooCommerce 取消訂閱失敗 Email 排程 {features/email/排程訂閱生命週期Email.feature}
+[JOIN:1a]
+
+[DECISION:1b] 網站的 host_type
+  [BRANCH:1b:host_type 為 wpcd] @WooCommerce 呼叫 CloudServer 啟用網站 {features/site/WPCD啟用網站.feature}
+  [BRANCH:1b:host_type 為 powercloud] @WooCommerce 呼叫 PowerCloud 啟動網站 {features/site/PowerCloud啟用網站.feature}
+[MERGE:1b]
+
+[STEP:2] @WooCommerce 呼叫 CloudServer 重啟授權碼 {features/license-code/訂閱恢復重啟授權碼.feature}

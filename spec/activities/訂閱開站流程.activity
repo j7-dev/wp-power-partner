@@ -1,0 +1,22 @@
+[ACTIVITY] 訂閱開站流程
+[ACTOR] Customer -> {specs/actors/Customer.md}
+[ACTOR] WooCommerce -> {specs/actors/WooCommerce.md}
+[ACTOR] CloudServer -> {specs/actors/CloudServer.md}
+[ACTOR] PowerCloud -> {specs/actors/PowerCloud.md}
+[ACTOR] ActionScheduler -> {specs/actors/ActionScheduler.md}
+
+[STEP:1] @Customer 購買訂閱商品並完成首次付款 {features/subscription/訂閱首次付款自動開站.feature}
+[DECISION:1a] 商品的 host_type 設定
+  [BRANCH:1a:host_type 為 wpcd] @WooCommerce 透過 WPCD 舊架構開站 {features/site/WPCD開站.feature}
+  [BRANCH:1a:host_type 為 powercloud] @WooCommerce 透過 PowerCloud 新架構開站 {features/site/PowerCloud開站.feature}
+[MERGE:1a]
+
+[STEP:2] @WooCommerce 標記訂閱為開站訂閱並儲存開站結果 {features/subscription/訂閱首次付款自動開站.feature}
+
+[DECISION:2a] 開站結果
+  [BRANCH:2a:開站成功且為 WPCD] @CloudServer 開站完成後回調通知 {features/site/WPCD開站回調通知客戶.feature}
+  [BRANCH:2a:開站成功且為 PowerCloud] @ActionScheduler 排程 4 分鐘後寄送帳密 Email {features/email/發送站點帳密郵件.feature}
+  [BRANCH:2a:開站失敗] @WooCommerce 記錄失敗訊息於訂單備註 {features/subscription/訂閱首次付款自動開站.feature}
+[MERGE:2a]
+
+[STEP:3] @WooCommerce 排程訂閱生命週期 Email {features/email/排程訂閱生命週期Email.feature}

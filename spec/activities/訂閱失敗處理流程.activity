@@ -1,0 +1,20 @@
+[ACTIVITY] 訂閱失敗處理流程
+[ACTOR] WooCommerce -> {specs/actors/WooCommerce.md}
+[ACTOR] ActionScheduler -> {specs/actors/ActionScheduler.md}
+[ACTOR] CloudServer -> {specs/actors/CloudServer.md}
+[ACTOR] PowerCloud -> {specs/actors/PowerCloud.md}
+
+[STEP:1] @WooCommerce 偵測訂閱狀態從 active 變為失敗狀態 {features/subscription/訂閱失敗排程關站.feature}
+
+[FORK:1a]
+  [PARALLEL:1a] @ActionScheduler 排程 N 天後停用網站 {features/subscription/訂閱失敗排程關站.feature}
+  [PARALLEL:1a] @ActionScheduler 排程 4 小時後停用授權碼 {features/license-code/訂閱失敗排程停用授權碼.feature}
+  [PARALLEL:1a] @WooCommerce 排程訂閱失敗 Email {features/email/排程訂閱生命週期Email.feature}
+[JOIN:1a]
+
+[DECISION:1b] 關站排程到期後的 host_type
+  [BRANCH:1b:host_type 為 wpcd] @ActionScheduler 呼叫 CloudServer 停用網站 {features/site/WPCD停用網站.feature}
+  [BRANCH:1b:host_type 為 powercloud] @ActionScheduler 呼叫 PowerCloud 停止網站 {features/site/PowerCloud停用網站.feature}
+[MERGE:1b]
+
+[STEP:2] @ActionScheduler LC 過期排程到期後呼叫 CloudServer 停用授權碼 {features/license-code/訂閱失敗排程停用授權碼.feature}

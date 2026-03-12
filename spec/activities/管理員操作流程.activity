@@ -1,0 +1,11 @@
+[ACTIVITY] 管理員操作流程
+[ACTOR] Admin -> {specs/actors/Admin.md}
+
+[STEP:1] @Admin 搜尋客戶 {features/user/搜尋客戶.feature}
+[STEP:2] @Admin 查詢客戶資訊 {features/user/查詢客戶資訊.feature}
+[STEP:3] @Admin 查詢用戶訂閱列表 {features/user/查詢用戶訂閱列表.feature}
+[STEP:4] @Admin 查詢網站對應訂閱 {features/subscription/查詢網站對應訂閱.feature}
+[STEP:5] @Admin 變更訂閱綁定 {features/subscription/變更訂閱綁定.feature}
+[STEP:6] @Admin 手動開站 {features/site/手動開站.feature}
+[STEP:7] @Admin 發送站點帳密郵件 {features/email/發送站點帳密郵件.feature}
+[STEP:8] @Admin WPCD 綁定網站到訂閱 {features/site/WPCD綁定網站到訂閱.feature}
