@@ -8,7 +8,8 @@ use J7\PowerPartner\Bootstrap;
 use J7\PowerPartner\Plugin;
 
 /** Class FetchPowerCloud */
-abstract class FetchPowerCloud {
+abstract class FetchPowerCloud
+{
 
 
 	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = 'power_partner_allowed_template_options_powercloud';
@@ -39,11 +40,13 @@ abstract class FetchPowerCloud {
 	 *
 	 * @throws \Exception 當 API 請求失敗時拋出異常
 	 */
-	public static function site_sync( array $props, string $open_site_plan_id, string $template_site_id ): array {
+	public static function site_sync(array $props, string $open_site_plan_id, string $template_site_id): array
+	{
 		/** @var array{id: int, first_name: string, last_name: string, username: string, email: string, phone: string} $customer */
 		$customer           = $props['customer'];
 		$current_user_id    = $customer['id'];
-		$powercloud_api_key = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . (string) $current_user_id);
+
+		$powercloud_api_key = self::get_powercloud_api_key((string) $current_user_id);
 
 		if (empty($powercloud_api_key)) {
 			throw new \Exception('PowerCloud API Key 不存在，請先登入 PowerCloud');
@@ -51,7 +54,7 @@ abstract class FetchPowerCloud {
 
 		$template_sites    = \get_transient(self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY);
 		$template_sites    = is_array($template_sites) ? $template_sites : [];
-		$template_site_url = $template_sites[ $template_site_id ] ?? '';
+		$template_site_url = $template_sites[$template_site_id] ?? '';
 
 		/** @var array{id: int, first_name: string, last_name: string, username: string, email: string, phone: string} $customer */
 		$customer = $props['customer'];
@@ -91,7 +94,7 @@ abstract class FetchPowerCloud {
 		];
 
 		$body = \wp_json_encode($request_body);
-		if ( false === $body ) {
+		if (false === $body) {
 			throw new \Exception('site_sync PowerCloud: wp_json_encode failed');
 		}
 
@@ -130,7 +133,7 @@ abstract class FetchPowerCloud {
 
 		\do_action('pp_after_site_sync_powercloud', $response_obj, $props);
 
-		return [ $response_obj, $wordpress_obj ];
+		return [$response_obj, $wordpress_obj];
 	}
 
 
@@ -141,7 +144,8 @@ abstract class FetchPowerCloud {
 	 * @param string $website_id      網站 ID
 	 * @return void
 	 */
-	public static function disable_site( string $current_user_id, string $website_id ): void {
+	public static function disable_site(string $current_user_id, string $website_id): void
+	{
 		$powercloud_api_key = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
 
 		$args = [
@@ -185,7 +189,8 @@ abstract class FetchPowerCloud {
 	 * @param string $website_id      網站 ID
 	 * @return void
 	 */
-	public static function enable_site( string $current_user_id, string $website_id ): void {
+	public static function enable_site(string $current_user_id, string $website_id): void
+	{
 		$powercloud_api_key = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
 
 		$args = [
@@ -228,7 +233,8 @@ abstract class FetchPowerCloud {
 	 *
 	 * @return array<string, string>
 	 */
-	public static function get_allowed_template_options(): array {
+	public static function get_allowed_template_options(): array
+	{
 
 		$allowed_template_options = \get_transient(self::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY);
 		$allowed_template_options = is_array($allowed_template_options) ? $allowed_template_options : [];
@@ -248,7 +254,8 @@ abstract class FetchPowerCloud {
 	 *
 	 * @return array<string, string>
 	 */
-	public static function fetch_template_sites_by_user(): array {
+	public static function fetch_template_sites_by_user(): array
+	{
 		$_allowed_template_options = [];
 		$current_user_id           = \get_current_user_id();
 		$powercloud_api_key        = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
@@ -273,7 +280,7 @@ abstract class FetchPowerCloud {
 
 		foreach ($template_sites as $template_site) {
 			if (is_array($template_site) && isset($template_site['domain']) && isset($template_site['id'])) {
-				$_allowed_template_options[ (string) $template_site['id'] ] = (string) $template_site['domain'];
+				$_allowed_template_options[(string) $template_site['id']] = (string) $template_site['domain'];
 			}
 		}
 
@@ -286,7 +293,8 @@ abstract class FetchPowerCloud {
 	 *
 	 * @return array<string, string>
 	 */
-	public static function get_open_site_plan_options(): array {
+	public static function get_open_site_plan_options(): array
+	{
 		$open_site_plan_options = \get_transient(self::OPEN_SITE_PLAN_OPTIONS_TRANSIENT_KEY);
 		$open_site_plan_options = is_array($open_site_plan_options) ? $open_site_plan_options : [];
 
@@ -305,7 +313,8 @@ abstract class FetchPowerCloud {
 	 *
 	 * @return array<string, string>
 	 */
-	public static function fetch_open_site_plan_options_by_user(): array {
+	public static function fetch_open_site_plan_options_by_user(): array
+	{
 		$_open_site_plan_options = [];
 		$current_user_id         = \get_current_user_id();
 		$powercloud_api_key      = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
@@ -335,7 +344,7 @@ abstract class FetchPowerCloud {
 		foreach ($website_packages as $package) {
 			if (is_array($package) && isset($package['id']) && isset($package['name'])) {
 				$price = $package['price'] ?? '';
-				$_open_site_plan_options[ (string) $package['id'] ] = (string) $package['name'] . '-' . (string) $price;
+				$_open_site_plan_options[(string) $package['id']] = (string) $package['name'] . '-' . (string) $price;
 			}
 		}
 
@@ -348,7 +357,8 @@ abstract class FetchPowerCloud {
 	 *
 	 * @return string
 	 */
-	private static function generate_namespace(): string {
+	private static function generate_namespace(): string
+	{
 		$random_adjs = [
 			'bright',
 			'curious',
@@ -408,6 +418,23 @@ abstract class FetchPowerCloud {
 		$random_adj_index    = \array_rand($random_adjs);
 		$random_animal_index = \array_rand($random_animals);
 
-		return $random_adjs[ $random_adj_index ] . '-' . $random_animals[ $random_animal_index ];
+		return $random_adjs[$random_adj_index] . '-' . $random_animals[$random_animal_index];
+	}
+
+	/**
+	 * 取得 PowerCloud API Key
+	 *
+	 * @param string $user_id 用戶 ID
+	 * @return string|null API Key 或 null 如果不存在
+	 */
+	private static function get_powercloud_api_key(string $user_id): ?string
+	{
+		/** @var string|false $legacy 就版本的 key */
+		$legacy = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $user_id);
+		$key = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY);
+		if ($key) {
+			return (string) $key;
+		}
+		return is_string($legacy) ? $legacy : null;
 	}
 }

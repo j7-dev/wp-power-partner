@@ -15,17 +15,18 @@ use J7\WpUtils\Classes\WP;
 /**
  * Class Api
  */
-final class Main {
+final class Main
+{
 	use \J7\WpUtils\Traits\SingletonTrait;
 
 	const POWERCLOUD_API_KEY_TRANSIENT_KEY = 'power_partner_powercloud_api_key';
-	const POWERCLOUD_API_KEY_CACHE_TIME    = 30 * 24 * HOUR_IN_SECONDS; // 30 天
 
 	/**
 	 * Constructor.
 	 */
-	public function __construct() {
-		\add_action( 'rest_api_init', [ $this, 'register_apis' ] );
+	public function __construct()
+	{
+		\add_action('rest_api_init', [$this, 'register_apis']);
 	}
 
 	/**
@@ -33,14 +34,15 @@ final class Main {
 	 *
 	 * @return void
 	 */
-	public function register_apis(): void {
+	public function register_apis(): void
+	{
 		\register_rest_route(
 			Plugin::$kebab,
 			'customer-notification',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'post_customer_notification_callback' ],
-				'permission_callback' => [ $this, 'check_ip_permission' ],
+				'callback'            => [$this, 'post_customer_notification_callback'],
+				'permission_callback' => [$this, 'check_ip_permission'],
 			]
 		);
 
@@ -49,8 +51,8 @@ final class Main {
 			'link-site',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'post_link_site_callback' ],
-				'permission_callback' => [ $this, 'check_ip_permission' ],
+				'callback'            => [$this, 'post_link_site_callback'],
+				'permission_callback' => [$this, 'check_ip_permission'],
 			]
 		);
 
@@ -59,9 +61,9 @@ final class Main {
 			'manual-site-sync',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'manual_site_sync_callback' ],
+				'callback'            => [$this, 'manual_site_sync_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -71,9 +73,9 @@ final class Main {
 			'clear-template-sites-cache',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'clear_template_sites_cache_callback' ],
+				'callback'            => [$this, 'clear_template_sites_cache_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -83,9 +85,9 @@ final class Main {
 			'send-site-credentials-email',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'send_site_credentials_email_callback' ],
+				'callback'            => [$this, 'send_site_credentials_email_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -95,9 +97,9 @@ final class Main {
 			'emails',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'post_emails_callback' ],
+				'callback'            => [$this, 'post_emails_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -107,9 +109,9 @@ final class Main {
 			'emails',
 			[
 				'methods'             => 'GET',
-				'callback'            => [ $this, 'get_emails_callback' ],
+				'callback'            => [$this, 'get_emails_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -119,9 +121,9 @@ final class Main {
 			'subscriptions',
 			[
 				'methods'             => 'GET',
-				'callback'            => [ $this, 'get_subscriptions_callback' ],
+				'callback'            => [$this, 'get_subscriptions_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -131,9 +133,9 @@ final class Main {
 			'change-subscription',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'post_change_subscription_callback' ],
+				'callback'            => [$this, 'post_change_subscription_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -143,7 +145,7 @@ final class Main {
 			'apps',
 			[
 				'methods'             => 'GET',
-				'callback'            => [ $this, 'get_apps_callback' ],
+				'callback'            => [$this, 'get_apps_callback'],
 				'permission_callback' => '__return_true',
 			]
 		);
@@ -153,9 +155,9 @@ final class Main {
 			'settings',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'post_settings_callback' ],
+				'callback'            => [$this, 'post_settings_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -165,9 +167,9 @@ final class Main {
 			'powercloud-api-key',
 			[
 				'methods'             => 'POST',
-				'callback'            => [ $this, 'post_powercloud_api_key_callback' ],
+				'callback'            => [$this, 'post_powercloud_api_key_callback'],
 				'permission_callback' => function () {
-					return \current_user_can( 'manage_options' );
+					return \current_user_can('manage_options');
 				},
 			]
 		);
@@ -180,12 +182,13 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function post_customer_notification_callback( $request ) {
+	public function post_customer_notification_callback($request)
+	{
 		try {
 			$body_params = $request->get_json_params();
 			$customer_id = $body_params['CUSTOMER_ID'] ?? '0';
-			$customer    = \get_user_by( 'id', $customer_id );
-			if ( ! $customer || empty( $customer_id ) ) {
+			$customer    = \get_user_by('id', $customer_id);
+			if (! $customer || empty($customer_id)) {
 				return \rest_ensure_response(
 					[
 						'status'  => 500,
@@ -194,13 +197,13 @@ final class Main {
 				);
 			}
 			$order_id       = $body_params['REF_ORDER_ID'] ?? '0';
-			$order          = \wc_get_order( $order_id );
+			$order          = \wc_get_order($order_id);
 			$customer_email = $customer->user_email;
 
-			if ( $order instanceof \WC_Order ) {
+			if ($order instanceof \WC_Order) {
 				$customer_email = $order->get_billing_email();
-				$subscriptions  = \wcs_get_subscriptions_for_order( $order->get_id() );
-				$subscription   = \reset( $subscriptions ); // 取得第一個訂閱
+				$subscriptions  = \wcs_get_subscriptions_for_order($order->get_id());
+				$subscription   = \reset($subscriptions); // 取得第一個訂閱
 
 				$new_site_id = $body_params['NEW_SITE_ID'] ?? null;
 				if ($subscription && $new_site_id) {
@@ -226,7 +229,7 @@ final class Main {
 			$tokens['SITEUSERNAME']                   = $body_params['SITEUSERNAME'];
 			$tokens['SITEPASSWORD']                   = $body_params['SITEPASSWORD'];
 
-			[$success_emails, $failed_emails] = EmailService::send_mail( $customer_email, $tokens );
+			[$success_emails, $failed_emails] = EmailService::send_mail($customer_email, $tokens);
 
 			return \rest_ensure_response(
 				[
@@ -239,7 +242,7 @@ final class Main {
 					],
 				]
 			);
-		} catch ( \Throwable $th ) {
+		} catch (\Throwable $th) {
 			return \rest_ensure_response(
 				[
 					'status'  => 500,
@@ -255,7 +258,8 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function post_link_site_callback( $request ) {
+	public function post_link_site_callback($request)
+	{
 		/**
 		 * Body params
 		 *
@@ -265,16 +269,16 @@ final class Main {
 		$body_params     = $request->get_json_params();
 		$subscription_id = $body_params['subscription_id'] ?? '';
 		$site_id         = $body_params['site_id'] ?? '';
-		$linked_site_ids = ShopSubscription::get_linked_site_ids( $subscription_id );
-		array_push( $linked_site_ids, $site_id );
-		$update_success = ShopSubscription::update_linked_site_ids( $subscription_id, $linked_site_ids );
+		$linked_site_ids = ShopSubscription::get_linked_site_ids($subscription_id);
+		array_push($linked_site_ids, $site_id);
+		$update_success = ShopSubscription::update_linked_site_ids($subscription_id, $linked_site_ids);
 
-		if ( $update_success ) {
+		if ($update_success) {
 			return new \WP_REST_Response(
 				[
 					'status'  => 200,
 					'message' => 'post link site success',
-					'data'    => 'subscription id: ' . $subscription_id . ' linked site ids: ' . \implode( ',', $linked_site_ids ),
+					'data'    => 'subscription id: ' . $subscription_id . ' linked site ids: ' . \implode(',', $linked_site_ids),
 				],
 				200
 			);
@@ -283,7 +287,7 @@ final class Main {
 				[
 					'status'  => 500,
 					'message' => 'post link site fail',
-					'data'    => 'subscription id: ' . $subscription_id . ' linked site ids: ' . \implode( ',', $linked_site_ids ),
+					'data'    => 'subscription id: ' . $subscription_id . ' linked site ids: ' . \implode(',', $linked_site_ids),
 				],
 				500
 			);
@@ -297,50 +301,51 @@ final class Main {
 	 * @return \WP_REST_Response
 	 * @phpstan-ignore-next-line
 	 */
-	public function get_subscriptions_callback( $request ): \WP_REST_Response {
+	public function get_subscriptions_callback($request): \WP_REST_Response
+	{
 		$params = $request->get_query_params();
 
 		try {
-			WP::include_required_params( $params, [ 'user_id' ] );
+			WP::include_required_params($params, ['user_id']);
 			$user_id = $params['user_id'] ?? 0;
 
 			$subscriptions = \get_posts(
-			[
-				'numberposts' => -1,
-				'post_type'   => 'shop_subscription',
-				'post_status' => [ 'wc-on-hold', 'wc-active', 'wc-pending', 'wc-expired', 'wc-pending-cancel' ], // wc-on-hold wc-active
-				'meta_key'    => '_customer_user',
-				'meta_value'  => $user_id,
-			]
+				[
+					'numberposts' => -1,
+					'post_type'   => 'shop_subscription',
+					'post_status' => ['wc-on-hold', 'wc-active', 'wc-pending', 'wc-expired', 'wc-pending-cancel'], // wc-on-hold wc-active
+					'meta_key'    => '_customer_user',
+					'meta_value'  => $user_id,
+				]
 			);
 
 			$formatted_subscriptions = array_map(
-			function ( $subscription ) {
-				return [
-					'id'              => (string) $subscription->ID,
-					'status'          => $subscription->post_status,
-					'post_title'      => $subscription->post_title,
-					'post_date'       => $subscription->post_date,
-					'linked_site_ids' => array_values( ShopSubscription::get_linked_site_ids( $subscription->ID ) ),
-				];
-			},
-			$subscriptions
+				function ($subscription) {
+					return [
+						'id'              => (string) $subscription->ID,
+						'status'          => $subscription->post_status,
+						'post_title'      => $subscription->post_title,
+						'post_date'       => $subscription->post_date,
+						'linked_site_ids' => array_values(ShopSubscription::get_linked_site_ids($subscription->ID)),
+					];
+				},
+				$subscriptions
 			);
 
-			$response = new \WP_REST_Response( $formatted_subscriptions );
+			$response = new \WP_REST_Response($formatted_subscriptions);
 
 			// set pagination in header
-			$response->header( 'X-WP-Total', (string) count( $formatted_subscriptions ) );
-			$response->header( 'X-WP-TotalPages', '1' );
+			$response->header('X-WP-Total', (string) count($formatted_subscriptions));
+			$response->header('X-WP-TotalPages', '1');
 
 			return $response;
 		} catch (\Throwable $th) {
 			return new \WP_REST_Response(
-			[
-				'code'    => 'get_subscriptions_fail',
-				'message' => $th->getMessage(),
-			],
-			500
+				[
+					'code'    => 'get_subscriptions_fail',
+					'message' => $th->getMessage(),
+				],
+				500
 			);
 		}
 	}
@@ -352,14 +357,15 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function post_change_subscription_callback( $request ) {
+	public function post_change_subscription_callback($request)
+	{
 		try {
 			$body_params     = $request->get_json_params();
 			$subscription_id = $body_params['subscription_id'] ?? '';
 			$site_id         = $body_params['site_id'] ?? '';
 			$linked_site_ids = $body_params['linked_site_ids'] ?? [];
-			$subscription    = \wcs_get_subscription( $subscription_id );
-			if ( ! $subscription || empty( $subscription_id || empty( $site_id ) ) ) {
+			$subscription    = \wcs_get_subscription($subscription_id);
+			if (! $subscription || empty($subscription_id || empty($site_id))) {
 				return \rest_ensure_response(
 					[
 						'status'  => 500,
@@ -369,7 +375,7 @@ final class Main {
 			}
 
 			$parent_order = $subscription->get_parent();
-			if ( ! $parent_order ) {
+			if (! $parent_order) {
 				return \rest_ensure_response(
 					[
 						'status'  => 500,
@@ -378,7 +384,7 @@ final class Main {
 				);
 			}
 
-			if ( ! is_array( $linked_site_ids ) ) {
+			if (! is_array($linked_site_ids)) {
 				return \rest_ensure_response(
 					[
 						'status'  => 500,
@@ -387,13 +393,13 @@ final class Main {
 				);
 			}
 
-			$is_success = ShopSubscription::change_linked_site_ids( $subscription_id, $linked_site_ids );
+			$is_success = ShopSubscription::change_linked_site_ids($subscription_id, $linked_site_ids);
 
-			if ( $is_success ) {
+			if ($is_success) {
 				return \rest_ensure_response(
 					[
 						'status'  => 200,
-						'message' => 'post change subscription success, subscription id: ' . $subscription_id . ' linked site ids: ' . \implode( ',', $linked_site_ids ),
+						'message' => 'post change subscription success, subscription id: ' . $subscription_id . ' linked site ids: ' . \implode(',', $linked_site_ids),
 					]
 				);
 			} else {
@@ -404,7 +410,7 @@ final class Main {
 					]
 				);
 			}
-		} catch ( \Throwable $th ) {
+		} catch (\Throwable $th) {
 
 			return \rest_ensure_response(
 				[
@@ -421,13 +427,14 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function get_apps_callback( $request ): \WP_REST_Response {
+	public function get_apps_callback($request): \WP_REST_Response
+	{
 		$params  = $request->get_query_params();
 		$app_ids = $params['app_ids'] ?? [];
 
 		$apps = [];
 
-		foreach ( $app_ids as $app_id ) {
+		foreach ($app_ids as $app_id) {
 			$args = [
 				'post_type'      => ShopSubscription::POST_TYPE,
 				'posts_per_page' => -1,
@@ -437,7 +444,7 @@ final class Main {
 				'meta_value'     => $app_id,
 			];
 
-			$subscription_ids = \get_posts( $args );
+			$subscription_ids = \get_posts($args);
 
 			$apps[] = [
 				'app_id'           => (string) $app_id,
@@ -457,8 +464,9 @@ final class Main {
 	 *
 	 * @return \WP_REST_Response
 	 */
-	public function get_emails_callback(): \WP_REST_Response {
-		$power_partner_settings = \get_option( 'power_partner_settings', [] );
+	public function get_emails_callback(): \WP_REST_Response
+	{
+		$power_partner_settings = \get_option('power_partner_settings', []);
 		$power_partner_settings = is_array($power_partner_settings) ? $power_partner_settings : [];
 		$emails                 = $power_partner_settings['emails'] ?? [];
 
@@ -476,15 +484,16 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function post_emails_callback( $request ): \WP_REST_Response {
+	public function post_emails_callback($request): \WP_REST_Response
+	{
 		$body_params = $request->get_json_params();
 		$emails      = $body_params['emails'] ?? null;
 
-		$power_partner_settings = \get_option( 'power_partner_settings', [] );
+		$power_partner_settings = \get_option('power_partner_settings', []);
 		$power_partner_settings = is_array($power_partner_settings) ? $power_partner_settings : [];
-		if ( is_array( $emails ) ) {
+		if (is_array($emails)) {
 			$power_partner_settings['emails'] = $emails;
-			\update_option( 'power_partner_settings', $power_partner_settings);
+			\update_option('power_partner_settings', $power_partner_settings);
 			return new \WP_REST_Response(
 				[
 					'status'  => 200,
@@ -511,16 +520,17 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function send_site_credentials_email_callback( $request ): \WP_REST_Response {
+	public function send_site_credentials_email_callback($request): \WP_REST_Response
+	{
 
 		try {
 			$body_params = $request->get_json_params();
 
 			// 獲取當前用戶
 			$current_user_id = \get_current_user_id();
-			$current_user    = \get_user_by( 'id', $current_user_id );
+			$current_user    = \get_user_by('id', $current_user_id);
 
-			if ( ! $current_user ) {
+			if (! $current_user) {
 				return new \WP_REST_Response(
 					[
 						'status'  => 500,
@@ -539,7 +549,7 @@ final class Main {
 			$password    = $body_params['password'] ?? '';
 			$ip          = $body_params['ip'] ?? '';
 
-			if ( empty( $domain ) || empty( $password ) ) {
+			if (empty($domain) || empty($password)) {
 				return new \WP_REST_Response(
 					[
 						'status'  => 400,
@@ -564,9 +574,9 @@ final class Main {
 
 			// 取得 site_sync 的 email 模板
 			$email_service = EmailService::instance();
-			$emails        = $email_service->get_emails( 'site_sync' );
+			$emails        = $email_service->get_emails('site_sync');
 
-			if ( empty( $emails ) ) {
+			if (empty($emails)) {
 				return new \WP_REST_Response(
 					[
 						'status'  => 404,
@@ -579,29 +589,29 @@ final class Main {
 			$success_emails = [];
 			$failed_emails  = [];
 
-			foreach ( $emails as $email ) {
+			foreach ($emails as $email) {
 				// 取得 subject
 				$subject = $email->subject;
-				$subject = empty( $subject ) ? $email_service->default->subject : $subject;
+				$subject = empty($subject) ? $email_service->default->subject : $subject;
 
 				// 取得 message
 				$body = $email->body;
-				$body = empty( $body ) ? $email_service->default->body : $body;
+				$body = empty($body) ? $email_service->default->body : $body;
 
 				// Replace tokens in email
-				$subject = Token::replace( $subject, $tokens );
-				$body    = Token::replace( $body, $tokens );
+				$subject = Token::replace($subject, $tokens);
+				$body    = Token::replace($body, $tokens);
 
-				$email_headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+				$email_headers = ['Content-Type: text/html; charset=UTF-8'];
 
 				$result = \wp_mail(
 					$admin_email,
 					$subject,
-					\wpautop( $body ),
+					\wpautop($body),
 					$email_headers
 				);
 
-				if ( $result ) {
+				if ($result) {
 					$success_emails[] = $email->action_name;
 				} else {
 					$failed_emails[] = $email->action_name;
@@ -620,7 +630,7 @@ final class Main {
 				],
 				200
 			);
-		} catch ( \Throwable $th ) {
+		} catch (\Throwable $th) {
 			return new \WP_REST_Response(
 				[
 					'status'  => 500,
@@ -637,11 +647,12 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function post_settings_callback( $request ): \WP_REST_Response {
+	public function post_settings_callback($request): \WP_REST_Response
+	{
 		$body_params = $request->get_json_params();
-		$body_params = WP::sanitize_text_field_deep( $body_params, true, [ 'emails' ] );
+		$body_params = WP::sanitize_text_field_deep($body_params, true, ['emails']);
 
-		\update_option( 'power_partner_settings', $body_params );
+		\update_option('power_partner_settings', $body_params);
 
 		return new \WP_REST_Response(
 			[
@@ -660,50 +671,50 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function manual_site_sync_callback( $request ) {
+	public function manual_site_sync_callback($request)
+	{
 		try {
 
 			$body_params   = $request->get_json_params();
-			$site_id       = (string) ( $body_params['site_id'] ?? '' );
-			$host_position = (string) ( $body_params['host_position'] ?? '' );
-			$partner_id    = (string) \get_option( Plugin::$snake . '_partner_id', '0' );
+			$site_id       = (string) ($body_params['site_id'] ?? '');
+			$host_position = (string) ($body_params['host_position'] ?? '');
+			$partner_id    = (string) \get_option(Plugin::$snake . '_partner_id', '0');
 			$customer_id   = \get_current_user_id();
-			$customer      = \get_user_by( 'id', $customer_id );
+			$customer      = \get_user_by('id', $customer_id);
 
 			$response_obj = Fetch::site_sync(
-			[
-				'site_url'      => \site_url(),
-				'site_id'       => $site_id,
-				'host_position' => $host_position,
-				'partner_id'    => $partner_id,
-				'customer'      => [
-					'id'         => $customer_id,
-					'first_name' => $customer ? $customer->first_name : 'admin',
-					'last_name'  => $customer ? $customer->last_name : '',
-					'username'   => $customer ? $customer->user_login : 'admin',
-					'email'      => $customer ? $customer->user_email : '',
-					'phone'      => $customer ? (string) \get_user_meta( $customer_id, 'billing_phone', true ) : '',
-				],
-			]
+				[
+					'site_url'      => \site_url(),
+					'site_id'       => $site_id,
+					'host_position' => $host_position,
+					'partner_id'    => $partner_id,
+					'customer'      => [
+						'id'         => $customer_id,
+						'first_name' => $customer ? $customer->first_name : 'admin',
+						'last_name'  => $customer ? $customer->last_name : '',
+						'username'   => $customer ? $customer->user_login : 'admin',
+						'email'      => $customer ? $customer->user_email : '',
+						'phone'      => $customer ? (string) \get_user_meta($customer_id, 'billing_phone', true) : '',
+					],
+				]
 			);
 
 			return new \WP_REST_Response(
-			[
-				'status'  => $response_obj->status,
-				'message' => $response_obj->message,
-				'data'    => $response_obj->data,
-			],
-			200
+				[
+					'status'  => $response_obj->status,
+					'message' => $response_obj->message,
+					'data'    => $response_obj->data,
+				],
+				200
 			);
-
 		} catch (\Throwable $th) {
 			Plugin::logger(
-			"手動開站建立網站失敗: {$th->getMessage()}",
-			'error',
-			[
-				'params' => $request->get_params(),
-			],
-			5
+				"手動開站建立網站失敗: {$th->getMessage()}",
+				'error',
+				[
+					'params' => $request->get_params(),
+				],
+				5
 			);
 
 			return new \WP_REST_Response(
@@ -722,9 +733,10 @@ final class Main {
 	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function clear_template_sites_cache_callback( $request ) {
+	public function clear_template_sites_cache_callback($request)
+	{
 
-		\delete_transient( Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY );
+		\delete_transient(Fetch::ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY);
 
 		return new \WP_REST_Response(
 			[
@@ -740,36 +752,37 @@ final class Main {
 	 *
 	 * @return bool
 	 */
-	public function check_ip_permission(): bool {
+	public function check_ip_permission(): bool
+	{
 		if ('local' === \wp_get_environment_type() || 'staging' === \wp_get_environment_type()) {
 			return true;
 		}
 		// 103.153.176.121 = 黃亦主機對外  199.99.88.1 = 黃亦主機打黃亦主機
 		// 163.61.60.80 = 是方主機對外  是方主機打是方主機
-		$fixed_ips = [ '103.153.176.121', '199.99.88.1', '163.61.60.80' ];
+		$fixed_ips = ['103.153.176.121', '199.99.88.1', '163.61.60.80'];
 
-		 // phpcs:disable
+		// phpcs:disable
 		if (in_array($_SERVER['REMOTE_ADDR'], $fixed_ips, true)) {
 			return true;
 		}
 
-        // 內網
-        if($this->in_ip( '10.0.0.0', '10.255.255.255')){
-            return true;
-        }
+		// 內網
+		if ($this->in_ip('10.0.0.0', '10.255.255.255')) {
+			return true;
+		}
 
-        // 內網
-        if($this->in_ip( '172.16.0.0', '172.31.255.255')){
-            return true;
-        }
+		// 內網
+		if ($this->in_ip('172.16.0.0', '172.31.255.255')) {
+			return true;
+		}
 
-        // 內網
-        if($this->in_ip( '192.168.0.0', '192.168.255.255')){
-            return true;
-        }
+		// 內網
+		if ($this->in_ip('192.168.0.0', '192.168.255.255')) {
+			return true;
+		}
 
-        // 以前的版本
-        return $this->in_ip( '61.220.44.0', '61.220.44.10');
+		// 以前的版本
+		return $this->in_ip('61.220.44.0', '61.220.44.10');
 	}
 
 
@@ -781,15 +794,16 @@ final class Main {
 	 *
 	 * @return bool
 	 */
-	private function in_ip( string $from_ip, string $to_ip ): bool {
+	private function in_ip(string $from_ip, string $to_ip): bool
+	{
 		// phpcs:ignore
 		$request_ip_long = sprintf('%u', ip2long((string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0')));
 		// 將起始和結束 IP 轉換為長整型
-		$from_ip_long = sprintf( '%u', ip2long( $from_ip ) );
-		$to_ip_long   = sprintf( '%u', ip2long( $to_ip ) );
+		$from_ip_long = sprintf('%u', ip2long($from_ip));
+		$to_ip_long   = sprintf('%u', ip2long($to_ip));
 
 		// 檢查發起請求的 IP 是否在允許的範圍內
-		return ( $request_ip_long >= $from_ip_long && $request_ip_long <= $to_ip_long );
+		return ($request_ip_long >= $from_ip_long && $request_ip_long <= $to_ip_long);
 	}
 
 
@@ -800,11 +814,12 @@ final class Main {
 	 * @param \WP_REST_Request $request Request object.
 	 * @return \WP_REST_Response
 	 */
-	public function post_powercloud_api_key_callback( $request ): \WP_REST_Response {
+	public function post_powercloud_api_key_callback($request): \WP_REST_Response
+	{
 		$body_params = $request->get_json_params();
-		$api_key     = \sanitize_text_field( $body_params['api_key'] ?? '' );
+		$api_key     = \sanitize_text_field($body_params['api_key'] ?? '');
 
-		if ( empty( $api_key ) ) {
+		if (empty($api_key)) {
 			return new \WP_REST_Response(
 				[
 					'status'  => 400,
@@ -816,7 +831,7 @@ final class Main {
 
 		// Get current logged in user ID
 		$user_id = \get_current_user_id();
-		if ( ! $user_id ) {
+		if (! $user_id) {
 			return new \WP_REST_Response(
 				[
 					'status'  => 401,
@@ -828,7 +843,7 @@ final class Main {
 
 		// Use transient to save (save to MySQL wp_options table)
 		$transient_key = self::POWERCLOUD_API_KEY_TRANSIENT_KEY . "_{$user_id}";
-		\set_transient( $transient_key, $api_key, self::POWERCLOUD_API_KEY_CACHE_TIME );
+		\set_transient($transient_key, $api_key);
 
 		return new \WP_REST_Response(
 			[
