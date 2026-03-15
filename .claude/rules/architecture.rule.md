@@ -1,15 +1,10 @@
-# Power Partner — Architecture Guide
-#
-# This file belongs at: instructions/architecture.md
-# Run setup-docs.ps1 to create the instructions/ directory, then move this file there.
-
-# Power Partner — Architecture & Domain Model
-
-**Last Updated:** 2025-01-01
-
+---
+globs: "**/*.php"
 ---
 
-## High-Level Architecture
+# Power Partner — PHP 架構規則
+
+## 高層架構
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -40,7 +35,7 @@
 
 ---
 
-## Subscription Lifecycle & Hook Mapping
+## 訂閱生命週期 Hook 對應
 
 ```
 Customer buys subscription
@@ -53,8 +48,8 @@ Customer buys subscription
                                   │                 └── SubscriptionEmailHooks::schedule_site_sync_email()
                                   │
                                   └──── LC\LifeCycle::create_lcs()
-                                             └── Creates license codes via CloudApi
-                                             └── Sends license code email
+                                             └── CloudApi::remote_post('license-codes', ...)
+                                             └── send_email_to_subscriber()
 
          │
          │  (time passes...)
@@ -63,7 +58,7 @@ Customer buys subscription
                                    │         └── DisableSiteScheduler::schedule_single(now + N days)
                                    │
                                    └──── LC\LifeCycle::subscription_failed()
-                                             └── ExpireHandler::schedule_single(now + 4h)
+                                   │         └── ExpireHandler::schedule_single(now + 4h)
                                    │
                                    └──── SubscriptionEmailHooks (fires subscription_failed emails)
 
@@ -77,10 +72,12 @@ Customer buys subscription
          │
   SUBSCRIPTION_SUCCESS ───────────┬──── DisableHooks::cancel_disable_site_schedule()
                                    ├──── DisableHooks::restart_all_stopped_sites_scheduler()
-                                   │         └── Fetch::enable_site() or FetchPowerCloud::enable_site()
-                                   └──── LC\LifeCycle::subscription_success()
-                                             └── ExpireHandler::unschedule()
-                                             └── CloudApi: license-codes/recover
+                                   │         └── Fetch::enable_site() / FetchPowerCloud::enable_site()
+                                   ├──── LC\LifeCycle::subscription_success()
+                                   │         └── ExpireHandler::unschedule()
+                                   │         └── CloudApi: license-codes/recover
+                                   └──── SubscriptionEmailHooks::unschedule_email()
+                                             └── 取消 subscription_failed 的排程信件
 ```
 
 ---
@@ -88,135 +85,86 @@ Customer buys subscription
 ## Domain Modules
 
 ### `Domains\Email`
-Manages all outbound email scheduling and delivery.
+管理所有外發 Email 排程與發送。
 
-- **`Core\SubscriptionEmailHooks`** — Singleton. Wires every `Action` enum hook to schedule emails. Reads email templates from `power_partner_settings['emails']`.
-- **`DTOs\Email`** — Value object for an email template. Immutable after construction. Validates `action_name`, `operator`, `days`.
-- **`Models\SubscriptionEmail`** — Combines Email DTO + Subscription to compute the final send timestamp.
-- **`Services\SubscriptionEmailScheduler`** — Thin wrapper around ActionScheduler. `register()` must be called in Bootstrap.
+- **`Core\SubscriptionEmailHooks`** — Singleton。將每個 `Action` enum hook 連接到排程發信。從 `power_partner_settings['emails']` 讀取模板。
+- **`DTOs\Email`** — 繼承 `J7\WpUtils\Classes\DTO`。建構時驗證 `action_name`、`operator`、`days`。`unique` 自動為 true（trial_end/next_payment/end）。
+- **`Models\SubscriptionEmail`** — 結合 Email DTO + Subscription 計算最終發送 timestamp。使用 Powerhouse 的 `Times` DTO。
+- **`Services\SubscriptionEmailScheduler`** — 繼承 `Powerhouse\Domains\AsSchedulerHandler\Shared\Base`。hook: `power_partner/3.1.0/email/scheduler`。`register()` 必須在 Bootstrap 中呼叫。
 
 ### `Domains\Site`
-Manages site suspend/resume scheduling.
+管理網站停用/恢復排程。
 
-- **`Core\DisableHooks`** — Singleton. Listens for `SUBSCRIPTION_FAILED` → schedules disable; `SUBSCRIPTION_SUCCESS` → cancels + re-enables.
-- **`Services\DisableSiteScheduler`** — ActionScheduler wrapper. Args include `{subscription_id}`.
+- **`Core\DisableHooks`** — Singleton。`SUBSCRIPTION_FAILED` → 排程停用；`SUBSCRIPTION_SUCCESS` → 取消排程 + 重新啟用。
+- **`Services\DisableSiteScheduler`** — ActionScheduler 包裝。args 包含 `{subscription_id}`。
 
-### `Domains\LC` (License Codes)
-Manages license code lifecycle via `cloud.luke.cafe` API.
+### `Domains\LC`（License Codes）
+管理授權碼生命週期，透過 `cloud.luke.cafe` API（Powerhouse CloudApi）。
 
-- **`Core\LifeCycle`** — Creates LCs on `INITIAL_PAYMENT_COMPLETE`; expires on `SUBSCRIPTION_FAILED`; recovers on `SUBSCRIPTION_SUCCESS`.
-- **`Core\Api`** — REST endpoints for LC management (admin).
-- **`Services\ExpireHandler`** — ActionScheduler wrapper for deferred LC expiry.
+- **`Core\LifeCycle`** — `INITIAL_PAYMENT_COMPLETE` 建立 LCs；`SUBSCRIPTION_FAILED` 排程停用（延遲 4 小時）；`SUBSCRIPTION_SUCCESS` 恢復。
+- **`Core\Api`** — 管理端授權碼 REST API。
+- **`Services\ExpireHandler`** — ActionScheduler 包裝，延遲 LC 停用。
 
 ### `Domains\Settings`
-Watches for settings changes and reschedules dependent async jobs.
+監聽設定變更並重新排程。
 
-- **`Core\WatchSettingHooks`** — On `update_option_power_partner_settings`, reschedules: (a) all pending `disable_site` actions if the N-days value changed, (b) all lifecycle emails if email timing changed.
+- **`Core\WatchSettingHooks`** — `update_option_power_partner_settings` 時：(a) N-days 值變更則重排所有 `disable_site` actions，(b) Email 時間變更則非同步重排所有訂閱 Email。使用 transaction 確保原子性。
 
 ---
 
-## API Layer
+## API 層
 
-### `Api\Fetch` (WPCD / legacy)
-Abstract class. Communicates with `cloud.luke.cafe` via HTTP Basic Auth.
+### `Api\Fetch`（WPCD / 舊架構）
+Abstract class。透過 HTTP Basic Auth 與 `cloud.luke.cafe` 通訊。
 
-Key methods:
-- `site_sync(array $props)` — POST to `/wp-json/power-partner-server/site-sync`
-- `disable_site(string $site_id)` — POST to `.../v2/disable-site`
-- `enable_site(string $site_id)` — POST to `.../v2/enable-site`
-- `get_allowed_template_options()` — Fetches + caches template list (7-day transient)
+- `site_sync(array $props)` — POST `/wp-json/power-partner-server/site-sync`
+- `disable_site(string $site_id, string $reason)` — POST `.../v2/disable-site`
+- `enable_site(string $site_id)` — POST `.../v2/enable-site`
+- `get_allowed_template_options()` — 取得 + 快取模板列表（7 天 transient）
 
-### `Api\FetchPowerCloud` (new architecture)
-Abstract class. Communicates with `api.wpsite.pro` via `X-API-Key` header.
+### `Api\FetchPowerCloud`（新架構）
+Abstract class。透過 `X-API-Key` header 與 `api.wpsite.pro` 通訊。
 
-Key methods:
-- `site_sync(array $props, string $plan_id, string $template_id)` — POST to `/wordpress`
-- `disable_site(string $user_id, string $websiteId)` — PATCH to `/wordpress/{id}/stop`
-- `enable_site(string $user_id, string $websiteId)` — PATCH to `/wordpress/{id}/start`
+- `site_sync(array $props, string $plan_id, string $template_id)` — POST `/wordpress`
+- `disable_site(string $user_id, string $websiteId)` — PATCH `/wordpress/{id}/stop`
+- `enable_site(string $user_id, string $websiteId)` — PATCH `/wordpress/{id}/start`
 - `get_allowed_template_options()` — GET `/templates/wordpress`
 - `get_open_site_plan_options()` — GET `/website-packages`
 
-### `Api\Main` — Core REST routes
-Registered on `rest_api_init`. Contains the most endpoints (see REST API reference).
+### `Api\Main` — 核心 REST routes
+在 `rest_api_init` 註冊。包含大部分 endpoints。
 
-### `Api\Connect` — Partner connection
-- `GET/POST/DELETE /partner-id` — Manage partner connection state
-- `GET /account-info` — Retrieve stored account info
+### `Api\Connect` — Partner 連線
+- `GET/POST/DELETE /partner-id`
+- `GET /account-info`
+- 注意: 底部有 `new Connect()` 額外初始化
 
-### `Api\User` — Customer data
-- `GET /customers-by-search` — Search by ID or keyword
-- `GET /customers` — Fetch by ID array
+### `Api\User` — 客戶資料
+- `GET /customers-by-search`
+- `GET /customers`
 
 ---
 
-## Product Configuration (DataTabs)
+## 商品設定（DataTabs）
 
 ### `Product\DataTabs\LinkedSites`
-Adds custom fields to WooCommerce product editor (General tab) for subscription products and variations.
+在 WooCommerce 商品編輯器（General tab）新增自訂欄位，支援 subscription 和 variable-subscription。
 
-Fields:
-- `power_partner_host_type` — `powercloud` (new) or `wpcd` (legacy)
-- `power_partner_host_position` — Server region
-- `power_partner_linked_site` — Template site ID (different lists per host_type)
-- `power_partner_open_site_plan` — PowerCloud plan ID
+- `power_partner_host_type` — `powercloud`（新）或 `wpcd`（舊）
+- `power_partner_host_position` — 伺服器區域（jp, tw, us_west, uk_london, sg, hk, canada）
+- `power_partner_linked_site` — 模板站 ID
+- `power_partner_open_site_plan` — PowerCloud 方案 ID
 
-The UI uses a tab widget (新架構 / 舊架構) to switch between the two host types. JS inline script handles tab switching and disables inactive tab's hidden inputs before form submit.
+UI 使用 tab widget（新架構 / 舊架構），inline JS/CSS 處理切換邏輯。切換 tab 時 disabled 非活動 tab 的 hidden inputs。
 
 ### `Product\DataTabs\LinkedLC`
-Adds custom fields for linking WooCommerce subscription products to license code products on cloud.luke.cafe.
+在訂閱商品新增欄位，連結 cloud.luke.cafe 的授權碼商品。
 
 ---
 
-## Frontend Apps
+## 環境設定
 
-### App1 — Admin Page
-- Entry: `pages/AdminApp/index.tsx`
-- Auth check: `useGetUserIdentity()` → shows `Login` or `Dashboard`
-- Dashboard wraps all tabs in an Ant Design `Form` for batch save (Email + Settings tabs)
-- Global save button only visible on Email and Settings tabs
-- Tab state managed via `tabAtom` (Jotai)
-
-### App2 — Frontend (Shortcode)
-- Entry: `pages/UserApp/index.tsx`
-- Wrapped in Shadow DOM (`react-shadow`) to prevent style leakage
-- Styles injected inline via `<style>{styles}</style>` inside shadow root
-
----
-
-## Data Flow: Site Provisioning
-
-```
-1. Customer pays → WooCommerce fires INITIAL_PAYMENT_COMPLETE
-
-2. SiteSync::site_sync_by_subscription($subscription, $args)
-   a. Verify only 1 related order (parent order only — skip renewals)
-   b. Loop order items → get product
-   c. For each subscription/variable-subscription product:
-      - Read host_type from product meta
-      - Read linked_site_id from product/variation meta
-      - Read host_position from product/variation meta
-      - Build site_sync_params (site_url, site_id, host_position, partner_id, customer)
-      - Dispatch to FetchPowerCloud::site_sync() or Fetch::site_sync()
-   d. Save responses to order item meta (_pp_create_site_responses_item)
-   e. Save summary response to order meta (pp_create_site_responses)
-   f. Add order note with site details
-   g. Fire pp_site_sync_by_subscription
-
-3. [PowerCloud path only]
-   - On HTTP 201: build email_payloads_tmp on subscription
-   - Schedule 'powerhouse_delay_send_email' in 4 minutes
-
-4. [Delayed email] SiteSync::send_email($to, $subscription_id)
-   - Read email_payloads_tmp from subscription
-   - Call SubscriptionEmailHooks::send_mail($to, $tokens)
-   - Delete email_payloads_tmp
-```
-
----
-
-## Environment Configuration
-
-`Utils\Base::set_api_auth(Bootstrap $bootstrap)` configures API credentials per environment:
+`Utils\Base::set_api_auth(Bootstrap $bootstrap)` 根據環境設定 API 帳密:
 
 | `wp_get_environment_type()` | Base URL | PowerCloud API |
 |---|---|---|
@@ -224,17 +172,13 @@ Adds custom fields for linking WooCommerce subscription products to license code
 | `staging` | `https://test1.powerhouse.cloud` | `https://api.wpsite.pro` |
 | *(production)* | `https://cloud.luke.cafe` | `https://api.wpsite.pro` |
 
-Credentials are stored on the `Bootstrap` singleton instance (`$bootstrap->username`, `$bootstrap->psw`, `$bootstrap->base_url`, `$bootstrap->powercloud_api`, `$bootstrap->t`).
-
 ---
 
-## Token System
+## Token 系統
 
 `Utils\Token::replace(string $script, array $tokens): string`
+替換 `##UPPERCASEKEY##` 模式。keys 自動大寫。Array 和空值跳過。
 
-Replaces `##UPPERCASEKEY##` patterns in email subject/body. Keys in the `$tokens` array are automatically uppercased. Arrays and empty values are skipped.
-
-Token arrays are assembled in:
-- `Token::get_order_tokens(\WC_Order $order)` — order-based tokens
-- `Token::get_subscription_tokens(\WC_Subscription $subscription)` — subscription tokens
-- Individual arrays assembled in `Api\Main` callback methods for site-credential emails
+Token 組裝方法:
+- `Token::get_order_tokens(\WC_Order)` — 訂單相關 tokens
+- `Token::get_subscription_tokens(\WC_Subscription)` — 訂閱相關 tokens（含 site URL）

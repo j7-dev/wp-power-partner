@@ -15,7 +15,7 @@ info:
     - 管理端 API 需要 WordPress 登入 Cookie 加上 `X-WP-Nonce` Header
     - IP 白名單 API 需要從 cloud.luke.cafe 主機 IP 發出請求
     - Public API 不需要認證
-  version: "3.2.4"
+  version: "3.2.5"
 
 servers:
   - url: /wp-json/power-partner

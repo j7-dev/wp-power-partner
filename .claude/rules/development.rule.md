@@ -1,265 +1,219 @@
-# Power Partner — Development Guide
-#
-# This file belongs at: instructions/development.md
-# Run setup-docs.ps1 to create the instructions/ directory, then move this file there.
-
-# Power Partner — Development Guide
-
-**Last Updated:** 2025-01-01
-
+---
+globs: "**/*.{ts,tsx,scss,json,cjs}"
 ---
 
-## Prerequisites
+# Power Partner — 前端與開發規則
 
-- PHP 8.1+ with extensions: `json`, `mbstring`, `openssl`
+## 前置需求
+
+- PHP 8.1+ (extensions: `json`, `mbstring`, `openssl`)
 - Composer 2.x
-- Node.js 18+ and pnpm
-- Local WordPress install with:
-  - WooCommerce ≥ 7.6
-  - Woo Subscriptions ≥ 5.9
-  - Powerhouse plugin ≥ 3.3.23
+- Node.js 18+ 和 pnpm 10+
+- WordPress + WooCommerce >= 7.6 + Woo Subscriptions >= 5.9 + Powerhouse >= 3.3.23
 
 ---
 
-## Initial Setup
+## 初始設定
 
 ```bash
-# 1. Install PHP dependencies
-composer install
-
-# 2. Install JS dependencies
-pnpm install
+composer install     # PHP 依賴
+pnpm install         # JS 依賴
 ```
 
 ---
 
-## Daily Development
+## 日常開發
 
-### Start Vite dev server
+### Vite dev server
 ```bash
-pnpm dev   # starts on http://localhost:5176
+pnpm dev
 ```
+使用 `@kucrut/vite-for-wp`，WordPress 透過 `asset-manifest.json` 載入正確的 HMR scripts。
 
-The dev server uses `@kucrut/vite-for-wp` which outputs an `asset-manifest.json` that WordPress reads to load the correct scripts with HMR support.
-
-### WordPress must be running
-The PHP side renders the mount points (`<div id="power-partner-connect-app">`). Vite serves the JS assets. Both must run simultaneously for the admin page to work in development.
-
-### Environment type
-Set `WP_ENVIRONMENT_TYPE` in `wp-config.php`:
+### 環境類型
+在 `wp-config.php` 設定:
 ```php
-define('WP_ENVIRONMENT_TYPE', 'local');   // or 'staging'
+define('WP_ENVIRONMENT_TYPE', 'local');   // 或 'staging'
 ```
-This controls which API endpoints the plugin targets (see `Utils\Base::set_api_auth()`).
+控制 API endpoints（見 `Utils\Base::set_api_auth()`）。
 
 ---
 
-## Build for Production
+## 建置
 
 ```bash
-# Standard build (uses vite.config.ts)
-pnpm build
-
-# WordPress-specific build (uses vite.config-for-wp.ts)
-pnpm build:wp
+pnpm build        # 標準建置（vite.config.ts）
+pnpm build:wp     # WordPress 專用建置（vite.config-for-wp.ts）
 ```
-
-Output goes to `js/dist/`. The `js/dist/` directory should be committed for distribution.
+輸出: `js/dist/`
 
 ---
 
-## Code Quality
+## 代碼品質
 
 ### PHP
 ```bash
-# Run PHPCS (code sniffer)
-composer lint         # phpcs
-
-# Auto-fix fixable issues
-vendor/bin/phpcbf
-
-# Run PHPStan (static analysis)
-vendor/bin/phpstan analyse
+composer lint              # PHPCS
+vendor/bin/phpcbf           # 自動修正
+vendor/bin/phpstan analyse  # 靜態分析
 ```
-
-Configuration:
-- `phpcs.xml` — PHPCS ruleset (WPCS + custom rules)
-- `phpstan.neon` — PHPStan config (level 5)
 
 ### JavaScript / TypeScript
 ```bash
-pnpm lint          # ESLint check
-pnpm lint:fix      # ESLint + PHPCBF auto-fix
-pnpm format        # Prettier format js/src/**/*.tsx
+pnpm lint          # ESLint
+pnpm lint:fix      # ESLint + PHPCBF 自動修正
+pnpm format        # Prettier
 ```
 
 ---
 
-## Testing
+## 測試
 
+### PHP 單元測試
 ```bash
-# PHP tests (Pest + wp-pest)
-vendor/bin/pest
-
-# Or via PHPUnit
-vendor/bin/phpunit
+vendor/bin/pest      # Pest + wp-pest
+vendor/bin/phpunit   # PHPUnit
 ```
 
-Test files are in `inc/classes/Test/`. The `Test\Retry` class is only loaded in `local` environment.
+### E2E 測試
+```bash
+cd tests/e2e
+pnpm install
+npx playwright test
+```
+E2E 使用 Playwright，測試分三層：
+- `01-admin/` — Admin API 測試
+- `02-frontend/` — 前端權限邊界
+- `03-integration/` — 整合流程測試
 
 ---
 
-## Version Management
+## 版本管理
 
-Version is stored in **two places** that must stay in sync:
-- `package.json` → `"version": "3.2.4"`
-- `plugin.php` → `* Version: 3.2.4`
-
-Use the sync script to keep them aligned:
-```bash
-pnpm sync:version   # reads package.json, writes to plugin.php
-```
-
----
-
-## Release Process
+版本儲存在**兩處**，必須同步:
+- `package.json` → `"version": "3.2.5"`
+- `plugin.php` → `* Version: 3.2.5`
 
 ```bash
-# Patch release (bug fixes: 3.2.4 → 3.2.5)
-pnpm release:patch
-
-# Minor release (new features: 3.2.4 → 3.3.0)
-pnpm release:minor
-
-# Major release (breaking changes: 3.2.4 → 4.0.0)
-pnpm release:major
-```
-
-These commands use `release-it` configured in `release/.release-it.cjs`. They:
-1. Bump version in `package.json`
-2. Run `pnpm sync:version` to update `plugin.php`
-3. Run `pnpm build:wp`
-4. Create a Git tag
-5. Push to GitHub and create a Release with the ZIP attached
-
-### Create ZIP manually
-```bash
-pnpm zip
+pnpm sync:version   # 從 package.json 同步到 plugin.php
 ```
 
 ---
 
-## Directory Structure for New Features
+## 發佈流程
 
-### Adding a PHP domain feature
-Follow the Domain-Driven Design pattern already in the codebase:
+```bash
+pnpm release:patch   # 3.2.5 → 3.2.6
+pnpm release:minor   # 3.2.5 → 3.3.0
+pnpm release:major   # 3.2.5 → 4.0.0
+pnpm zip             # 手動建立 ZIP
+```
 
+使用 `release-it`（設定在 `release/.release-it.cjs`）。
+
+---
+
+## 前端架構
+
+### 雙 App 入口
+- `App1` (Admin): `pages/AdminApp/` — 無 Shadow DOM, Ant Design `ConfigProvider` + `StyleProvider`
+- `App2` (Frontend): `pages/UserApp/` — Shadow DOM (`react-shadow`), inline styles
+
+### 核心依賴
+| 依賴 | 用途 |
+|---|---|
+| `antd` + `antd-toolkit` | UI 元件庫 |
+| `@refinedev/core` + `@refinedev/antd` | 資料 CRUD 框架 |
+| `@tanstack/react-query` v5 | 伺服器狀態管理 |
+| `jotai` | 客戶端狀態 (atoms) |
+| `axios` | HTTP client |
+| `react-quill` | Rich text 編輯器（Email body） |
+| `react-shadow` | App2 Shadow DOM |
+| `zod` | 資料驗證 |
+| `@blocknote/*` | 區塊編輯器 |
+| `react-router` v7 | 路由 |
+
+### 狀態管理
+- **Jotai atoms**: `identityAtom`, `globalLoadingAtom`, `tabAtom`, `powercloudAtom`
+- **TanStack Query**: 所有 API 查詢和 mutations
+
+### API 層
+- `api/axios.tsx` — WP REST Axios 實例（使用 `wpApiSettings.nonce`）
+- `api/cloudAxios.tsx` — cloud.luke.cafe Axios 實例
+- `api/powerCloudAxios.tsx` — api.wpsite.pro Axios 實例
+- `api/resources/` — CRUD helpers（create, get, update, delete）
+
+### TypeScript 型別
+- `types/custom/` — 自訂型別
+- `types/wcRestApi/` — WooCommerce REST API 型別
+- `types/wcStoreApi/` — WooCommerce Store API 型別
+- `types/wpRestApi/` — WordPress REST API 型別
+
+---
+
+## 新增功能
+
+### 新增 React 元件/頁面
+```
+js/src/pages/AdminApp/Dashboard/
+└── MyFeature/
+    ├── index.tsx               # 主元件
+    ├── hooks/                  # Feature-specific hooks
+    └── types.ts                # Feature-specific types
+```
+在 `js/src/pages/AdminApp/Dashboard/index.tsx` 新增 tab。
+
+### 新增 PHP Domain 功能
 ```
 inc/classes/Domains/
 └── MyDomain/
     ├── Core/
-    │   ├── MyHooks.php          # Wires WordPress hooks
-    │   └── MyApi.php            # REST endpoints (if needed)
+    │   ├── MyHooks.php          # WordPress hooks
+    │   └── MyApi.php            # REST endpoints
     ├── DTOs/
-    │   └── MyDTO.php            # Data transfer objects
     ├── Models/
-    │   └── MyModel.php          # Business logic models
     ├── Services/
-    │   └── MyScheduler.php      # ActionScheduler wrapper (if needed)
-    └── Shared/
-        └── Enums/               # PHP 8.1 enums
+    └── Shared/Enums/
 ```
-
-### Adding a React page/component
-
-```
-js/src/pages/AdminApp/Dashboard/
-└── MyFeature/
-    ├── index.tsx               # Main component
-    ├── hooks/                  # Feature-specific hooks
-    └── types.ts                # Feature-specific types
-```
-
-Then add a new tab entry in `js/src/pages/AdminApp/Dashboard/index.tsx`.
 
 ---
 
-## Common Development Tasks
+## 除錯
 
-### Refreshing template cache
-When testing template site changes, clear the transient:
-```bash
-# Via WP CLI
-wp transient delete power_partner_allowed_template_options
-wp transient delete power_partner_allowed_template_options_powercloud
+### React App 不載入?
+1. 檢查 browser console
+2. 確認 Vite dev server 執行中
+3. 確認 `js/dist/` 存在（production）或 `WP_ENVIRONMENT_TYPE=local`
+4. 檢查 mount point HTML（`#power-partner-connect-app`）
 
-# Or via REST API (requires manage_options)
-POST /wp-json/power-partner/clear-template-sites-cache
-```
+### API 呼叫失敗?
+1. 檢查 `wpApiSettings.nonce` 是否存在
+2. 檢查 CORS headers
+3. IP whitelist routes 檢查 `REMOTE_ADDR`
 
-### Inspecting ActionScheduler jobs
-Go to **WooCommerce → Status → Scheduled Actions** or use WP CLI:
-```bash
-wp action-scheduler list --hook=power_partner_disable_site
-wp action-scheduler list --hook=power_partner_send_email
-```
+### PowerCloud 開站失敗?
+1. 確認 `power_partner_powercloud_api_key` transient 存在
+2. 請管理員在**新架構權限** tab 重新認證
+3. 檢查 `power_partner` WC logs
 
-### Checking WC logs
-Plugin uses the `power_partner` source for WC logger:
-```bash
-# Logs are at: wp-content/uploads/wc-logs/power_partner-*.log
-# Or WP Admin: WooCommerce → Status → Logs
-```
-
-### Testing subscription lifecycle locally
-1. Set environment type to `local`
-2. Create a subscription product with a linked template site
-3. Complete a test order
-4. Check WC logs for `訂閱 #X site sync` entries
-5. ActionScheduler will run the email job within 4 minutes
+### Email 沒寄出?
+1. 確認 `power_partner_settings['emails']` 有 enabled 的 `site_sync` 模板
+2. 檢查 ActionScheduler pending actions
+3. 驗證 WP mail 設定
 
 ---
 
-## Key Files Reference
+## 關鍵檔案對照表
 
-| File | What to change when... |
+| 檔案 | 修改時機 |
 |---|---|
-| `plugin.php` | Changing plugin version, required plugin versions, default email body |
-| `inc/classes/Bootstrap.php` | Adding a new singleton class to the bootstrap chain |
-| `inc/classes/Utils/Base.php` | Adding new environment configs, changing API endpoints |
-| `inc/classes/Api/Main.php` | Adding new REST endpoints for core features |
-| `inc/classes/Api/FetchPowerCloud.php` | Changing PowerCloud API integration |
-| `inc/classes/Api/Fetch.php` | Changing WPCD API integration |
-| `inc/classes/Product/DataTabs/LinkedSites.php` | Adding/modifying product configuration fields |
-| `inc/classes/Domains/Email/Core/SubscriptionEmailHooks.php` | Adding new email trigger points |
-| `inc/classes/Domains/Settings/Core/WatchSettingHooks.php` | Handling settings changes |
-| `js/src/pages/AdminApp/Dashboard/index.tsx` | Adding/removing admin dashboard tabs |
-| `js/src/utils/index.ts` | Updating shared frontend constants |
-
----
-
-## Debugging Tips
-
-### PHP errors not showing?
-Ensure `WP_DEBUG` and `WP_DEBUG_LOG` are `true` in `wp-config.php`.
-
-### React app not loading?
-1. Check browser console for JS errors
-2. Verify Vite dev server is running (`pnpm dev`)
-3. Check that `js/dist/` exists (for production) or that `WP_ENVIRONMENT_TYPE=local`
-4. Verify the mount point HTML exists (`#power-partner-connect-app`)
-
-### API calls failing?
-1. Check `wpApiSettings.nonce` is set in window (inspect console)
-2. Check CORS headers if calling from different origin
-3. Check IP whitelist for `/customer-notification` and `/link-site` routes
-
-### PowerCloud provisioning failing?
-1. Ensure `power_partner_powercloud_api_key_{user_id}` transient exists
-2. Ask the admin to re-authenticate in the **新架構權限** tab
-3. Check `power_partner` WC logs for the error message
-
-### Email not sending?
-1. Check `power_partner_settings['emails']` has at least one enabled template with `action_name: 'site_sync'`
-2. Check ActionScheduler for pending `power_partner_send_email` actions
-3. Verify WP mail is configured (test with a mail plugin)
+| `plugin.php` | 版本號、必要外掛版本、預設 Email body |
+| `inc/classes/Bootstrap.php` | 新增 singleton 到啟動鏈 |
+| `inc/classes/Utils/Base.php` | 環境設定、API endpoints |
+| `inc/classes/Api/Main.php` | 核心 REST endpoints |
+| `inc/classes/Api/FetchPowerCloud.php` | PowerCloud API 整合 |
+| `inc/classes/Api/Fetch.php` | WPCD API 整合 |
+| `inc/classes/Product/DataTabs/LinkedSites.php` | 商品設定欄位 |
+| `inc/classes/Domains/Email/Core/SubscriptionEmailHooks.php` | Email 觸發點 |
+| `inc/classes/Domains/Settings/Core/WatchSettingHooks.php` | 設定變更處理 |
+| `js/src/pages/AdminApp/Dashboard/index.tsx` | Admin Dashboard tabs |
