@@ -1,10 +1,9 @@
-# Power Partner — Copilot Instructions
+# Power Partner — 
 #
-# This file belongs at: .github/copilot-instructions.md
 # To install: mkdir .github && move copilot-instructions.md .github\
 #             (or run setup-docs.ps1 first, then re-run the doc generation)
 
-# Power Partner — GitHub Copilot Instructions
+# Power Partner — GitHub 
 
 **Last Updated:** 2025-01-01
 **Plugin Version:** 3.2.4
