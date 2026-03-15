@@ -50,7 +50,7 @@ Power Partner is a WordPress plugin that lets you **sell WordPress website templ
 ## Development Setup
 
 ### Requirements
-- Node.js + pnpm (monorepo workspace)
+- Node.js + pnpm
 - PHP 8.1+ with Composer
 - A local WordPress install with WooCommerce and Woo Subscriptions
 
@@ -60,7 +60,7 @@ Power Partner is a WordPress plugin that lets you **sell WordPress website templ
 # PHP dependencies
 composer install
 
-# JS dependencies (from monorepo root)
+# Install JS dependencies
 pnpm install
 ```
 
@@ -262,11 +262,6 @@ Renders a React app (App2) showing the current logged-in customer's provisioned 
 ---
 
 ## Contributing
-
-This project is part of the `powerrepo` turborepo monorepo. Shared configs:
-- ESLint: `@power/eslint-config`
-- Tailwind: `@power/tailwind-config`
-- TypeScript: `@power/typescript-config`
 
 All PHP must pass PHPCS (WPCS rules) and PHPStan (configured in `phpstan.neon`).  
 All JS/TS must pass ESLint before committing.

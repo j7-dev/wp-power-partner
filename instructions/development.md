@@ -13,7 +13,7 @@
 
 - PHP 8.1+ with extensions: `json`, `mbstring`, `openssl`
 - Composer 2.x
-- Node.js 18+ and pnpm (monorepo uses pnpm workspaces)
+- Node.js 18+ and pnpm
 - Local WordPress install with:
   - WooCommerce ≥ 7.6
   - Woo Subscriptions ≥ 5.9
@@ -27,8 +27,7 @@
 # 1. Install PHP dependencies
 composer install
 
-# 2. Install JS dependencies (from monorepo root)
-cd ../..  # go to turborepo root
+# 2. Install JS dependencies
 pnpm install
 ```
 
@@ -38,7 +37,6 @@ pnpm install
 
 ### Start Vite dev server
 ```bash
-cd apps/power-partner
 pnpm dev   # starts on http://localhost:5176
 ```
 
@@ -237,22 +235,6 @@ Plugin uses the `power_partner` source for WC logger:
 | `inc/classes/Domains/Settings/Core/WatchSettingHooks.php` | Handling settings changes |
 | `js/src/pages/AdminApp/Dashboard/index.tsx` | Adding/removing admin dashboard tabs |
 | `js/src/utils/index.ts` | Updating shared frontend constants |
-
----
-
-## Monorepo Notes
-
-This plugin is part of `powerrepo` (Turborepo monorepo).
-
-Shared configurations used:
-- **ESLint**: `@power/eslint-config` (workspace package)
-- **Tailwind**: `@power/tailwind-config` (workspace package)
-- **TypeScript**: `@power/typescript-config` (workspace package)
-- **Ant Design toolkit**: `antd-toolkit` (workspace package)
-
-The `.npmrc` file configures pnpm workspace resolution. Do not change `node_modules` structure manually.
-
-Environment variables for release scripts are read from `../../.env` (monorepo root `.env`).
 
 ---
 
