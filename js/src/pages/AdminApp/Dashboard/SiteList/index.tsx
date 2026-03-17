@@ -398,7 +398,7 @@ const PowercloudContent = () => {
 								target="_blank"
 							/>
 						</Tooltip>
-						<Popconfirm
+						{/* <Popconfirm
 							title="確認變更域名"
 							description={`確定要變更站台 ${record.domain} 的域名嗎？`}
 							onConfirm={() => handleShowChangeDomainModal(record)}
@@ -408,7 +408,7 @@ const PowercloudContent = () => {
 							<Tooltip title="變更域名">
 								<Button type="link" size="small" icon={<EditOutlined />} />
 							</Tooltip>
-						</Popconfirm>
+						</Popconfirm> */}
 						{record.status === 'stopped' && (
 							<Popconfirm
 								title="確認啟動站台"
