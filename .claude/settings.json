@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm *)",
+      "Bash(composer *)",
+      "Bash(vendor/bin/phpcs *)",
+      "Bash(vendor/bin/phpcbf *)",
+      "Bash(vendor/bin/phpstan *)",
+      "Bash(vendor/bin/pest *)",
+      "Bash(vendor/bin/phpunit *)"
+    ]
+  }
+}

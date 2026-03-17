@@ -1,5 +1,6 @@
 ---
-globs: "**/*.{ts,tsx,scss,json,cjs}"
+paths:
+  - "**/*.{ts,tsx,scss,json,cjs}"
 ---
 
 # Power Partner — 前端與開發規則

@@ -51,101 +51,25 @@ power-partner/
 │   │   ├── Fetch.php               # Abstract: WPCD API（舊架構）
 │   │   ├── FetchPowerCloud.php     # Abstract: PowerCloud API（新架構）
 │   │   └── User.php                # 客戶搜尋 endpoints
-│   ├── Compatibility/Compatibility.php
 │   ├── Domains/
-│   │   ├── Email/
-│   │   │   ├── Core/SubscriptionEmailHooks.php    # 訂閱生命週期 → 排程發信
-│   │   │   ├── DTOs/Email.php                     # Email DTO（extends DTO base）
-│   │   │   ├── Models/EmailBase.php               # Email 基礎模型
-│   │   │   ├── Models/SubscriptionEmail.php       # 計算寄信時間戳
-│   │   │   ├── Services/SubscriptionEmailScheduler.php  # ActionScheduler 包裝
-│   │   │   └── Shared/Enums/                      # Enabled, Operator 列舉
-│   │   ├── Site/
-│   │   │   ├── Core/DisableHooks.php              # 訂閱失敗 → 停用/恢復網站
-│   │   │   └── Services/DisableSiteScheduler.php
-│   │   ├── LC/
-│   │   │   ├── Core/LifeCycle.php                 # 授權碼 建立/停用/恢復
-│   │   │   ├── Core/Api.php                       # 授權碼 REST API
-│   │   │   ├── Core/Deprecated.php                # 棄用方法
-│   │   │   └── Services/ExpireHandler.php         # 延遲停用排程
-│   │   ├── Settings/Core/WatchSettingHooks.php    # 設定變更時重新排程
-│   │   └── Subscription/Utils/Base.php            # 訂閱工具方法
+│   │   ├── Email/Core/SubscriptionEmailHooks.php    # 訂閱生命週期 → 排程發信
+│   │   ├── Site/Core/DisableHooks.php               # 訂閱失敗 → 停用/恢復網站
+│   │   ├── LC/Core/LifeCycle.php                    # 授權碼 建立/停用/恢復
+│   │   └── Settings/Core/WatchSettingHooks.php      # 設定變更時重新排程
 │   ├── Product/
 │   │   ├── SiteSync.php            # INITIAL_PAYMENT_COMPLETE 觸發開站
-│   │   └── DataTabs/
-│   │       ├── LinkedSites.php     # 商品欄位: host_type, template, plan
-│   │       └── LinkedLC.php        # 商品欄位: linked license products
-│   ├── Test/Retry.php              # 測試工具（僅 local 環境載入）
+│   │   └── DataTabs/LinkedSites.php  # 商品欄位: host_type, template, plan
 │   └── Utils/
 │       ├── Base.php                # 環境 API 設定、常數、mail_to
 │       └── Token.php               # ##TOKEN## 替換
 ├── js/src/
 │   ├── main.tsx                    # 入口: 掛載 App1 (admin) + App2 (frontend)
-│   ├── App1.tsx                    # Admin: Ant Design, 無 Shadow DOM
-│   ├── App2.tsx                    # Frontend: Shadow DOM via react-shadow
-│   ├── api/                        # Axios 實例 + CRUD resource helpers
-│   ├── hooks/                      # useTable, useOne, useAjax, useModal, useUpdate
-│   ├── components/                 # 共用元件（SiteListTable, LicenseCodes, etc.）
 │   ├── pages/AdminApp/             # Dashboard tabs + Login
 │   ├── pages/UserApp/              # 客戶網站列表 + 授權碼
-│   ├── types/                      # TypeScript 型別定義
-│   └── utils/                      # 工具函式、常數
-├── spec/                           # 規格文件（features, activities, entity, api）
+│   └── api/                        # Axios 實例 + CRUD resource helpers
+├── spec/                           # 規格文件
 ├── tests/e2e/                      # Playwright E2E 測試
-├── release/                        # release-it 設定和腳本
-└── stubs/                          # PHP stubs
-```
-
----
-
-## PHP 架構規則
-
-### 嚴格型別
-```php
-declare(strict_types=1);
-```
-
-### Singleton 模式（所有 hook 註冊類別）
-```php
-final class MyClass {
-    use \J7\WpUtils\Traits\SingletonTrait;
-    public function __construct() {
-        // 在此註冊 hooks
-    }
-}
-// 初始化: MyClass::instance();
-// 禁止: new MyClass()
-```
-
-### 日誌 — 使用 Plugin::logger()，禁用 error_log()
-```php
-Plugin::logger('message', 'error', ['context' => $value], $limit);
-// Levels: 'info' | 'warning' | 'error' | 'critical' | 'debug'
-// $limit: 最大存儲行數（0 = 無限）
-```
-
-### 訂閱生命週期 hooks — 使用 Action enum
-```php
-use J7\Powerhouse\Domains\Subscription\Shared\Enums\Action;
-
-// 正確:
-\add_action(Action::INITIAL_PAYMENT_COMPLETE->get_action_hook(), [$this, 'cb'], 10, 2);
-\add_action(Action::SUBSCRIPTION_FAILED->get_action_hook(), [$this, 'cb'], 10, 2);
-\add_action(Action::SUBSCRIPTION_SUCCESS->get_action_hook(), [$this, 'cb'], 10, 2);
-
-// 禁止直接使用 WooCommerce 原生 hooks:
-// \add_action('woocommerce_subscription_pre_update_status', ...);
-```
-
-### 訂閱「失敗」定義
-> Active → Cancelled / On-Hold / Pending-Cancel = **FAILED**（觸發停用排程）
-> Active → Expired = **NOT failed**（自然結束，不停用）
-
-### 非同步延遲工作 — ActionScheduler
-```php
-\as_schedule_single_action($timestamp, 'my_hook', $args);   // 延遲
-\as_enqueue_async_action('my_hook', $args);                 // 背景立即
-\as_unschedule_all_actions('my_hook');                      // 取消
+└── release/                        # release-it 設定和腳本
 ```
 
 ---
@@ -245,111 +169,28 @@ PowerCloud API key 儲存方式:
 ## Email 系統
 
 ### Email DTO 欄位
-```php
-string $key;          // 唯一 key（前端 render 用）
-string $enabled;      // '1' 或 '0'
-string $subject;      // 支援 ##TOKEN##
-string $body;         // HTML，支援 ##TOKEN##
-string $action_name;  // 'site_sync' | Action enum value
-string $days;         // 數字偏移量
-string $operator;     // 'before' | 'after'
-bool   $unique;       // trial_end/next_payment/end 自動為 true
+
+```
+string $key, $enabled, $subject, $body, $action_name, $days, $operator; bool $unique
 ```
 
 ### action_name 值
+
 | 值 | 發送時機 |
 |---|---|
 | `site_sync` | 開站完成後 |
 | `subscription_failed` | 訂閱 active → cancelled/on-hold |
 | `subscription_success` | 訂閱 failed → active |
-| `trial_end` | 試用結束時 |
-| `next_payment` | 下次付款時 |
-| `end` | 訂閱結束時 |
-| `watch_trial_end` | 試用結束前/後 N 天（unique，設定變更時重新排程） |
-| `watch_next_payment` | 下次付款前/後 N 天（unique） |
-| `watch_end` | 訂閱結束前/後 N 天（unique） |
+| `trial_end` / `next_payment` / `end` | 訂閱里程碑時 |
+| `watch_trial_end` / `watch_next_payment` / `watch_end` | 前/後 N 天（unique，設定變更時重排） |
 
 ### 支援的 ##TOKEN## 值
+
 `##FIRST_NAME##` `##LAST_NAME##` `##NICE_NAME##` `##EMAIL##`
 `##DOMAIN##` `##FRONTURL##` `##ADMINURL##`
 `##SITEUSERNAME##` `##SITEPASSWORD##` `##IPV4##`
 `##ORDER_ID##` `##ORDER_ITEMS##` `##ORDER_STATUS##` `##ORDER_DATE##`
 `##CHECKOUT_PAYMENT_URL##` `##VIEW_ORDER_URL##`
-
----
-
-## 前端架構
-
-### 雙 App 掛載
-
-| App | Selector | 位置 | Shadow DOM |
-|---|---|---|---|
-| App1 | `#power-partner-connect-app` | Admin 管理頁 | 否 |
-| App2 | `.power_partner_current_user_site_list` | 前台（shortcode） | **是** |
-
-### Admin Dashboard tabs
-
-| Tab | Component | 說明 |
-|---|---|---|
-| 所有站台 | `SiteList` | 已建站列表 |
-| 點數 Log | `LogList` | cloud.luke.cafe 點數紀錄 |
-| Email 設定 | `EmailSetting` | Email 模板管理 |
-| 手動開站 | `ManualSiteSync` | 手動建站 |
-| 設定 | `Settings` | 外掛設定 |
-| 授權碼管理 | `LicenseCodes` | 授權碼管理 |
-| 其他資訊 | `Description` | 說明/文件連結 |
-| 新架構權限 | `PowercloudAuth` | 設定 PowerCloud API key |
-
-### JS localized window object: `window.power_partner_data.env`
-```ts
-{
-  siteUrl, ajaxUrl, userId, postId, permalink,
-  APP_NAME, KEBAB, SNAKE,
-  BASE_URL,           // '/'
-  APP1_SELECTOR,      // '#power-partner-connect-app'
-  APP2_SELECTOR,      // '.power_partner_current_user_site_list'
-  API_TIMEOUT,        // '30000'
-  nonce,              // WP REST nonce
-  allowed_template_options,   // {id: title}
-  partner_id,
-  disable_site_after_n_days,
-  t,                  // base64 Basic Auth token
-  cloudBaseUrl,       // cloud.luke.cafe base URL
-  POWERCLOUD_API,     // api.wpsite.pro base URL
-  is_kiwissec,        // bool
-  myAccountUrl,
-}
-```
-
-### 狀態管理
-- **Jotai** atoms: `identityAtom`, `globalLoadingAtom`, `tabAtom`, `powercloudAtom`
-- **TanStack Query v5** 管理伺服器狀態
-
----
-
-## 新增功能指引
-
-### 新 PHP singleton 類別
-1. 在正確的 `inc/classes/` 子目錄建立，設定正確 namespace
-2. 加上 `declare(strict_types=1)` + `use SingletonTrait`
-3. 在 `__construct()` 註冊 hooks
-4. 在 `Bootstrap::__construct()` 加入 `MyClass::instance();`
-
-### 新 REST endpoint
-1. 在對應的 `Api\*::register_apis()` 中呼叫 `\register_rest_route()`
-2. Admin routes: `'permission_callback' => fn() => current_user_can('manage_options')`
-3. Server callbacks: `'permission_callback' => [$this, 'check_ip_permission']`
-
-### 新商品 meta 欄位
-1. 在 `LinkedSites` 或 `LinkedLC` 加入 `const FIELD_NAME`
-2. 在 `custom_field_subscription()` 和 `custom_field_variable_subscription()` 加入渲染
-3. 在 `save_subscription()` 和 `save_variable_subscription()` 加入儲存
-
-### 新 Email action type
-1. 使用 Powerhouse 的 `Action` enum 值
-2. 在 `SubscriptionEmailHooks::__construct()` 連接 hook
-3. 如果是 unique/可重排程的 action，加入 `$mapper`
-4. 如果需要設定變更時重排程，加入 `WatchSettingHooks::is_in_schedule_actions()`
 
 ---
 

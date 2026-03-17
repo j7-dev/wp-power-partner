@@ -1,5 +1,6 @@
 ---
-globs: "**/*.php"
+paths:
+  - "**/*.php"
 ---
 
 # Power Partner — PHP 架構規則
