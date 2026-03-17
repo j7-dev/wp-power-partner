@@ -72,10 +72,8 @@ abstract class FetchPowerCloud
 		// 構建請求體
 		$request_body = [
 			'packageId'   => $open_site_plan_id,
-			'name'        => $name,
 			'namespace'   => $namespace,
-			'domain'      => $domain,
-			'isWildcard'  => true,
+			'wildcardDomain' => $domain,
 			'mysql'       => [
 				'auth' => [
 					'rootPassword' => $db_root_password,

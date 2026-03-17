@@ -1,17 +1,44 @@
-import {axios, powerCloudAxios, usePowerCloudAxiosWithApiKey} from '@/api'
-import {identityAtom} from '@/pages/AdminApp/Atom/atom'
-import {allowed_template_options, host_positions, is_kiwissec, kebab,} from '@/utils'
-import {CloudOutlined, GlobalOutlined, LoadingOutlined,} from '@ant-design/icons'
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
-import {Button, Card, Col, Empty, Form, Input, notification, Row, Select, Spin, Tabs, Tag,} from 'antd'
-import {TabsProps} from 'antd/lib'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useRef} from 'react'
-import {EPowercloudIdentityStatusEnum, powercloudIdentityAtom,} from '../../Atom/powercloud.atom'
-import {setTabAtom, TabKeyEnum} from '../../Atom/tab.atom'
-import {generateRandomPassword} from '@/utils/functions/password'
-import {generateRandomWpsiteProConfig} from '@/utils/functions/wordpress'
-import {AxiosResponse} from 'axios'
+import {
+	CloudOutlined,
+	GlobalOutlined,
+	LoadingOutlined,
+} from '@ant-design/icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+	Button,
+	Card,
+	Col,
+	Empty,
+	Form,
+	Input,
+	notification,
+	Row,
+	Select,
+	Spin,
+	Tabs,
+	Tag,
+} from 'antd'
+import { TabsProps } from 'antd/lib'
+import { AxiosResponse } from 'axios'
+import { atom, useAtomValue, useSetAtom } from 'jotai'
+import { useEffect, useRef } from 'react'
+
+import {
+	EPowercloudIdentityStatusEnum,
+	powercloudIdentityAtom,
+} from '../../Atom/powercloud.atom'
+import { setTabAtom, TabKeyEnum } from '../../Atom/tab.atom'
+
+import { axios, powerCloudAxios, usePowerCloudAxiosWithApiKey } from '@/api'
+import { identityAtom } from '@/pages/AdminApp/Atom/atom'
+import {
+	allowed_template_options,
+	host_positions,
+	is_kiwissec,
+	kebab,
+} from '@/utils'
+import { generateRandomPassword } from '@/utils/functions/password'
+import { generateRandomWpsiteProConfig } from '@/utils/functions/wordpress'
 
 const { Item } = Form
 
@@ -41,6 +68,7 @@ interface IPowercloudPackage {
 
 // 選中的方案 Atom
 const selectedPackageIdAtom = atom<string | null>(null)
+
 // Powercloud 內部 tab 的狀態
 const powercloudActiveTabAtom = atom<string>('website-package-list')
 
@@ -52,7 +80,7 @@ const PowercloudPakcageList = () => {
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['powercloud-package-list'],
-		queryFn: () => powerCloudInstance.get(`/website-packages`),
+		queryFn: () => powerCloudInstance.get('/website-packages'),
 	})
 
 	const websitePackages: IPowercloudPackage[] =
@@ -60,6 +88,7 @@ const PowercloudPakcageList = () => {
 
 	const handleSelectPackage = (packageId: string) => {
 		setSelectedPackageId(packageId)
+
 		// 切換到開站 tab
 		setPowercloudActiveTab('open-site')
 	}
@@ -108,11 +137,10 @@ const PowercloudPakcageList = () => {
 								</div>
 							}
 							hoverable
-							className={`h-full cursor-pointer transition-all ${
-								selectedPackageId === pkg.id
+							className={`h-full cursor-pointer transition-all ${selectedPackageId === pkg.id
 									? 'border-2 border-primary shadow-lg'
 									: 'border'
-							}`}
+								}`}
 							onClick={() => handleSelectPackage(pkg.id)}
 						>
 							<div className="space-y-3">
@@ -175,10 +203,8 @@ const PowercloudPakcageList = () => {
 
 type TPowercloudOpenSiteParams = {
 	packageId: string
-	name: string
 	namespace: string
-	domain: string
-	isWildcard: boolean
+	wildcardDomain: string
 	mysql: {
 		auth: {
 			rootPassword: string
@@ -211,7 +237,7 @@ const PowercloudOpenSite = () => {
 	// 取得 package 列表
 	const { data: packagesData, isLoading: isLoadingPackages } = useQuery({
 		queryKey: ['powercloud-package-list'],
-		queryFn: () => powerCloudInstance.get(`/website-packages`),
+		queryFn: () => powerCloudInstance.get('/website-packages'),
 	})
 
 	const websitePackages: IPowercloudPackage[] =
@@ -296,13 +322,12 @@ const PowercloudOpenSite = () => {
 				// 生成隨機配置（只調用一次）
 				const wpsiteConfig = generateRandomWpsiteProConfig()
 
-				const {adminEmail, ...data} = values
+				const { adminEmail, ...data } = values
 
 				createWordPress({
 					...data,
-					name: wpsiteConfig.name,
 					namespace: wpsiteConfig.namespace,
-					domain: wpsiteConfig.domain,
+					wildcardDomain: wpsiteConfig.domain,
 					wordpress: {
 						autoInstall: {
 							siteTitle: 'WordPress Site',
@@ -364,16 +389,6 @@ const PowercloudOpenSite = () => {
 					/>
 				</Form.Item>
 
-				<Form.Item
-					label="是否通配符域名"
-					name={['isWildcard']}
-					initialValue={true}
-					valuePropName="checked"
-					className="hidden"
-				>
-					<input type="checkbox" disabled={isPending} />
-				</Form.Item>
-
 				<div className="flex gap-x-2 mt-8">
 					<Button type="primary" loading={isPending} onClick={handleFinish}>
 						建立站台
@@ -415,7 +430,11 @@ const Powercloud = () => {
 		!powercloudIdentity.apiKey
 	) {
 		return (
-			<Button color="primary" variant="link" onClick={handleRedirectToPowercloudAuth}>
+			<Button
+				color="primary"
+				variant="link"
+				onClick={handleRedirectToPowercloudAuth}
+			>
 				登入新架構
 			</Button>
 		)
@@ -595,12 +614,12 @@ const WPCD = () => {
 						options={
 							is_kiwissec
 								? [
-										...host_positions,
-										{
-											value: 'kiwissec',
-											label: '七維思',
-										},
-									]
+									...host_positions,
+									{
+										value: 'kiwissec',
+										label: '七維思',
+									},
+								]
 								: host_positions
 						}
 						allowClear
@@ -630,17 +649,17 @@ const WPCD = () => {
 
 const siteTypeItems: TabsProps['items'] = [
 	{
-		key: 'wpcd',
-		icon: <GlobalOutlined />,
-		label: '舊架構',
-		children: <WPCD />,
-		forceRender: false,
-	},
-	{
 		key: 'powercloud',
 		icon: <CloudOutlined />,
 		label: '新架構',
 		children: <Powercloud />,
+		forceRender: false,
+	},
+	{
+		key: 'wpcd',
+		icon: <GlobalOutlined />,
+		label: '舊架構',
+		children: <WPCD />,
 		forceRender: false,
 	},
 ]

@@ -1,42 +1,51 @@
-import {SiteListTable, useCustomers, useTable,} from '@/components/SiteListTable'
-import {powerCloudAxios, usePowerCloudAxiosWithApiKey} from '@/api'
-import {globalLoadingAtom, identityAtom} from '@/pages/AdminApp/Atom/atom'
 import {
-    CloudOutlined,
-    DeleteOutlined,
-    EditOutlined,
-    GlobalOutlined,
-    LinkOutlined,
-    ReloadOutlined,
-    SettingOutlined,
-    StopOutlined,
-    SyncOutlined,
+	CloudOutlined,
+	DeleteOutlined,
+	EditOutlined,
+	GlobalOutlined,
+	LinkOutlined,
+	ReloadOutlined,
+	SettingOutlined,
+	StopOutlined,
+	SyncOutlined,
 } from '@ant-design/icons'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import {
-    Alert,
-    Button,
-    Empty,
-    Form,
-    Input,
-    InputNumber,
-    message,
-    Modal,
-    Popconfirm,
-    Space,
-    Spin,
-    Table,
-    Tabs,
-    TabsProps,
-    Tag,
-    Tooltip,
-    Typography,
+	Alert,
+	Button,
+	Empty,
+	Form,
+	Input,
+	InputNumber,
+	message,
+	Modal,
+	Popconfirm,
+	Space,
+	Spin,
+	Table,
+	Tabs,
+	TabsProps,
+	Tag,
+	Tooltip,
+	Typography,
 } from 'antd'
-import type {ColumnsType} from 'antd/es/table'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useState} from 'react'
-import {useMutation, useQuery} from '@tanstack/react-query'
-import {EPowercloudIdentityStatusEnum, powercloudIdentityAtom,} from '../../Atom/powercloud.atom'
-import {setTabAtom, TabKeyEnum} from '../../Atom/tab.atom'
+import type { ColumnsType } from 'antd/es/table'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { useEffect, useState } from 'react'
+
+import {
+	EPowercloudIdentityStatusEnum,
+	powercloudIdentityAtom,
+} from '../../Atom/powercloud.atom'
+import { setTabAtom, TabKeyEnum } from '../../Atom/tab.atom'
+
+import { powerCloudAxios, usePowerCloudAxiosWithApiKey } from '@/api'
+import {
+	SiteListTable,
+	useCustomers,
+	useTable,
+} from '@/components/SiteListTable'
+import { globalLoadingAtom, identityAtom } from '@/pages/AdminApp/Atom/atom'
 
 const { Text, Link } = Typography
 
@@ -59,10 +68,12 @@ const statusTextMap: Record<string, string> = {
 interface IWebsite {
 	id: string
 	name: string
-	domain: string
+	domain?: string
+	primaryDomain?: string
+	subDomain?: string
+	wildcardDomain: string
 	namespace: string
 	status: string
-	isWildcard: boolean
 	adminUsername: string
 	adminEmail: string
 	adminPassword: string
@@ -92,12 +103,7 @@ interface IWebsite {
 
 interface IWebsiteResponse {
 	data: IWebsite[]
-	pagination: {
-		total: number
-		page: number
-		limit: number
-		totalPages: number
-	}
+	total: number
 }
 
 // 容器數量編輯組件
@@ -166,6 +172,16 @@ const PodSizeEditor = ({
 	)
 }
 
+const getDomain = (website: IWebsite): string => {
+	return (
+		website.primaryDomain ||
+		website.domain ||
+		website.subDomain ||
+		website.wildcardDomain ||
+		''
+	)
+}
+
 const PowercloudContent = () => {
 	const powerCloudInstance = usePowerCloudAxiosWithApiKey(powerCloudAxios)
 	const [pagination, setPagination] = useState({ page: 1, limit: 10 })
@@ -177,7 +193,7 @@ const PowercloudContent = () => {
 		queryKey: ['powercloud-websites', pagination.page, pagination.limit],
 		queryFn: () =>
 			powerCloudInstance.get<IWebsiteResponse>(
-				`/websites?page=${pagination.page}&limit=${pagination.limit}`,
+				`/websites?page=${pagination.page}&limit=${pagination.limit}`
 			),
 	})
 
@@ -221,13 +237,13 @@ const PowercloudContent = () => {
 		},
 		onError: (error: any) => {
 			message.error(
-				`域名變更失敗: ${error?.response?.data?.message || error.message}`,
+				`域名變更失敗: ${error?.response?.data?.message || error.message}`
 			)
 		},
 	})
 
 	const websites = data?.data?.data || []
-	const paginationInfo = data?.data?.pagination
+	const total = data?.data?.total || 0
 
 	const columns: ColumnsType<IWebsite> = [
 		{
@@ -239,11 +255,11 @@ const PowercloudContent = () => {
 			render: (name: string, record) => (
 				<Space direction="vertical" size={0}>
 					<Link
-						href={`https://${record.domain}`}
+						href={`https://${getDomain(record)}`}
 						target="_blank"
 						style={{ fontSize: 14 }}
 					>
-						<LinkOutlined /> {record.domain}
+						<LinkOutlined /> {getDomain(record)}
 					</Link>
 					<Text className="text-xs text-gray-500">{name}</Text>
 				</Space>
@@ -512,7 +528,7 @@ const PowercloudContent = () => {
 					alignItems: 'center',
 				}}
 			>
-				<Text type="secondary">共 {paginationInfo?.total || 0} 個網站</Text>
+				<Text type="secondary">共 {total || 0} 個網站</Text>
 				<Button
 					icon={<ReloadOutlined spin={isFetching} />}
 					onClick={() => refetch()}
@@ -530,7 +546,7 @@ const PowercloudContent = () => {
 				pagination={{
 					current: pagination.page,
 					pageSize: pagination.limit,
-					total: paginationInfo?.total || 0,
+					total,
 					showSizeChanger: true,
 					showQuickJumper: true,
 					pageSizeOptions: ['10', '20', '50'],
@@ -605,7 +621,11 @@ const Powercloud = () => {
 		!powercloudIdentity.apiKey
 	) {
 		return (
-			<Button color="primary" variant="link" onClick={handleRedirectToPowercloudAuth}>
+			<Button
+				color="primary"
+				variant="link"
+				onClick={handleRedirectToPowercloudAuth}
+			>
 				登入新架構
 			</Button>
 		)
@@ -662,17 +682,17 @@ const WPCD = () => {
 
 const siteTypeItems: TabsProps['items'] = [
 	{
-		key: 'wpcd',
-		icon: <GlobalOutlined />,
-		label: '舊架構',
-		children: <WPCD />,
-		forceRender: false,
-	},
-	{
 		key: 'powercloud',
 		icon: <CloudOutlined />,
 		label: '新架構',
 		children: <Powercloud />,
+		forceRender: false,
+	},
+	{
+		key: 'wpcd',
+		icon: <GlobalOutlined />,
+		label: '舊架構',
+		children: <WPCD />,
 		forceRender: false,
 	},
 ]
