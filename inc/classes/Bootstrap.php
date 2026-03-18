@@ -102,6 +102,7 @@ final class Bootstrap {
 					'siteUrl'                   => \site_url(),
 					'ajaxUrl'                   => \admin_url( 'admin-ajax.php' ),
 					'userId'                    => \wp_get_current_user()->data->ID ?? null,
+					'userEmail'                 => \wp_get_current_user()->user_email ?? '',
 					'postId'                    => $post_id,
 					'permalink'                 => $permalink,
 					'APP_NAME'                  => Plugin::$app_name,

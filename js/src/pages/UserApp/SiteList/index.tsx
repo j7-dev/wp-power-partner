@@ -1,49 +1,43 @@
+import { CloudOutlined, GlobalOutlined } from '@ant-design/icons'
+import { Tabs, TabsProps } from 'antd'
+import { useAtomValue } from 'jotai'
+
 import {
-	SiteListTable,
-	useCustomers,
-	useTable,
-} from '@/components/SiteListTable'
-import { identityAtom, globalLoadingAtom } from '@/pages/UserApp/atom'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect } from 'react'
-import { currentUserId } from '@/utils'
+	EPowercloudIdentityStatusEnum,
+	powercloudIdentityAtom,
+} from '@/pages/AdminApp/Atom/powercloud.atom'
+
+import Powercloud from './Powercloud'
+import WPCD from './WPCD'
 
 const index = () => {
-	const identity = useAtomValue(identityAtom)
-	const partner_id = identity.data?.partner_id || ''
+	const powercloudIdentity = useAtomValue(powercloudIdentityAtom)
+	const hasPowerCloudApiKey =
+		powercloudIdentity.status === EPowercloudIdentityStatusEnum.LOGGED_IN &&
+		!!powercloudIdentity.apiKey
 
-	const setGlobalLoading = useSetAtom(globalLoadingAtom)
+	if (!hasPowerCloudApiKey) {
+		return <WPCD />
+	}
 
-	const { tableProps } = useTable({
-		resource: 'apps',
-		defaultParams: {
-			user_id: partner_id,
-			customer_id: currentUserId.toString(),
+	const siteTypeItems: TabsProps['items'] = [
+		{
+			key: 'powercloud',
+			icon: <CloudOutlined />,
+			label: '新架構',
+			children: <Powercloud />,
+			forceRender: false,
 		},
-		queryOptions: {
-			enabled: !!partner_id && !!currentUserId,
+		{
+			key: 'wpcd',
+			icon: <GlobalOutlined />,
+			label: '舊架構',
+			children: <WPCD />,
+			forceRender: false,
 		},
-	})
+	]
 
-	const all_customer_ids =
-		tableProps?.dataSource
-			?.map((site) => site.customer_id)
-			.filter((value, i, self) => self.indexOf(value) === i) || [] // remove duplicates
-
-	const customerResult = useCustomers({ user_ids: all_customer_ids })
-
-	useEffect(() => {
-		if (!tableProps?.loading) {
-			setGlobalLoading({
-				isLoading: false,
-				label: '',
-			})
-		}
-	}, [tableProps?.loading])
-
-	return (
-		<SiteListTable tableProps={tableProps} customerResult={customerResult} />
-	)
+	return <Tabs items={siteTypeItems} />
 }
 
 export default index
