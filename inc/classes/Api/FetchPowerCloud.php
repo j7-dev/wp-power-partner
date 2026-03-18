@@ -10,11 +10,8 @@ use J7\PowerPartner\Plugin;
 /** Class FetchPowerCloud */
 abstract class FetchPowerCloud
 {
-
-
 	const ALLOWED_TEMPLATE_OPTIONS_TRANSIENT_KEY = 'power_partner_allowed_template_options_powercloud';
 	const OPEN_SITE_PLAN_OPTIONS_TRANSIENT_KEY   = 'power_partner_open_site_plan_options_powercloud';
-	// phpstan:ignoreㄋ
 	const ALLOWED_TEMPLATE_OPTIONS_CACHE_TIME = 7 * 24 * HOUR_IN_SECONDS;
 	/**
 	 * 發 API 開站
