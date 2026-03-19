@@ -95,6 +95,7 @@ const getDomain = (website: IWebsite): string => {
 const Powercloud = () => {
 	const powerCloudInstance = usePowerCloudAxiosWithApiKey(powerCloudAxios)
 	const setGlobalLoading = useSetAtom(globalLoadingAtom)
+
 	// 一次拉足夠多的資料，前端用 adminEmail 過濾當前客戶的網站
 	const [pagination] = useState({ page: 1, limit: 100 })
 
@@ -106,7 +107,7 @@ const Powercloud = () => {
 		],
 		queryFn: () =>
 			powerCloudInstance.get<IWebsiteResponse>(
-				`/websites?page=${pagination.page}&limit=${pagination.limit}`,
+				`/websites?page=${pagination.page}&limit=${pagination.limit}`
 			),
 	})
 
@@ -130,10 +131,9 @@ const Powercloud = () => {
 		() =>
 			allWebsites.filter(
 				(site) =>
-					site.adminEmail?.toLowerCase() ===
-					currentUserEmail.toLowerCase(),
+					site.adminEmail?.toLowerCase() === currentUserEmail.toLowerCase()
 			),
-		[allWebsites, currentUserEmail],
+		[allWebsites, currentUserEmail]
 	)
 
 	useEffect(() => {
@@ -184,23 +184,6 @@ const Powercloud = () => {
 			render: (ipAddress: string) => (
 				<Text copyable={{ text: ipAddress }}>{ipAddress}</Text>
 			),
-		},
-		{
-			title: '方案',
-			dataIndex: 'package',
-			key: 'package',
-			width: 200,
-			render: (pkg: IWebsite['package']) =>
-				pkg ? (
-					<Space direction="vertical" size={0}>
-						<Text>{pkg.name}</Text>
-						<Text type="secondary" style={{ fontSize: 12 }}>
-							NT$ {pkg.price}/年
-						</Text>
-					</Space>
-				) : (
-					<Text type="secondary">-</Text>
-				),
 		},
 		{
 			title: 'WordPress 管理員信箱',
@@ -265,11 +248,7 @@ const Powercloud = () => {
 								cancelText="取消"
 							>
 								<Tooltip title="啟動站台">
-									<Button
-										type="link"
-										size="small"
-										icon={<SyncOutlined />}
-									/>
+									<Button type="link" size="small" icon={<SyncOutlined />} />
 								</Tooltip>
 							</Popconfirm>
 						)}
@@ -311,10 +290,7 @@ const Powercloud = () => {
 
 	if (!websites.length) {
 		return (
-			<Empty
-				description="尚無新架構網站資料"
-				style={{ padding: '60px 0' }}
-			/>
+			<Empty description="尚無新架構網站資料" style={{ padding: '60px 0' }} />
 		)
 	}
 
