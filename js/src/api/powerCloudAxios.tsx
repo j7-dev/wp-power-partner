@@ -1,10 +1,11 @@
 /* eslint-disable quote-props */
-import { powercloudIdentityAtom } from '@/pages/AdminApp/Atom/powercloud.atom'
-import { POWERCLOUD_API, apiTimeout } from '@/utils'
 import { notification } from 'antd'
 import axios, { AxiosInstance } from 'axios'
 import { useAtomValue } from 'jotai'
 import { useMemo } from 'react'
+
+import { powercloudIdentityAtom } from '@/pages/AdminApp/Atom/powercloud.atom'
+import { POWERCLOUD_API, apiTimeout } from '@/utils'
 
 const instance: AxiosInstance = axios.create({
 	baseURL: POWERCLOUD_API,
@@ -23,7 +24,7 @@ export const usePowerCloudAxiosWithApiKey = (axiosInstance: AxiosInstance) => {
 					'X-API-Key': apiKey,
 				},
 			}),
-		[apiKey],
+		[apiKey]
 	)
 
 	return instance
@@ -44,15 +45,23 @@ instance.interceptors.response.use(
 		return response
 	},
 	async function (error) {
-		const message =
+		const message: string | string[] =
 			error?.response?.data?.message || 'OOPS! 發生錯誤 請稍後再試'
 
-		notification.error({
-			message: message,
-		})
+		if (Array.isArray(message)) {
+			message.forEach((msg) => {
+				notification.error({
+					message: msg,
+				})
+			})
+		} else {
+			notification.error({
+				message,
+			})
+		}
 
 		return Promise.reject(error)
-	},
+	}
 )
 
 export default instance

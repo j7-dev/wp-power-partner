@@ -1,10 +1,13 @@
 import { useMutation } from '@tanstack/react-query'
-
 import { Button, Form, Input, Alert, notification } from 'antd'
-import { powerCloudAxios, axios } from '@/api'
-import { EPowercloudIdentityStatusEnum, powercloudIdentityAtom } from '@/pages/AdminApp/Atom/powercloud.atom'
-import { globalLoadingAtom } from '@/pages/AdminApp/Atom/atom'
 import { useAtomValue, useSetAtom } from 'jotai'
+
+import { powerCloudAxios, axios } from '@/api'
+import { globalLoadingAtom } from '@/pages/AdminApp/Atom/atom'
+import {
+	EPowercloudIdentityStatusEnum,
+	powercloudIdentityAtom,
+} from '@/pages/AdminApp/Atom/powercloud.atom'
 import { TAccountInfo } from '@/pages/AdminApp/types'
 import { renderHTML, kebab } from '@/utils'
 
@@ -12,6 +15,7 @@ const Login = () => {
 	const [form] = Form.useForm()
 	const setIdentity = useSetAtom(powercloudIdentityAtom)
 	const setGlobalLoading = useSetAtom(globalLoadingAtom)
+
 	// powercloud login
 	const { mutate: powercloudLogin, isPending: isPendingPowercloudLogin } =
 		useMutation({
@@ -40,7 +44,7 @@ const Login = () => {
 				setIdentity({
 					status: EPowercloudIdentityStatusEnum.LOGGED_IN,
 					message: '',
-					apiKey: apiKey,
+					apiKey,
 				})
 
 				// 保存 apiKey 到 WordPress usermeta
@@ -52,15 +56,10 @@ const Login = () => {
 					console.error('Failed to save API key to WordPress:', error)
 					notification.warning({
 						message: '登入成功，但保存 API Key 到 WordPress 失敗',
-						description: error?.response?.data?.message || error?.message || '請稍後再試',
+						description:
+							error?.response?.data?.message || error?.message || '請稍後再試',
 					})
 				}
-			},
-			onError: (err) => {
-				notification.error({
-					message: err?.message || '登入失敗',
-					description: renderHTML(JSON.stringify(err || '')),
-				})
 			},
 		})
 	}
@@ -111,27 +110,29 @@ const Login = () => {
 }
 
 const Logout = () => {
-	const setPowercloudIdentity = useSetAtom(powercloudIdentityAtom)
+	const setIdentity = useSetAtom(powercloudIdentityAtom)
 
 	const handleLogout = () => {
-		setPowercloudIdentity({
+		setIdentity({
 			status: EPowercloudIdentityStatusEnum.UN_LOGIN,
 			message: '',
 			apiKey: '',
 		})
 	}
-	return <div>
-		<Button variant='outlined' danger onClick={handleLogout}>
-			登出
-		</Button>
-	</div>
+	return (
+		<div>
+			<Button variant="outlined" danger onClick={handleLogout}>
+				登出
+			</Button>
+		</div>
+	)
 }
 
 const index = () => {
 	const powercloudIdentity = useAtomValue(powercloudIdentityAtom)
-	if (powercloudIdentity.status === EPowercloudIdentityStatusEnum.UN_LOGIN) return <Login />
+	if (powercloudIdentity.status === EPowercloudIdentityStatusEnum.UN_LOGIN)
+		return <Login />
 	return <Logout />
-
 }
 
 export default index
