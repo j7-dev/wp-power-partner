@@ -141,7 +141,7 @@ abstract class FetchPowerCloud
 	 */
 	public static function disable_site(string $current_user_id, string $website_id): void
 	{
-		$powercloud_api_key = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
+		$powercloud_api_key = self::get_powercloud_api_key((string) $current_user_id);
 
 		$args = [
 			'method'  => 'PATCH',
@@ -186,7 +186,7 @@ abstract class FetchPowerCloud
 	 */
 	public static function enable_site(string $current_user_id, string $website_id): void
 	{
-		$powercloud_api_key = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
+		$powercloud_api_key = self::get_powercloud_api_key((string) $current_user_id);
 
 		$args = [
 			'method'  => 'PATCH',
@@ -253,7 +253,7 @@ abstract class FetchPowerCloud
 	{
 		$_allowed_template_options = [];
 		$current_user_id           = \get_current_user_id();
-		$powercloud_api_key        = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
+		$powercloud_api_key        = self::get_powercloud_api_key((string) $current_user_id);
 
 		$args     = [
 			'headers' => [
@@ -274,8 +274,8 @@ abstract class FetchPowerCloud
 		$template_sites = isset($response_body['data']) && is_array($response_body['data']) ? $response_body['data'] : [];
 
 		foreach ($template_sites as $template_site) {
-			if (is_array($template_site) && isset($template_site['domain']) && isset($template_site['id'])) {
-				$_allowed_template_options[(string) $template_site['id']] = (string) $template_site['domain'];
+			if (is_array($template_site) && isset($template_site['primaryDomain']) && isset($template_site['id'])) {
+				$_allowed_template_options[(string) $template_site['id']] = (string) $template_site['primaryDomain'];
 			}
 		}
 
@@ -312,7 +312,7 @@ abstract class FetchPowerCloud
 	{
 		$_open_site_plan_options = [];
 		$current_user_id         = \get_current_user_id();
-		$powercloud_api_key      = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $current_user_id);
+		$powercloud_api_key      = self::get_powercloud_api_key((string) $current_user_id);
 
 		if (empty($powercloud_api_key)) {
 			return [];
@@ -422,7 +422,7 @@ abstract class FetchPowerCloud
 	 * @param string $user_id 用戶 ID
 	 * @return string|null API Key 或 null 如果不存在
 	 */
-	private static function get_powercloud_api_key(string $user_id): ?string
+	public static function get_powercloud_api_key(string $user_id): ?string
 	{
 		/** @var string|false $legacy 就版本的 key */
 		$legacy = \get_transient(Main::POWERCLOUD_API_KEY_TRANSIENT_KEY . '_' . $user_id);
